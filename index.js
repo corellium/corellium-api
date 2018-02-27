@@ -47,7 +47,7 @@ async function main() {
     }
 
     // The instance's console is accessible as a node stream and can be piped to stdout.
-    (await instance.console()).pipe(process.stdout);
+    //(await instance.console()).pipe(process.stdout);
 
     // Instances have the 'panic' event that can be listened for.
     instance.on('panic', async () => {
@@ -65,6 +65,16 @@ async function main() {
         // You can listen for change events on instances. This also demonstrates publicly accessible properties on isntances.
         console.log(instance.id(), instance.name(), instance.status());
     });
+
+    // If there's a freshly restored snapshot...
+    let snapshots = await instance.snapshots();
+    let freshSnapshots = snapshots.filter(snapshot => snapshot.isFresh());
+    if (freshSnapshots.length > 0) {
+        // Restore to the freshly restored snapshot.
+        await freshSnapshots[0].restore();
+    }
+
+    console.log('new snapshot', await instance.takeSnapshot('New snapshot'));
 }
 
 main().catch(err => {

@@ -4,6 +4,7 @@ const stringify = require('fast-stable-stringify');
 const openstack = require('openstack-api');
 const c3po = require('./c3po');
 const websocket = require('websocket-stream');
+const Snapshot = require('./snapshot');
 
 class Instance extends EventEmitter {
     constructor(account, project, info, metadata) {
@@ -16,6 +17,7 @@ class Instance extends EventEmitter {
         this.hash = null;
         this.hypervisorStream = null;
         this.lastPanicLength = null;
+        this.volumeId = null;
 
         this.on('newListener', () => {
             this.manageUpdates(true);
@@ -40,8 +42,44 @@ class Instance extends EventEmitter {
         return this.info.status;
     }
 
+    async token() {
+        let projectToken = await this.project.token();
+        return projectToken;
+    }
+
     key() {
         return Buffer.from(this.metadata.key, 'hex');
+    }
+
+    async snapshots() {
+        let projectToken = await this.token();
+        let [snapshots, volumes] = await Promise.all([
+            openstack.volume.volumeSnapshots(projectToken.token, this.project.id()),
+            this.volumeId ? Promise.resolve([this.volumeId]) : openstack.compute.instanceVolumes(projectToken.token, this.id())
+        ]);
+
+        let mySnapshots = [] 
+        volumes.forEach(volumeId => {
+            mySnapshots = mySnapshots.concat(snapshots.filter(snapshot => {
+                return snapshot.volume_id === volumeId;
+            }));
+
+            this.volumeId = volumeId;
+        });
+
+        return mySnapshots.map(snapshot => {
+            return new Snapshot(this, snapshot);  
+        });
+    }
+
+    async takeSnapshot(name) {
+        let projectToken = await this.token();
+        let volumes = await (this.volumeId ? Promise.resolve([this.volumeId]) : openstack.compute.instanceVolumes(projectToken.token, this.id()));
+        if (volumes.length === 0)
+            throw new openstack.exceptions.APIException(1002, 'instance has no volumes');
+        
+        this.volumeId = volumes[0];
+        return openstack.volume.volumeCreateSnapshot(projectToken.token, this.project.id(), this.volumeId, name);
     }
 
     async panics() {
@@ -101,7 +139,7 @@ class Instance extends EventEmitter {
     }
 
     async console() {
-        let projectToken = await this.project.token();
+        let projectToken = await this.token();
         let wsUrl = await openstack.compute.serialConsole(projectToken.token, this.id());
         return websocket(wsUrl, ['binary']);
     }
@@ -128,7 +166,7 @@ class Instance extends EventEmitter {
     }
 
     async update() {
-        let projectToken = await this.project.token();
+        let projectToken = await this.token();
         let id = this.id();
 
         try {
@@ -144,7 +182,7 @@ class Instance extends EventEmitter {
     }
 
     async start() {
-        let projectToken = await this.project.token();
+        let projectToken = await this.token();
         let id = this.id();
 
         await openstack.compute.instanceOpenStackMetadataDelete(projectToken.token, id, 'is-restore')
@@ -165,21 +203,21 @@ class Instance extends EventEmitter {
     }
 
     async stop() {
-        let projectToken = await this.project.token();
+        let projectToken = await this.token();
         let id = this.id();
 
         await openstack.compute.instanceStop(projectToken.token, id);
     }
 
     async reboot() {
-        let projectToken = await this.project.token();
+        let projectToken = await this.token();
         let id = this.id();
 
         await openstack.compute.instanceReboot(projectToken.token, id);
     }
 
     async destroy() {
-        let projectToken = await this.project.token();
+        let projectToken = await this.token();
         let id = this.id();
 
         let tagPromise = openstack.compute.instanceTag(projectToken.token, id, 'deleting');
