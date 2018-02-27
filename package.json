@@ -1,0 +1,19 @@
+{
+  "name": "corellium-api",
+  "version": "1.0.0",
+  "description": "",
+  "main": "src/corellium.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "dependencies": {
+    "fast-stable-stringify": "^1.0.0",
+    "hkdf": "0.0.2",
+    "node-fetch": "^2.0.0",
+    "node-webcrypto-ossl": "^1.0.35",
+    "openstack-api": "git+ssh://gitolite3@dev.corellium.com:8002/node-openstack-api",
+    "uuid": "^3.2.1",
+    "websocket-stream": "^5.1.1"
+  }
+}
