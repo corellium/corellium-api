@@ -1,0 +1,50 @@
+{
+    "vstrm": "http://pdev2.corellium.com:9000",
+    "console": "http://pdev2.corellium.com:6083",
+    "identityEndpoint": "http://pdev2.corellium.com/identity",
+    "serviceDomain": "default",
+    "serviceUser": "frontend",
+    "servicePassword": "password",
+    "ipswFilters": [
+        {
+            "exclude": true
+        },
+        {
+            "device": {
+                "product": "iPhone7,.*"
+            },
+            "include": true
+        },
+        {
+            "device": {
+                "product": "iPod7,.*"
+            },
+            "include": true
+        },
+        {
+            "device": {
+                "product": "iPad5,1"
+            },
+            "include": true
+        },
+        {
+            "device": {
+                "product": "iPhone9,.*"
+            },
+            "include": true
+        },
+        {
+            "version": {
+                "lt": "10.3"
+            },
+            "exclude": true
+        }
+    ],
+    "endpointRewrite": [
+        {
+            "search": "10.99.253.129",
+            "replace": "pdev2.corellium.com"
+        }
+    ],
+    "quiet": true
+}
