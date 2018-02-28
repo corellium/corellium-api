@@ -178,6 +178,43 @@ const A10BootArgs = [
             }
         },
 
+        restore: '-v nand-enable-reformat=1 rootdev=md0 rd=md0 debug=0x14e serial=3',
+        normal: '-v rootdev=disk0s1 debug=0x14e serial=3 gpu=0'
+    },
+    {
+        versionRange: {
+            lower: {
+                major: 11,
+                minor: 0,
+                patch: 0
+            },
+            upper: {
+                major: 12,
+                minor: 0,
+                patch: 0
+            }
+        },
+
+        restore: '-v nand-enable-reformat=1 rootdev=md0 rd=md0 debug=0x14e serial=3',
+        normal: '-v rootdev=disk0s1s1 debug=0x14e serial=3 gpu=0'
+    }
+];
+
+const A11BootArgs = [
+    {
+        versionRange: {
+            lower: {
+                major: 10,
+                minor: 0,
+                patch: 0
+            },
+            upper: {
+                major: 11,
+                minor: 0,
+                patch: 0
+            }
+        },
+
         restore: '-v nand-enable-reformat=1 rootdev=md0 rd=md0 debug=0x14e serial=3 cpus=1',
         normal: '-v rootdev=disk0s1 debug=0x14e serial=3 gpu=0 cpus=1'
     },
@@ -281,6 +318,15 @@ const SupportedDevices = [
         "volume": A10Volume,
         "bootargs": A10BootArgs,
         "charmd": "iphone7"
+    },
+    {
+        "flavor": "iPhone 8",
+        "flavorId": "iphone8",
+        "product": "iPhone10,1",
+        "model": "d20ap",
+        "volume": A10Volume,
+        "bootargs": A11BootArgs,
+        "charmd": "iphone8"
     }
 ];
 
