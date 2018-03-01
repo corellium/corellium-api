@@ -5,12 +5,14 @@ async function main() {
     let corellium = new Corellium({
         domain: 'pdev2',
         username: 'adam',
-        password: 'c0rellium1'
+        password: 'password'
     });
 
+    console.log('Logging in...');
     // Login.
     await corellium.login();
 
+    console.log('Getting projects list...');
     // Get the list of projects.
     let projects = await corellium.projects();
 
@@ -20,6 +22,7 @@ async function main() {
     })[0];
 
     // Get the instances in the project.
+    console.log('Getting instances...');
     let instances = await project.instances();
 
     let instance;
@@ -33,6 +36,7 @@ async function main() {
                 .find({version: '11.2.6'});
 
         // Create the instance.
+        console.log('Creating new instance...');
         instance = await project.createInstance({
             'name': 'Test Device',
             'firmware': firmware,
@@ -40,6 +44,7 @@ async function main() {
         });
 
         // Wait for it to finish restoring.
+        console.log('Waiting for device to finish restoring...');
         await instance.finishRestore();
     } else {
         // Use the first instance as our example.
@@ -67,13 +72,16 @@ async function main() {
     });
 
     // If there's a freshly restored snapshot...
+    console.log('Getting snapshots...');
     let snapshots = await instance.snapshots();
     let freshSnapshots = snapshots.filter(snapshot => snapshot.isFresh());
     if (freshSnapshots.length > 0) {
         // Restore to the freshly restored snapshot.
+        console.log("Restoring to freshly restored snapshot...");
         await freshSnapshots[0].restore();
     }
 
+    console.log("Taking new snapshot...");
     console.log('new snapshot', await instance.takeSnapshot('New snapshot'));
 }
 
