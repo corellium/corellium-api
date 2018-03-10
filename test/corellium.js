@@ -38,5 +38,11 @@ describe('Corellium API', function() {
             await instance.start();
             assert.equal(instance.status(), 'ACTIVE');
         });
+
+        it('can take snapshots', async function() {
+            const snapshot1 = await instance.takeSnapshot('foo');
+            const snapshots = await instance.snapshots();
+            snapshots[0].restore();
+        });
     });
 });
