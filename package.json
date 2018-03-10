@@ -4,7 +4,7 @@
   "description": "",
   "main": "src/corellium.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "nyc mocha"
   },
   "author": "",
   "dependencies": {
@@ -15,5 +15,9 @@
     "openstack-api": "git+ssh://gitolite3@dev.corellium.com:8002/node-openstack-api",
     "uuid": "^3.2.1",
     "websocket-stream": "^5.1.1"
+  },
+  "devDependencies": {
+    "mocha": "^5.0.4",
+    "nyc": "^11.4.1"
   }
 }
