@@ -26,6 +26,8 @@ async function fetch(url, {json, token, ...options}) {
     }
 
     const res = await nodeFetch(url, options);
+    if (res.status == 204)
+        return;
     const body = await res.json();
     if (res.status >= 400 && res.status < 500)
         throw new CorelliumError(body.error, res.status);

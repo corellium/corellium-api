@@ -1,54 +1,35 @@
+const {fetchApi} = require('./util/fetch');
 const EventEmitter = require('events');
 const crypto = require('crypto');
 const stringify = require('fast-stable-stringify');
-const openstack = require('openstack-api');
 const c3po = require('./c3po');
 const websocket = require('websocket-stream');
 const Snapshot = require('./snapshot');
 
 class Instance extends EventEmitter {
-    constructor(account, project, info, metadata) {
+    constructor(project, info) {
         super();
 
-        this.account = account;
         this.project = project;
-        this.updating = false;
+        this.info = info;
+        this.id = info.id;
+
         this.updateTimeout = null;
         this.hash = null;
         this.hypervisorStream = null;
         this.lastPanicLength = null;
         this.volumeId = null;
 
-        this.on('newListener', () => {
-            this.manageUpdates(true);
-        });
-
-        this.on('removeListener', () => {
-            this.manageUpdates(false);
-        });
-
-        this.processInstanceUpdate(info, metadata);
+        this.on('newListener', () => this.manageUpdates());
+        this.on('removeListener', () => this.manageUpdates());
     }
 
-    id() {
-        return this.info.id;
-    }
-
-    name() {
+    get name() {
         return this.info.name;
     }
 
-    status() {
+    get status() {
         return this.info.status;
-    }
-
-    async token() {
-        let projectToken = await this.project.token();
-        return projectToken;
-    }
-
-    key() {
-        return Buffer.from(this.metadata.key, 'hex');
     }
 
     async snapshots() {
@@ -165,92 +146,37 @@ class Instance extends EventEmitter {
         }
     }
 
-    async update() {
-        let projectToken = await this.token();
-        let id = this.id();
-
-        try {
-            let [[instanceInfo, metadata], corelliumMetadata] =
-                await Promise.all([
-                    openstack.compute.instance(projectToken.token, id),
-                    openstack.compute.instanceMetadata(projectToken.token, id)
-                ]);
-            this.processInstanceUpdate(instanceInfo, Object.assign(metadata, corelliumMetadata));
-        } catch (err) {
-            this.processInstanceUpdate(Object.assign({}, this.info, {status: 'DELETED'}), this.metadata);
-        }
-    }
-
     async start() {
-        let projectToken = await this.token();
-        let id = this.id();
-
-        await openstack.compute.instanceOpenStackMetadataDelete(projectToken.token, id, 'is-restore')
-        try {
-            await openstack.compute.instanceStart(projectToken.token, id);
-        } catch(err) {
-            await this.update();
-            if (this.info['status'] !== 'SHELVED_OFFLOADED')
-                throw err;
-
-            let started = new Date(this.metadata['restore-snapshot-started']);
-            if (new Date(started.getTime() + 3 * 60000) > new Date())
-                throw err;
-
-            await openstack.compute.instanceUnshelve(projectToken.token, id);
-            await openstack.compute.instanceOpenStackMetadataDelete(projectToken.token, id, 'restore-snapshot-started');
-        }
+        await fetchApi(this.project, `/instances/${this.id}/start`, {method: 'POST'});
     }
 
     async stop() {
-        let projectToken = await this.token();
-        let id = this.id();
-
-        await openstack.compute.instanceStop(projectToken.token, id);
+        await fetchApi(this.project, `/instances/${this.id}/stop`, {method: 'POST'});
     }
 
     async reboot() {
-        let projectToken = await this.token();
-        let id = this.id();
-
-        await openstack.compute.instanceReboot(projectToken.token, id);
+        // TODO
+        await fetchApi(this.project, `/instances/${this.id}/reboot`, {method: 'POST'});
     }
 
     async destroy() {
-        let projectToken = await this.token();
-        let id = this.id();
-
-        let tagPromise = openstack.compute.instanceTag(projectToken.token, id, 'deleting');
-        let volumes = await openstack.compute.instanceVolumes(projectToken.token, id);
-
-        await openstack.compute.instanceDelete(projectToken.token, id);
-        
-        openstack.compute.instanceWaitForDeleted(projectToken.token, id).then(() => {
-            return Promise.all(volumes.map(volumeId => {
-                return openstack.volume.volumeDelete(projectToken.token, this.project.id(), volumeId);
-            }));
-        });
-
-        await tagPromise;
-        return;
+        await fetchApi(this.project, `/instances/${this.id}`, {method: 'DELETE'});
     }
 
     async doUpdate() {
         await this.update();
-        if (this.listenerCount('change') !== 0)
-            this.updateTimeout = setTimeout(this.doUpdate.bind(this), 5000);
     }
 
-    manageUpdates(add) {
-        if (add && !this.updating) {
-            this.updating = true;
-            this.doUpdate();
-        } else if (!add && this.listenerCount('change') === 0 && this.updating) {
-            this.updating = false;
-            if (this.updateTimeout) {
-                clearTimeout(this.updateTimeout);
-                this.updateTimeout = null;
-            }
+    async update() {
+        this.info = await fetchApi(this.project, `/instances/${this.id}`);
+    }
+
+    manageUpdates() {
+        if (this.listenerCount('change') != 0) {
+            this.updateTimeout = setInterval(this.update.bind(this), 5000);
+        } else {
+            clearInterval(this.updateTimeout);
+            this.updateTimeout = null;
         }
     }
 

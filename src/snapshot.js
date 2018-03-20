@@ -1,4 +1,3 @@
-const openstack = require('openstack-api');
 
 class Snapshot {
     constructor(instance, info) {
