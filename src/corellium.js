@@ -12,7 +12,7 @@ class Corellium {
 
     async getToken() {
         if (this.token && this.token.expiration < new Date())
-            return this.token;
+            return this.token.token;
 
         const res = await fetch(`${this.api}/tokens`, {
             method: 'POST',
@@ -44,11 +44,9 @@ class Corellium {
     }
 
     async supported() {
-        if (this.supportedDevices)
-            return this.supportedDevices;
-
-        let ipsws = await ipsw();
-        return this.supportedDevices = new SupportedDevices(ipsws);
+        if (!this.supportedDevices)
+            this.supportedDevices = await fetchApi(this, '/supported');
+        return this.supportedDevices;
     }
 }
 

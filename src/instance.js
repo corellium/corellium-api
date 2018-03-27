@@ -14,14 +14,12 @@ class Instance extends EventEmitter {
         this.info = info;
         this.id = info.id;
 
-        this.updateTimeout = null;
         this.hash = null;
         this.hypervisorStream = null;
         this.lastPanicLength = null;
         this.volumeId = null;
 
         this.on('newListener', () => this.manageUpdates());
-        this.on('removeListener', () => this.manageUpdates());
     }
 
     get name() {
@@ -81,26 +79,7 @@ class Instance extends EventEmitter {
     }
 
     async hypervisor() {
-        await this.waitForInstance(() => {
-            if (!this.info || this.info['status'] === 'DELETED')
-                throw new openstack.exceptions.APIException(1001, 'instance gone');
-
-            if (!this.metadata['port-c3po'])
-                return false;
-            
-            if (!this.metadata['vpn-info'])
-                return false;
-
-            try {
-                let parsed = JSON.parse(this.metadata['vpn-info']);
-                if (parsed['ip'])
-                    return true;
-            } catch (err) {
-                return false;
-            }
-
-            return false;
-        });
+        await this._waitFor(() => this.info.vpn && this.info.vpn.ip);
 
         let [host, port] = this.metadata['port-c3po'].split(':');
 
@@ -125,27 +104,6 @@ class Instance extends EventEmitter {
         return websocket(wsUrl, ['binary']);
     }
 
-    processInstanceUpdate(info, metadata) {
-        const hasher = crypto.createHash('sha256');
-        hasher.update(stringify([info, metadata]));
-        let hash = hasher.digest();
-
-        if (!this.hash || !hash.equals(this.hash)) {
-            this.hash = hash;
-            this.info = info;
-            this.metadata = metadata;
-            
-            this.emit('change');
-
-            let panicLength = parseInt(this.metadata['panic-length']);
-            if (panicLength !== this.lastPanicLength) {
-                this.lastPanicLength = panicLength;
-                if (panicLength)
-                    this.emit('panic');
-            }
-        }
-    }
-
     async start() {
         await fetchApi(this.project, `/instances/${this.id}/start`, {method: 'POST'});
     }
@@ -155,7 +113,6 @@ class Instance extends EventEmitter {
     }
 
     async reboot() {
-        // TODO
         await fetchApi(this.project, `/instances/${this.id}/reboot`, {method: 'POST'});
     }
 
@@ -163,27 +120,36 @@ class Instance extends EventEmitter {
         await fetchApi(this.project, `/instances/${this.id}`, {method: 'DELETE'});
     }
 
-    async doUpdate() {
-        await this.update();
-    }
-
     async update() {
-        this.info = await fetchApi(this.project, `/instances/${this.id}`);
+        const info = await fetchApi(this.project, `/instances/${this.id}`);
+        // one way of checking object equality
+        if (JSON.stringify(info) != JSON.stringify(this.info)) {
+            this.info = info;
+            this.emit('change');
+        }
     }
 
     manageUpdates() {
         if (this.listenerCount('change') != 0) {
-            this.updateTimeout = setInterval(this.update.bind(this), 5000);
-        } else {
-            clearInterval(this.updateTimeout);
-            this.updateTimeout = null;
+            setImmediate(async () => {
+                while (this.listenerCount('change') != 0) {
+                    this.update();
+                    await new Promise((resolve, reject) => setTimeout(resolve, 5000));
+                }
+            });
         }
     }
 
-    async waitForInstance(callback) {
+    async _waitFor(callback) {
         return new Promise(resolve => {
-            let change = () => {
-                if (callback()) {
+            const change = () => {
+                let done;
+                try {
+                    done = callback();
+                } catch (e) {
+                    done = false;
+                }
+                if (done) {
                     this.removeListener('change', change);
                     resolve();
                 }
@@ -213,18 +179,11 @@ class Instance extends EventEmitter {
     }
 
     async finishRestore() {
-        return this.waitForInstance(() => {
-            if (!this.info || this.info['status'] === 'DELETED')
-                throw new openstack.exceptions.APIException(1001, 'instance gone');
+        await this._waitFor(() => this.info.status !== 'creating');
+    }
 
-            if (!this.metadata['is-restore'])
-                return true;
-
-            if (this.info['status'] !== 'ACTIVE' && this.info['status'] !== 'BUILD' && this.info['status'] !== 'PAUSED')
-                throw new openstack.exceptions.APIException(1002, 'unexpected state');
-
-            return false;
-        });
+    async waitForStatus(status) {
+        await this._waitFor(() => this.info.status === status);
     }
 }
 
