@@ -1,27 +1,30 @@
 const Corellium = require('../src/corellium').Corellium;
 const config = require('./config.json');
 const assert = require('assert');
+const util = require('util');
+const sleep = util.promisify(setTimeout);
 
 describe('Corellium API', function() {
-    this.slow(2000);
-    this.timeout(60000);
+    this.slow(10000);
+    this.timeout(20000);
 
     const corellium = new Corellium(config);
     it('logs in successfully', async function() {
         await corellium.login();
     });
 
-    describe('instances', () => {
-        let project;
+    let project;
+    it('lists projects', async function() {
+        const projects = await corellium.projects();
+        project = projects.find(project => project.info.name === config.project);
+    });
+
+    describe('instances', function() {
         let instance;
         before(async function() {
-            const projects = await corellium.projects();
-            project = projects.find(project => project.info.name === config.project);
-
+            this.timeout(20000);
             const instances = await project.instances();
             instance = instances[0];
-            await instance.start();
-            await instance.update();
         });
 
         it('lists supported devices', async function() {
@@ -30,13 +33,34 @@ describe('Corellium API', function() {
             assert(firmware);
         });
 
-        it('can start and stop', async function() {
-            assert.equal(instance.status, 'off');
-            await instance.stop();
-            // there's no way to wait for it to actually shut down
-            // assert.equal(instance.status(), 'SHUTOFF');
+        it('can rename', async function() {
+            async function rename(name) {
+                await instance.rename(name);
+                await instance.update();
+                assert.equal(instance.name, name);
+            }
+            await rename('foo');
+            await rename('bar');
+        });
+
+        async function turnOn() {
             await instance.start();
-            assert.equal(instance.status, 'on');
+            await instance.waitForState('on');
+            assert.equal(instance.state, 'on');
+        }
+        async function turnOff() {
+            await instance.stop();
+            await instance.waitForState('off');
+            assert.equal(instance.state, 'off');
+        }
+
+        it('can start', async function() {
+            await turnOff(instance);
+            await turnOn(instance);
+        });
+        it('can stop', async function() {
+            await turnOn(instance);
+            await turnOff(instance);
         });
     });
 });

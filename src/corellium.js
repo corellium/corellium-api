@@ -11,7 +11,7 @@ class Corellium {
     }
 
     async getToken() {
-        if (this.token && this.token.expiration < new Date())
+        if (this.token && this.token.expiration > new Date())
             return this.token.token;
 
         const res = await fetch(`${this.api}/tokens`, {

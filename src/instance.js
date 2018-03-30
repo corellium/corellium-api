@@ -5,6 +5,8 @@ const stringify = require('fast-stable-stringify');
 const c3po = require('./c3po');
 const websocket = require('websocket-stream');
 const Snapshot = require('./snapshot');
+const util = require('util');
+const sleep = util.promisify(setTimeout);
 
 class Instance extends EventEmitter {
     constructor(project, info) {
@@ -13,6 +15,7 @@ class Instance extends EventEmitter {
         this.project = project;
         this.info = info;
         this.id = info.id;
+        this.updating = false;
 
         this.hash = null;
         this.hypervisorStream = null;
@@ -26,8 +29,15 @@ class Instance extends EventEmitter {
         return this.info.name;
     }
 
-    get status() {
-        return this.info.status;
+    get state() {
+        return this.info.state;
+    }
+
+    async rename(name) {
+        await fetchApi(this.project, `/instances/${this.id}`, {
+            method: 'PATCH',
+            json: {name},
+        });
     }
 
     async snapshots() {
@@ -130,14 +140,15 @@ class Instance extends EventEmitter {
     }
 
     manageUpdates() {
-        if (this.listenerCount('change') != 0) {
-            setImmediate(async () => {
-                while (this.listenerCount('change') != 0) {
-                    this.update();
-                    await new Promise((resolve, reject) => setTimeout(resolve, 5000));
-                }
+        if (!this.updating)
+            process.nextTick(async () => {
+                this.updating = true;
+                do {
+                    await this.update();
+                    await sleep(1000);
+                } while (this.listenerCount('change') != 0);
+                this.updating = false;
             });
-        }
     }
 
     async _waitFor(callback) {
@@ -162,7 +173,7 @@ class Instance extends EventEmitter {
 
     async waitForMetadata(property) {
         return this.waitForInstance(() => {
-            if (!this.info || this.info['status'] === 'DELETED')
+            if (!this.info || this.info['state'] === 'DELETED')
                 throw new openstack.exceptions.APIException(1001, 'instance gone');
 
             if (property instanceof Array) {
@@ -179,11 +190,11 @@ class Instance extends EventEmitter {
     }
 
     async finishRestore() {
-        await this._waitFor(() => this.info.status !== 'creating');
+        await this._waitFor(() => this.state !== 'creating');
     }
 
-    async waitForStatus(status) {
-        await this._waitFor(() => this.info.status === status);
+    async waitForState(state) {
+        await this._waitFor(() => this.state === state);
     }
 }
 

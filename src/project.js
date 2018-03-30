@@ -14,7 +14,7 @@ class Project {
     }
 
     async getToken() {
-        if (this.token && this.token.expiration < new Date())
+        if (this.token && this.token.expiration > new Date())
             return this.token.token;
 
         const unscopedToken = await this.client.getToken();
