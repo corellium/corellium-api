@@ -34,7 +34,7 @@ class Instance extends EventEmitter {
     }
 
     async rename(name) {
-        await fetchApi(this.project, `/instances/${this.id}`, {
+        await this.fetch('', {
             method: 'PATCH',
             json: {name},
         });
@@ -109,29 +109,28 @@ class Instance extends EventEmitter {
     }
 
     async console() {
-        let projectToken = await this.token();
-        let wsUrl = await openstack.compute.serialConsole(projectToken.token, this.id());
-        return websocket(wsUrl, ['binary']);
+        const {url} = await this.fetch('/console');
+        return websocket(url, ['binary']);
     }
 
     async start() {
-        await fetchApi(this.project, `/instances/${this.id}/start`, {method: 'POST'});
+        await this.fetch('/start', {method: 'POST'});
     }
 
     async stop() {
-        await fetchApi(this.project, `/instances/${this.id}/stop`, {method: 'POST'});
+        await this.fetch('/stop', {method: 'POST'});
     }
 
     async reboot() {
-        await fetchApi(this.project, `/instances/${this.id}/reboot`, {method: 'POST'});
+        await this.fetch('/reboot', {method: 'POST'});
     }
 
     async destroy() {
-        await fetchApi(this.project, `/instances/${this.id}`, {method: 'DELETE'});
+        await this.fetch('', {method: 'DELETE'});
     }
 
     async update() {
-        const info = await fetchApi(this.project, `/instances/${this.id}`);
+        const info = await this.fetch('');
         // one way of checking object equality
         if (JSON.stringify(info) != JSON.stringify(this.info)) {
             this.info = info;
@@ -195,6 +194,10 @@ class Instance extends EventEmitter {
 
     async waitForState(state) {
         await this._waitFor(() => this.state === state);
+    }
+
+    async fetch(endpoint = '', options = {}) {
+        return await fetchApi(this.project, `/instances/${this.id}${endpoint}`, options);
     }
 }
 

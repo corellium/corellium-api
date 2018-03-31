@@ -54,13 +54,18 @@ describe('Corellium API', function() {
             assert.equal(instance.state, 'off');
         }
 
-        it('can start', async function() {
-            await turnOff(instance);
+        it('has a console', async function() {
             await turnOn(instance);
+            await instance.console();
         });
+
         it('can stop', async function() {
             await turnOn(instance);
             await turnOff(instance);
+        });
+        it('can start', async function() {
+            await turnOff(instance);
+            await turnOn(instance);
         });
     });
 });
