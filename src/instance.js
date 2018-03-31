@@ -73,7 +73,7 @@ class Instance extends EventEmitter {
 
     async panics() {
         let hypervisor = await this.hypervisor();
-        let results = await hypervisor.command(await hypervisor.signedCommand(this.id(), this.key(), {
+        let results = await hypervisor.command(await hypervisor.signedCommand(this.id, this.info.key, {
             'type': 'panic',
             'op': 'get'
         }));
@@ -82,19 +82,19 @@ class Instance extends EventEmitter {
 
     async clearPanics() {
         let hypervisor = await this.hypervisor();
-        return hypervisor.command(await hypervisor.signedCommand(this.id(), this.key(), {
+        return hypervisor.command(await hypervisor.signedCommand(this.id, this.info.key, {
             'type': 'panic',
             'op': 'clear'
         }));
     }
 
     async hypervisor() {
-        await this._waitFor(() => this.info.vpn && this.info.vpn.ip);
+        await this._waitFor(() => this.info.services.vpn && this.info.services.vpn.ip);
 
-        let [host, port] = this.metadata['port-c3po'].split(':');
+        let [host, port] = this.info.services.c3po.split(':');
 
         // XXX: We want the external host, so take it from VPN for now.
-        host = JSON.parse(this.metadata['vpn-info'])['ip'];
+        host = this.info.services.vpn.ip;
 
         if (this.hypervisorStream && this.hypervisorStream.active) {
             if (host === this.hypervisorStream.host && port === this.hypervisorStream.port)
@@ -135,19 +135,22 @@ class Instance extends EventEmitter {
         if (JSON.stringify(info) != JSON.stringify(this.info)) {
             this.info = info;
             this.emit('change');
+            if (info.panicked)
+                this.emit('panic');
         }
     }
 
     manageUpdates() {
-        if (!this.updating)
-            process.nextTick(async () => {
-                this.updating = true;
-                do {
-                    await this.update();
-                    await sleep(1000);
-                } while (this.listenerCount('change') != 0);
-                this.updating = false;
-            });
+        if (this.updating)
+            return;
+        process.nextTick(async () => {
+            this.updating = true;
+            do {
+                await this.update();
+                await sleep(1000);
+            } while (this.listenerCount('change') != 0);
+            this.updating = false;
+        });
     }
 
     async _waitFor(callback) {
@@ -167,24 +170,6 @@ class Instance extends EventEmitter {
 
             this.on('change', change);
             change();
-        });
-    }
-
-    async waitForMetadata(property) {
-        return this.waitForInstance(() => {
-            if (!this.info || this.info['state'] === 'DELETED')
-                throw new openstack.exceptions.APIException(1001, 'instance gone');
-
-            if (property instanceof Array) {
-                return property.every(property => {
-                    return !!this.metadata[property];
-                });
-            }
-
-            if (this.metadata[property])
-                return true;
-
-            return false;
         });
     }
 
