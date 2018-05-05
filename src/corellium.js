@@ -1,6 +1,5 @@
 const {fetch, fetchApi, CorelliumError} = require('./util/fetch');
 const Project = require('./project');
-const SupportedDevices = require('./supported').SupportedDevices;
 
 class Corellium {
     constructor(options) {
