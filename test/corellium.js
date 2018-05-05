@@ -2,7 +2,6 @@ const Corellium = require('../src/corellium').Corellium;
 const config = require('./config.json');
 const assert = require('assert');
 const util = require('util');
-const sleep = util.promisify(setTimeout);
 
 describe('Corellium API', function() {
     this.slow(10000);
@@ -25,6 +24,8 @@ describe('Corellium API', function() {
             this.timeout(20000);
             const instances = await project.instances();
             instance = instances[0];
+            if (instance === undefined)
+                throw new Error('no device found in specified project, please create one');
         });
 
         it('lists supported devices', async function() {
