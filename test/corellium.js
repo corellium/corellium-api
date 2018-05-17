@@ -19,7 +19,6 @@ describe('Corellium API', function() {
     describe('instances', function() {
         let instance, project;
         before(async function() {
-            this.timeout(20000);
             const projects = await corellium.projects();
             project = projects.find(project => project.info.name === config.project);
             const instances = await project.instances();
@@ -32,6 +31,13 @@ describe('Corellium API', function() {
             const supportedDevices = await corellium.supported();
             const firmware = supportedDevices.find(device => device.name === 'iphone6');
             assert(firmware);
+        });
+
+        it('can create and delete', async function() {
+            const instance = await project.createInstance({os: '11.2.6', flavor: 'iphone6'});
+            await instance.waitForState('creating');
+            await instance.destroy();
+            await instance.waitForState('deleting');
         });
 
         it('can rename', async function() {
