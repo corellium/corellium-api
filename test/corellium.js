@@ -83,11 +83,5 @@ describe('Corellium API', function() {
             await fresh.restore();
             await modified.delete();
         });
-
-        it('can take snapshots', async function() {
-            const snapshot1 = await instance.takeSnapshot('foo');
-            const snapshots = await instance.snapshots();
-            snapshots[0].restore();
-        });
     });
 });
