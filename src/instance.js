@@ -1,90 +1,59 @@
+const {fetchApi} = require('./util/fetch');
 const EventEmitter = require('events');
-const crypto = require('crypto');
-const stringify = require('fast-stable-stringify');
-const openstack = require('openstack-api');
 const c3po = require('./c3po');
 const websocket = require('websocket-stream');
+const util = require('util');
 const Snapshot = require('./snapshot');
+const sleep = util.promisify(setTimeout);
 
 class Instance extends EventEmitter {
-    constructor(account, project, info, metadata) {
+    constructor(project, info) {
         super();
 
-        this.account = account;
         this.project = project;
+        this.info = info;
+        this.id = info.id;
         this.updating = false;
-        this.updateTimeout = null;
+
         this.hash = null;
         this.hypervisorStream = null;
         this.lastPanicLength = null;
         this.volumeId = null;
 
-        this.on('newListener', () => {
-            this.manageUpdates(true);
-        });
-
-        this.on('removeListener', () => {
-            this.manageUpdates(false);
-        });
-
-        this.processInstanceUpdate(info, metadata);
+        this.on('newListener', () => this.manageUpdates());
     }
 
-    id() {
-        return this.info.id;
-    }
-
-    name() {
+    get name() {
         return this.info.name;
     }
 
-    status() {
-        return this.info.status;
+    get state() {
+        return this.info.state;
     }
 
-    async token() {
-        let projectToken = await this.project.token();
-        return projectToken;
-    }
-
-    key() {
-        return Buffer.from(this.metadata.key, 'hex');
+    async rename(name) {
+        await this._fetch('', {
+            method: 'PATCH',
+            json: {name},
+        });
     }
 
     async snapshots() {
-        let projectToken = await this.token();
-        let [snapshots, volumes] = await Promise.all([
-            openstack.volume.volumeSnapshots(projectToken.token, this.project.id()),
-            this.volumeId ? Promise.resolve([this.volumeId]) : openstack.compute.instanceVolumes(projectToken.token, this.id())
-        ]);
-
-        let mySnapshots = [] 
-        volumes.forEach(volumeId => {
-            mySnapshots = mySnapshots.concat(snapshots.filter(snapshot => {
-                return snapshot.volume_id === volumeId;
-            }));
-
-            this.volumeId = volumeId;
-        });
-
-        return mySnapshots.map(snapshot => {
-            return new Snapshot(this, snapshot);  
-        });
+        const snapshots = await this._fetch('/snapshots');
+        return snapshots.map(snap => new Snapshot(this, snap));
     }
 
     async takeSnapshot(name) {
-        let projectToken = await this.token();
-        let volumes = await (this.volumeId ? Promise.resolve([this.volumeId]) : openstack.compute.instanceVolumes(projectToken.token, this.id()));
-        if (volumes.length === 0)
-            throw new openstack.exceptions.APIException(1002, 'instance has no volumes');
-        
-        this.volumeId = volumes[0];
-        return openstack.volume.volumeCreateSnapshot(projectToken.token, this.project.id(), this.volumeId, name);
+        const snapshot = await this._fetch('/snapshots', {
+            method: 'POST',
+            json: {name},
+        });
+        return new Snapshot(this, snapshot);
     }
 
     async panics() {
         let hypervisor = await this.hypervisor();
-        let results = await hypervisor.command(await hypervisor.signedCommand(this.id(), this.key(), {
+        let results = await hypervisor.command(await hypervisor.signedCommand(this.id, this.info.key, {
             'type': 'panic',
             'op': 'get'
         }));
@@ -93,38 +62,19 @@ class Instance extends EventEmitter {
 
     async clearPanics() {
         let hypervisor = await this.hypervisor();
-        return hypervisor.command(await hypervisor.signedCommand(this.id(), this.key(), {
+        return hypervisor.command(await hypervisor.signedCommand(this.id, this.info.key, {
             'type': 'panic',
             'op': 'clear'
         }));
     }
 
     async hypervisor() {
-        await this.waitForInstance(() => {
-            if (!this.info || this.info['status'] === 'DELETED')
-                throw new openstack.exceptions.APIException(1001, 'instance gone');
+        await this._waitFor(() => this.info.services.vpn && this.info.services.vpn.ip);
 
-            if (!this.metadata['port-c3po'])
-                return false;
-            
-            if (!this.metadata['vpn-info'])
-                return false;
-
-            try {
-                let parsed = JSON.parse(this.metadata['vpn-info']);
-                if (parsed['ip'])
-                    return true;
-            } catch (err) {
-                return false;
-            }
-
-            return false;
-        });
-
-        let [host, port] = this.metadata['port-c3po'].split(':');
+        let [host, port] = this.info.services.c3po.split(':');
 
         // XXX: We want the external host, so take it from VPN for now.
-        host = JSON.parse(this.metadata['vpn-info'])['ip'];
+        host = this.info.services.vpn.ip;
 
         if (this.hypervisorStream && this.hypervisorStream.active) {
             if (host === this.hypervisorStream.host && port === this.hypervisorStream.port)
@@ -139,125 +89,60 @@ class Instance extends EventEmitter {
     }
 
     async console() {
-        let projectToken = await this.token();
-        let wsUrl = await openstack.compute.serialConsole(projectToken.token, this.id());
-        return websocket(wsUrl, ['binary']);
-    }
-
-    processInstanceUpdate(info, metadata) {
-        const hasher = crypto.createHash('sha256');
-        hasher.update(stringify([info, metadata]));
-        let hash = hasher.digest();
-
-        if (!this.hash || !hash.equals(this.hash)) {
-            this.hash = hash;
-            this.info = info;
-            this.metadata = metadata;
-            
-            this.emit('change');
-
-            let panicLength = parseInt(this.metadata['panic-length']);
-            if (panicLength !== this.lastPanicLength) {
-                this.lastPanicLength = panicLength;
-                if (panicLength)
-                    this.emit('panic');
-            }
-        }
-    }
-
-    async update() {
-        let projectToken = await this.token();
-        let id = this.id();
-
-        try {
-            let [[instanceInfo, metadata], corelliumMetadata] =
-                await Promise.all([
-                    openstack.compute.instance(projectToken.token, id),
-                    openstack.compute.instanceMetadata(projectToken.token, id)
-                ]);
-            this.processInstanceUpdate(instanceInfo, Object.assign(metadata, corelliumMetadata));
-        } catch (err) {
-            this.processInstanceUpdate(Object.assign({}, this.info, {status: 'DELETED'}), this.metadata);
-        }
+        const {url} = await this._fetch('/console');
+        return websocket(url, ['binary']);
     }
 
     async start() {
-        let projectToken = await this.token();
-        let id = this.id();
-
-        await openstack.compute.instanceOpenStackMetadataDelete(projectToken.token, id, 'is-restore')
-        try {
-            await openstack.compute.instanceStart(projectToken.token, id);
-        } catch(err) {
-            await this.update();
-            if (this.info['status'] !== 'SHELVED_OFFLOADED')
-                throw err;
-
-            let started = new Date(this.metadata['restore-snapshot-started']);
-            if (new Date(started.getTime() + 3 * 60000) > new Date())
-                throw err;
-
-            await openstack.compute.instanceUnshelve(projectToken.token, id);
-            await openstack.compute.instanceOpenStackMetadataDelete(projectToken.token, id, 'restore-snapshot-started');
-        }
+        await this._fetch('/start', {method: 'POST'});
     }
 
     async stop() {
-        let projectToken = await this.token();
-        let id = this.id();
-
-        await openstack.compute.instanceStop(projectToken.token, id);
+        await this._fetch('/stop', {method: 'POST'});
     }
 
     async reboot() {
-        let projectToken = await this.token();
-        let id = this.id();
-
-        await openstack.compute.instanceReboot(projectToken.token, id);
+        await this._fetch('/reboot', {method: 'POST'});
     }
 
     async destroy() {
-        let projectToken = await this.token();
-        let id = this.id();
-
-        let tagPromise = openstack.compute.instanceTag(projectToken.token, id, 'deleting');
-        let volumes = await openstack.compute.instanceVolumes(projectToken.token, id);
-
-        await openstack.compute.instanceDelete(projectToken.token, id);
-        
-        openstack.compute.instanceWaitForDeleted(projectToken.token, id).then(() => {
-            return Promise.all(volumes.map(volumeId => {
-                return openstack.volume.volumeDelete(projectToken.token, this.project.id(), volumeId);
-            }));
-        });
-
-        await tagPromise;
-        return;
+        await this._fetch('', {method: 'DELETE'});
     }
 
-    async doUpdate() {
-        await this.update();
-        if (this.listenerCount('change') !== 0)
-            this.updateTimeout = setTimeout(this.doUpdate.bind(this), 5000);
-    }
-
-    manageUpdates(add) {
-        if (add && !this.updating) {
-            this.updating = true;
-            this.doUpdate();
-        } else if (!add && this.listenerCount('change') === 0 && this.updating) {
-            this.updating = false;
-            if (this.updateTimeout) {
-                clearTimeout(this.updateTimeout);
-                this.updateTimeout = null;
-            }
+    async update() {
+        const info = await this._fetch('');
+        // one way of checking object equality
+        if (JSON.stringify(info) != JSON.stringify(this.info)) {
+            this.info = info;
+            this.emit('change');
+            if (info.panicked)
+                this.emit('panic');
         }
     }
 
-    async waitForInstance(callback) {
+    manageUpdates() {
+        if (this.updating)
+            return;
+        process.nextTick(async () => {
+            this.updating = true;
+            do {
+                await this.update();
+                await sleep(1000);
+            } while (this.listenerCount('change') != 0);
+            this.updating = false;
+        });
+    }
+
+    async _waitFor(callback) {
         return new Promise(resolve => {
-            let change = () => {
-                if (callback()) {
+            const change = () => {
+                let done;
+                try {
+                    done = callback();
+                } catch (e) {
+                    done = false;
+                }
+                if (done) {
                     this.removeListener('change', change);
                     resolve();
                 }
@@ -268,37 +153,16 @@ class Instance extends EventEmitter {
         });
     }
 
-    async waitForMetadata(property) {
-        return this.waitForInstance(() => {
-            if (!this.info || this.info['status'] === 'DELETED')
-                throw new openstack.exceptions.APIException(1001, 'instance gone');
-
-            if (property instanceof Array) {
-                return property.every(property => {
-                    return !!this.metadata[property];
-                });
-            }
-
-            if (this.metadata[property])
-                return true;
-
-            return false;
-        });
+    async finishRestore() {
+        await this._waitFor(() => this.state !== 'creating');
     }
 
-    async finishRestore() {
-        return this.waitForInstance(() => {
-            if (!this.info || this.info['status'] === 'DELETED')
-                throw new openstack.exceptions.APIException(1001, 'instance gone');
+    async waitForState(state) {
+        await this._waitFor(() => this.state === state);
+    }
 
-            if (!this.metadata['is-restore'])
-                return true;
-
-            if (this.info['status'] !== 'ACTIVE' && this.info['status'] !== 'BUILD' && this.info['status'] !== 'PAUSED')
-                throw new openstack.exceptions.APIException(1002, 'unexpected state');
-
-            return false;
-        });
+    async _fetch(endpoint = '', options = {}) {
+        return await fetchApi(this.project, `/instances/${this.id}${endpoint}`, options);
     }
 }
 

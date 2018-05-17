@@ -3,40 +3,85 @@ const config = require('./config.json');
 const assert = require('assert');
 
 describe('Corellium API', function() {
-    this.slow(2000);
-    this.timeout(10000);
+    this.slow(10000);
+    this.timeout(20000);
 
     const corellium = new Corellium(config);
     it('logs in successfully', async function() {
         await corellium.login();
     });
 
-    describe('instances', () => {
-        let project;
-        let instance;
+    it('lists projects', async function() {
+        const projects = await corellium.projects();
+        assert(projects.find(project => project.info.name === config.project) !== undefined);
+    });
+
+    describe('instances', function() {
+        let instance, project;
         before(async function() {
+            this.timeout(20000);
             const projects = await corellium.projects();
             project = projects.find(project => project.info.name === config.project);
-
             const instances = await project.instances();
             instance = instances[0];
-            await instance.start();
-            await instance.update();
+            if (instance === undefined)
+                throw new Error('no device found in specified project, please create one');
         });
 
         it('lists supported devices', async function() {
             const supportedDevices = await corellium.supported();
-            const firmware = supportedDevices.find({name: config.model}).find({version: config.version});
+            const firmware = supportedDevices.find(device => device.name === 'iphone6');
             assert(firmware);
         });
 
-        it('can start and stop', async function() {
-            assert.equal(instance.status(), 'ACTIVE');
-            await instance.stop();
-            // there's no way to wait for it to actually shut down
-            // assert.equal(instance.status(), 'SHUTOFF');
+        it('can rename', async function() {
+            async function rename(name) {
+                await instance.rename(name);
+                await instance.update();
+                assert.equal(instance.name, name);
+            }
+            await rename('foo');
+            await rename('bar');
+        });
+
+        async function turnOn() {
             await instance.start();
-            assert.equal(instance.status(), 'ACTIVE');
+            await instance.waitForState('on');
+            assert.equal(instance.state, 'on');
+        }
+        async function turnOff() {
+            await instance.stop();
+            await instance.waitForState('off');
+            assert.equal(instance.state, 'off');
+        }
+
+        it('has a console', async function() {
+            await turnOn(instance);
+            await instance.console();
+        });
+
+        it('can stop', async function() {
+            await turnOn(instance);
+            await turnOff(instance);
+        });
+        it('can start', async function() {
+            await turnOff(instance);
+            await turnOn(instance);
+        });
+
+        it('can take and restore snapshots', async function() {
+            this.timeout(60000);
+            await turnOn(instance);
+            await assert.rejects(() => instance.takeSnapshot());
+            await turnOff(instance);
+
+            const snapshots = await instance.snapshots();
+            const fresh = snapshots.find(snap => snap.fresh);
+            assert(fresh !== undefined);
+            const modified = await instance.takeSnapshot('modified');
+            await modified.restore();
+            await fresh.restore();
+            await modified.delete();
         });
 
         it('can take snapshots', async function() {

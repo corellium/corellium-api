@@ -1,4 +1,3 @@
-const openstack = require('openstack-api');
 const WebSocket = require('ws');
 const HKDF = require('hkdf');
 const crypto = require('crypto');
