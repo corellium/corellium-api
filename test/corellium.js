@@ -75,19 +75,24 @@ describe('Corellium API', function() {
             await turnOn(instance);
         });
 
-        it('can take and restore snapshots', async function() {
-            this.timeout(60000);
-            await turnOn(instance);
-            await assert.rejects(() => instance.takeSnapshot());
-            await turnOff(instance);
+        describe('snapshots', function() {
+            it('has a fresh snapshot', async function() {
+                const snapshots = await instance.snapshots();
+                const fresh = snapshots.find(snap => snap.fresh);
+                assert(fresh !== undefined);
+            });
 
-            const snapshots = await instance.snapshots();
-            const fresh = snapshots.find(snap => snap.fresh);
-            assert(fresh !== undefined);
-            const modified = await instance.takeSnapshot('modified');
-            await modified.restore();
-            await fresh.restore();
-            await modified.delete();
+            it('can take, restore, and delete snapshots', async function() {
+                await turnOff(instance);
+                const modified = await instance.takeSnapshot('modified');
+                await modified.restore();
+                await modified.delete();
+            });
+
+            it('refuses to take snapshot if instance is on', async function() {
+                await turnOn(instance);
+                await assert.rejects(() => instance.takeSnapshot());
+            });
         });
     });
 });
