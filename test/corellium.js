@@ -1,7 +1,6 @@
 const Corellium = require('../src/corellium').Corellium;
 const config = require('./config.json');
 const assert = require('assert');
-const util = require('util');
 
 describe('Corellium API', function() {
     this.slow(10000);
@@ -12,16 +11,17 @@ describe('Corellium API', function() {
         await corellium.login();
     });
 
-    let project;
     it('lists projects', async function() {
         const projects = await corellium.projects();
-        project = projects.find(project => project.info.name === config.project);
+        assert(projects.find(project => project.info.name === config.project) !== undefined);
     });
 
     describe('instances', function() {
-        let instance;
+        let instance, project;
         before(async function() {
             this.timeout(20000);
+            const projects = await corellium.projects();
+            project = projects.find(project => project.info.name === config.project);
             const instances = await project.instances();
             instance = instances[0];
             if (instance === undefined)
@@ -67,6 +67,21 @@ describe('Corellium API', function() {
         it('can start', async function() {
             await turnOff(instance);
             await turnOn(instance);
+        });
+
+        it('can take and restore snapshots', async function() {
+            this.timeout(60000);
+            await turnOn(instance);
+            await assert.rejects(() => instance.takeSnapshot());
+            await turnOff(instance);
+
+            const snapshots = await instance.snapshots();
+            const fresh = snapshots.find(snap => snap.fresh);
+            assert(fresh !== undefined);
+            const modified = await instance.takeSnapshot('modified');
+            await modified.restore();
+            await fresh.restore();
+            await modified.delete();
         });
     });
 });

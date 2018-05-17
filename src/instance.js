@@ -1,11 +1,9 @@
 const {fetchApi} = require('./util/fetch');
 const EventEmitter = require('events');
-const crypto = require('crypto');
-const stringify = require('fast-stable-stringify');
 const c3po = require('./c3po');
 const websocket = require('websocket-stream');
-const Snapshot = require('./snapshot');
 const util = require('util');
+const Snapshot = require('./snapshot');
 const sleep = util.promisify(setTimeout);
 
 class Instance extends EventEmitter {
@@ -34,41 +32,23 @@ class Instance extends EventEmitter {
     }
 
     async rename(name) {
-        await this.fetch('', {
+        await this._fetch('', {
             method: 'PATCH',
             json: {name},
         });
     }
 
     async snapshots() {
-        let projectToken = await this.token();
-        let [snapshots, volumes] = await Promise.all([
-            openstack.volume.volumeSnapshots(projectToken.token, this.project.id()),
-            this.volumeId ? Promise.resolve([this.volumeId]) : openstack.compute.instanceVolumes(projectToken.token, this.id())
-        ]);
-
-        let mySnapshots = [] 
-        volumes.forEach(volumeId => {
-            mySnapshots = mySnapshots.concat(snapshots.filter(snapshot => {
-                return snapshot.volume_id === volumeId;
-            }));
-
-            this.volumeId = volumeId;
-        });
-
-        return mySnapshots.map(snapshot => {
-            return new Snapshot(this, snapshot);  
-        });
+        const snapshots = await this._fetch('/snapshots');
+        return snapshots.map(snap => new Snapshot(this, snap));
     }
 
     async takeSnapshot(name) {
-        let projectToken = await this.token();
-        let volumes = await (this.volumeId ? Promise.resolve([this.volumeId]) : openstack.compute.instanceVolumes(projectToken.token, this.id()));
-        if (volumes.length === 0)
-            throw new openstack.exceptions.APIException(1002, 'instance has no volumes');
-        
-        this.volumeId = volumes[0];
-        return openstack.volume.volumeCreateSnapshot(projectToken.token, this.project.id(), this.volumeId, name);
+        const snapshot = await this._fetch('/snapshots', {
+            method: 'POST',
+            json: {name},
+        });
+        return new Snapshot(this, snapshot);
     }
 
     async panics() {
@@ -109,28 +89,28 @@ class Instance extends EventEmitter {
     }
 
     async console() {
-        const {url} = await this.fetch('/console');
+        const {url} = await this._fetch('/console');
         return websocket(url, ['binary']);
     }
 
     async start() {
-        await this.fetch('/start', {method: 'POST'});
+        await this._fetch('/start', {method: 'POST'});
     }
 
     async stop() {
-        await this.fetch('/stop', {method: 'POST'});
+        await this._fetch('/stop', {method: 'POST'});
     }
 
     async reboot() {
-        await this.fetch('/reboot', {method: 'POST'});
+        await this._fetch('/reboot', {method: 'POST'});
     }
 
     async destroy() {
-        await this.fetch('', {method: 'DELETE'});
+        await this._fetch('', {method: 'DELETE'});
     }
 
     async update() {
-        const info = await this.fetch('');
+        const info = await this._fetch('');
         // one way of checking object equality
         if (JSON.stringify(info) != JSON.stringify(this.info)) {
             this.info = info;
@@ -181,7 +161,7 @@ class Instance extends EventEmitter {
         await this._waitFor(() => this.state === state);
     }
 
-    async fetch(endpoint = '', options = {}) {
+    async _fetch(endpoint = '', options = {}) {
         return await fetchApi(this.project, `/instances/${this.id}${endpoint}`, options);
     }
 }

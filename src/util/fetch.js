@@ -11,7 +11,7 @@ class CorelliumError extends Error {
         this.name = this.constructor.name;
         this.code = code;
     }
-};
+}
 
 async function fetch(url, {json, token, ...options}) {
     if (options.headers === undefined)
@@ -34,7 +34,7 @@ async function fetch(url, {json, token, ...options}) {
     else if (res.status >= 500)
         throw new Error(`${res.status} ${res.statusText}`);
     return body;
-};
+}
 
 async function fetchApi(client, endpoint, options = {}) {
     options.token = await client.getToken();

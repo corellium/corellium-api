@@ -1,29 +1,26 @@
-
 class Snapshot {
-    constructor(instance, info) {
+    constructor(instance, snap) {
         this.instance = instance;
-        this.info = info;
+        this.id = snap.id;
+        this.name = snap.name;
+        this.created = new Date(snap.created);
+        this.fresh = snap.fresh;
     }
 
-    id() {
-        return this.info.id;
-    }
-
-    name() {
-        return this.info.name;
-    }
-
-    created() {
-        return new Date(this.info.created_at);
-    }
-
-    isFresh() {
-        return !!this.info.metadata.fresh;
+    async rename(name) {
+        await this._fetch('', {method: 'POST', json: {name}});
     }
 
     async restore() {
-        let token = await this.instance.token();
-        return openstack.helpers.restore_snapshot(token.token, this.instance.id(), this.info.volume_id, this.id());
+        await this._fetch(`/restore`, {method: 'POST'});
+    }
+
+    async delete() {
+        await this._fetch('', {method: 'DELETE'});
+    }
+
+    async _fetch(endpoint, options) {
+        return await this.instance._fetch(`/snapshots/${this.id}${endpoint}`, options);
     }
 }
 
