@@ -51,6 +51,15 @@ class Instance extends EventEmitter {
         return new Snapshot(this, snapshot);
     }
 
+    async consoleLog() {
+        let hypervisor = await this.hypervisor();
+        let results = await hypervisor.command(await hypervisor.signedCommand(this.id, Buffer.from(this.info.key, 'hex'), {
+            'type': 'console',
+            'op': 'get'
+        }));
+        return results['log'];
+    }
+
     async panics() {
         let hypervisor = await this.hypervisor();
         let results = await hypervisor.command(await hypervisor.signedCommand(this.id, Buffer.from(this.info.key, 'hex'), {

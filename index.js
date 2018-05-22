@@ -3,8 +3,9 @@ const Corellium = require('./src/corellium').Corellium;
 async function main() {
     // Configure the API.
     let corellium = new Corellium({
-        domain: 'pdev2',
-        username: 'adam',
+        endpoint: 'https://pdev2.corellium.com',
+        domain: 'pdev2.corellium.com',
+        username: 'admin',
         password: 'password'
     });
 
@@ -62,19 +63,21 @@ async function main() {
         // If there's a panic, get the panic log.
         console.log(await instance.panics());
 
+        // Download the console log.
+        console.log(await instance.consoleLog());
+
         // Clear the panic log.
-        //await instance.clearPanics();
+        await instance.clearPanics();
 
         // Reboot the instance.
-        //await instance.reboot();
+        await instance.reboot();
     });
 
     instance.on('change', async () => {
         // You can listen for change events on instances. This also demonstrates publicly accessible properties on isntances.
-        console.log(instance.id, instance.name, instance.status);
+        console.log(instance.id, instance.name, instance.state);
     });
 
-    console.log(await instance.panics());
     return;
 
     // If there's a freshly restored snapshot...
