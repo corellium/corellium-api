@@ -18,7 +18,7 @@ async function main() {
 
     // Find the project called "David's Project".
     let project = projects.filter(project => {
-        return project.info.name === "David's Project";
+        return project.info.name === "Default Project";
     })[0];
 
     // Get the instances in the project.
@@ -51,25 +51,31 @@ async function main() {
         instance = instances[0];
     }
 
+    console.log('Got instance: ' + instance.id);
     // The instance's console is accessible as a node stream and can be piped to stdout.
     //(await instance.console()).pipe(process.stdout);
 
     // Instances have the 'panic' event that can be listened for.
     instance.on('panic', async () => {
+        console.log('Panic detected!');
+
         // If there's a panic, get the panic log.
         console.log(await instance.panics());
 
         // Clear the panic log.
-        await instance.clearPanics();
+        //await instance.clearPanics();
 
         // Reboot the instance.
-        await instance.reboot();
+        //await instance.reboot();
     });
 
     instance.on('change', async () => {
         // You can listen for change events on instances. This also demonstrates publicly accessible properties on isntances.
-        console.log(instance.id(), instance.name(), instance.status());
+        console.log(instance.id, instance.name, instance.status);
     });
+
+    console.log(await instance.panics());
+    return;
 
     // If there's a freshly restored snapshot...
     console.log('Getting snapshots...');

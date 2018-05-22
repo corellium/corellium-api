@@ -3,9 +3,8 @@ const HKDF = require('hkdf');
 const crypto = require('crypto');
 
 class HypervisorStream {
-    constructor(host, port) {
-        this.host = host;
-        this.port = port;
+    constructor(endpoint) {
+        this.endpoint = endpoint;
         this.active = true;
         this.pending = new Map();
         this.id = 0;
@@ -26,7 +25,7 @@ class HypervisorStream {
             });
         }
 
-        this.ws = new WebSocket('ws://' + this.host + ':' + this.port + '/');
+        this.ws = new WebSocket(this.endpoint);
         this.ws.on('message', data => {
             try {
                 let message = JSON.parse(data);

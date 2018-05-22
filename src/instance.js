@@ -53,7 +53,7 @@ class Instance extends EventEmitter {
 
     async panics() {
         let hypervisor = await this.hypervisor();
-        let results = await hypervisor.command(await hypervisor.signedCommand(this.id, this.info.key, {
+        let results = await hypervisor.command(await hypervisor.signedCommand(this.id, Buffer.from(this.info.key, 'hex'), {
             'type': 'panic',
             'op': 'get'
         }));
@@ -62,7 +62,7 @@ class Instance extends EventEmitter {
 
     async clearPanics() {
         let hypervisor = await this.hypervisor();
-        return hypervisor.command(await hypervisor.signedCommand(this.id, this.info.key, {
+        return hypervisor.command(await hypervisor.signedCommand(this.id, Buffer.from(this.info.key, 'hex'), {
             'type': 'panic',
             'op': 'clear'
         }));
@@ -71,20 +71,17 @@ class Instance extends EventEmitter {
     async hypervisor() {
         await this._waitFor(() => this.info.services.vpn && this.info.services.vpn.ip);
 
-        let [host, port] = this.info.services.c3po.split(':');
-
-        // XXX: We want the external host, so take it from VPN for now.
-        host = this.info.services.vpn.ip;
+        let endpoint = this.project.api + '/c3po/' + this.info.c3po;
 
         if (this.hypervisorStream && this.hypervisorStream.active) {
-            if (host === this.hypervisorStream.host && port === this.hypervisorStream.port)
+            if (endpoint === this.hypervisorStream.endpoint)
                 return this.hypervisorStream;
 
             this.hypervisorStream.disconnect();
             this.hypervisorStream = null;
         }
 
-        this.hypervisorStream = new c3po.HypervisorStream(host, port);
+        this.hypervisorStream = new c3po.HypervisorStream(endpoint);
         return this.hypervisorStream;
     }
 
