@@ -49,6 +49,10 @@ class Project {
         });
         return await this.getInstance(id);
     }
+
+    get quotas() {
+        return this.info.quotas;
+    }
 }
 
 module.exports = Project;
