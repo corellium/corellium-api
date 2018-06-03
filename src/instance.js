@@ -31,6 +31,10 @@ class Instance extends EventEmitter {
         return this.info.state;
     }
 
+    get flavor() {
+        return this.info.flavor;
+    }
+
     async rename(name) {
         await this._fetch('', {
             method: 'PATCH',
