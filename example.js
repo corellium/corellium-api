@@ -1,10 +1,9 @@
-const Corellium = require('./src/corellium').Corellium;
+const {Corellium} = require('./src/corellium');
 
 async function main() {
     // Configure the API.
     let corellium = new Corellium({
         endpoint: 'https://pdev2.corellium.com',
-        domain: 'pdev2.corellium.com',
         username: 'admin',
         password: 'password'
     });
@@ -18,9 +17,7 @@ async function main() {
     let projects = await corellium.projects();
 
     // Find the project called "David's Project".
-    let project = projects.filter(project => {
-        return project.info.name === "Default Project";
-    })[0];
+    let project = projects.find(project => project.name === "Default Project");
 
     // Get the instances in the project.
     console.log('Getting instances...');
@@ -31,7 +28,7 @@ async function main() {
         // If there's currently no instance, create one!
 
         // Get the firmware for iPhone 6 11.2.6.
-        let firmware = 
+        let firmware =
             (await corellium.supported())
                 .find({name: 'iPhone 6'})
                 .find({version: '11.2.6'});
@@ -95,5 +92,5 @@ async function main() {
 }
 
 main().catch(err => {
-    console.error(err);  
+    console.error(err);
 });
