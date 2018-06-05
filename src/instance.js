@@ -119,6 +119,11 @@ class Instance extends EventEmitter {
         await this._fetch('', {method: 'DELETE'});
     }
 
+    async takeScreenshot() {
+        const res = await this._fetch('/screenshot.png', {response: 'raw'});
+        return await res.buffer();
+    }
+
     async update() {
         const info = await this._fetch('');
         // one way of checking object equality

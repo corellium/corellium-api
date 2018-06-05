@@ -53,6 +53,9 @@ class Project {
     get quotas() {
         return this.info.quotas;
     }
+    get name() {
+        return this.name;
+    }
 }
 
 module.exports = Project;

@@ -28,12 +28,15 @@ async function fetch(url, {json, token, ...options}) {
     const res = await nodeFetch(url, options);
     if (res.status == 204)
         return;
-    const body = await res.json();
-    if (res.status >= 400 && res.status < 500)
+    if (res.status >= 400 && res.status < 500) {
+        const body = await res.json();
         throw new CorelliumError(body.error, res.status);
-    else if (res.status >= 500)
+    } else if (res.status >= 500) {
         throw new Error(`${res.status} ${res.statusText}`);
-    return body;
+    }
+    if (options.response === 'raw')
+        return res;
+    return await res.json();
 }
 
 async function fetchApi(client, endpoint, options = {}) {
