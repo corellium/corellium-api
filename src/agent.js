@@ -128,7 +128,7 @@ class Agent {
 
     binaryData(id, data) {
         let idBuffer = Buffer.alloc(8, 0);
-        idBuffer.writeUInt32LE(0, id);
+        idBuffer.writeUInt32LE(id, 0);
         if (data)
             this.ws.send(Buffer.concat([idBuffer, data]));
         else
@@ -160,13 +160,19 @@ class Agent {
             throw new Error(results['error']);
     }
 
+    async run(bundleID) {
+        let results = await this.command({'type': 'app', 'op': 'run', 'bundleID': bundleID});
+        if (!results['success'])
+            throw new Error(results['error']);
+    }
+
     async kill(bundleID) {
         let results = await this.command({'type': 'app', 'op': 'kill', 'bundleID': bundleID});
         if (!results['success'])
             throw new Error(results['error']);
     }
 
-    async list() {
+    async appList() {
         let results = await this.command({'type': 'app', 'op': 'list'});
         if (!results['success'])
             throw new Error(results['error']);
@@ -215,6 +221,9 @@ class Agent {
                     resolve();
                     return true;
                 }
+
+                reject(new Error(message['error']));
+                return true;
             });
 
             stream.on('data', data => {
@@ -267,7 +276,7 @@ class Agent {
     crashes(bundleID, callback) {
         this.message({'type': 'crash', 'op': 'subscribe', 'bundleID': bundleID}, async (err, message) => {
             if (err) {
-                reject(err);
+                callback(err);
                 return true;
             }
 
@@ -284,7 +293,7 @@ class Agent {
                 });
             });
 
-            callback(crashReport.toString('utf8'));
+            callback(null, crashReport.toString('utf8'));
             return false;
         });
     }
