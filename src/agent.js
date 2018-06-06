@@ -2,21 +2,7 @@ const WebSocket = require('ws');
 const stream = require('stream');
 
 class DownloadStream extends stream.Readable {
-    constructor(options) {
-        super(options);
-        this.buffers = [];
-    }
-
     _read(n) {
-        while (this.buffers.length > 0) {
-            let buffer = this.buffer.shift();
-            if (!this.push(buffer))
-                break;
-        }
-    }
-
-    append(data) {
-        this.buffers.push(data);
     }
 }
 
@@ -251,8 +237,8 @@ class Agent {
         });
     }
 
-    async download(path) {
-        let stream = new DownloadStream();
+    download(path) {
+        let s = new DownloadStream();
         this.message({'type': 'file', 'op': 'download', 'path': path}, (err, message) => {
             if (err) {
                 reject(err);
@@ -263,15 +249,15 @@ class Agent {
                 return false;
 
             if (message.length === 0) {
-                stream.emit('end');
+                s.push(null);
                 return true;
             }
 
-            stream.append(message);
+            s.push(message);
             return false;
         });
 
-        return stream;
+        return s;
     }
 
     async installFile(stream, progress) {
