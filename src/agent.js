@@ -154,10 +154,25 @@ class Agent {
             throw new Error(results['error']);
     }
 
-    async uninstall(bundleID) {
-        let results = await this.command({'type': 'app', 'op': 'uninstall', 'bundleID': bundleID});
-        if (!results['success'])
-            throw new Error(results['error']);
+    async uninstall(bundleID, progress) {
+        return new Promise((resolve, reject) => {
+            return this.message({'type': 'app', 'op': 'uninstall', 'bundleID': bundleID}, (err, message) => {
+                if (err) {
+                    reject(err);
+                    return true;
+                }
+
+                if (message['success']) {
+                    resolve();
+                    return true;
+                }
+
+                if (progress)
+                    progress(message['progress'], message['status']);
+
+                return false;
+            });
+        });
     }
 
     async run(bundleID) {
