@@ -1,20 +1,16 @@
 const WebSocket = require('ws');
-const HKDF = require('hkdf');
-const crypto = require('crypto');
 
-class HypervisorStream {
+class Agent {
     constructor(endpoint) {
         this.endpoint = endpoint;
         this.active = true;
         this.pending = new Map();
         this.id = 0;
-        this.timeout = null;
         this.connectPromise = null;
         this.connectResolve = null;
         this.reconnect();
-        this.resetTimeout();
     }
-
+    
     reconnect() {
         if (!this.active)
             return;
@@ -28,12 +24,20 @@ class HypervisorStream {
         this.ws = new WebSocket(this.endpoint);
         this.ws.on('message', data => {
             try {
-                let message = JSON.parse(data);
-                let id = message['id'];
+                let message;
+                let id;
+                if (typeof data === 'string') {
+                    message = JSON.parse(data);
+                    id = message['id'];
+                } else if (data.length >= 8) {
+                    id = data.readUInt32LE(0);
+                    message = data.slice(8);
+                }
+
                 let handler = this.pending.get(id);
                 if (handler) {
-                    handler(null, message);
-                    this.pending.delete(id);
+                    if (handler(null, message))
+                        this.pending.delete(id);
                 }
             } catch (err) {
                 console.error(err);
@@ -57,6 +61,7 @@ class HypervisorStream {
                 setTimeout(() => {
                     this.connectPromise = null;
                     this.connectResolve = null;
+                    this.active = true;
                     this.reconnect();
                     this.connectPromise.then(oldResolve);
                 }, 1000);
@@ -76,26 +81,12 @@ class HypervisorStream {
         });
     }
 
-    resetTimeout() {
-        if (this.timeout)
-            clearTimeout(this.timeout);
-
-        this.timeout = setTimeout(() => {
-            this.disconnect();
-        }, 10 * 60 * 1000);
-    }
-
     disconnect() {
         this.active = false;
         this.ws.close();
-        
-        if (this.timeout)
-            clearTimeout(this.timeout);
     }
 
     command(message) {
-        this.resetTimeout();
-
         let send = () => {
             ++this.id;
 
@@ -119,31 +110,6 @@ class HypervisorStream {
 
         return send();
     }
-    
-    async signedCommand(instanceId, key, command) {
-        let hkdf = new HKDF('sha512', 'corellium-c3po-salt', key);
-        let derived = await new Promise(resolve => {
-            hkdf.derive('corellium-c3po-key-01', 32, key => {
-                resolve(key);
-            });
-        });
-
-        let signed = JSON.stringify({
-            'command': command,
-            'expires': (new Date((new Date()).getTime() + 5 * 60000)).toISOString()
-        });
-
-        let hmac = crypto.createHmac('sha384', derived);
-        hmac.update(signed);
-        
-        return {
-            'instance': instanceId,
-            'data': signed,
-            'sign': hmac.digest().toString('base64')
-        };
-    }
 }
 
-module.exports = {
-    HypervisorStream: HypervisorStream
-};
+module.exports = Agent;
