@@ -54,19 +54,42 @@ async function main() {
     for (let [, app] of apps) {
         let crashListener = await instance.newAgent();
         console.log('Running ' + app['bundleID']);
+        let timeout = null;
+        let timeoutComplete = null;
+        let crashed = false;
+
         crashListener.crashes(app['bundleID'], (err, crashReport) => {
             if (err) {
                 console.error(err);
                 return;
             }
 
+            if (timeout) {
+                clearTimeout(timeout);
+                timeoutComplete();
+            }
+
             console.log(crashReport);
+            crashed = true;
         });
 
         await agent.run(app['bundleID']);
-        await new Promise(resolve => setTimeout(resolve, 15000));
-        console.log('Killing ' + app['bundleID']);
-        await agent.kill(app['bundleID']);
+        await new Promise(resolve => {
+            timeoutComplete = resolve;
+            timeout = setTimeout(timeoutComplete, 15000);
+        });
+
+        timeout = null;
+
+        if (!crashed) {
+            console.log('Killing ' + app['bundleID']);
+
+            try {
+                await agent.kill(app['bundleID']);
+            } catch (e) {
+                console.error(e);
+            }
+        }
 
         crashListener.disconnect();
     }

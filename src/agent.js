@@ -297,8 +297,9 @@ class Agent {
                 return true;
             }
 
+            let path = message['file'];
             let crashReport = await new Promise(resolve => {
-                let stream = this.download(message['file']);
+                let stream = this.download(path);
                 let buffers = [];
 
                 stream.on('data', data => {
@@ -310,6 +311,7 @@ class Agent {
                 });
             });
 
+            await this.deleteFile(path);
             callback(null, crashReport.toString('utf8'));
             return false;
         });
