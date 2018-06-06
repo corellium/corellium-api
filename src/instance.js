@@ -4,6 +4,7 @@ const c3po = require('./c3po');
 const websocket = require('websocket-stream');
 const util = require('util');
 const Snapshot = require('./snapshot');
+const Agent = require('./agent');
 const sleep = util.promisify(setTimeout);
 
 class Instance extends EventEmitter {
@@ -17,6 +18,7 @@ class Instance extends EventEmitter {
 
         this.hash = null;
         this.hypervisorStream = null;
+        this.agentStream = null;
         this.lastPanicLength = null;
         this.volumeId = null;
 
@@ -96,6 +98,22 @@ class Instance extends EventEmitter {
 
         this.hypervisorStream = new c3po.HypervisorStream(endpoint);
         return this.hypervisorStream;
+    }
+
+    async agent() {
+        await this._waitFor(() => !!this.info.agent);
+        let endpoint = this.project.api + '/agent/' + this.info.agent.info;
+
+        if (this.agentStream && this.agentStream.active) {
+            if (endpoint === this.agentStream.endpoint)
+                return this.agentStream;
+
+            this.agentStream.disconnect();
+            this.agentStream = null;
+        }
+
+        this.agentStream = new Agent(endpoint);
+        return this.agentStream;
     }
 
     async console() {
