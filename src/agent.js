@@ -153,6 +153,11 @@ class Agent {
                     return true;
                 }
 
+                if (message['error']) {
+                    reject(message['error']);
+                    return true;
+                }
+
                 if (progress && message['progress'])
                     progress(message['progress'], message['status']);
 
@@ -194,6 +199,11 @@ class Agent {
                     return true;
                 }
 
+                if (message['error']) {
+                    reject(message['error']);
+                    return true;
+                }
+
                 if (progress && message['progress'])
                     progress(message['progress'], message['status']);
 
@@ -223,6 +233,11 @@ class Agent {
                     return true;
                 }
 
+                if (message['error']) {
+                    reject(message['error']);
+                    return true;
+                }
+
                 reject(new Error(message['error']));
                 return true;
             });
@@ -245,8 +260,14 @@ class Agent {
                 return true;
             }
 
-            if (message['id'] !== undefined)
+            if (message['id'] !== undefined) {
+                if (message['error']) {
+                    reject(message['error']);
+                    return true;
+                }
+
                 return false;
+            }
 
             if (message.length === 0) {
                 s.push(null);
