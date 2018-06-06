@@ -116,6 +116,12 @@ class Instance extends EventEmitter {
         return this.agentStream;
     }
 
+    async newAgent() {
+        await this._waitFor(() => !!this.info.agent);
+        let endpoint = this.project.api + '/agent/' + this.info.agent.info;
+        return new Agent(endpoint);
+    }
+
     async console() {
         const {url} = await this._fetch('/console');
         return websocket(url, ['binary']);
