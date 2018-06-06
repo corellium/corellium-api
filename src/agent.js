@@ -153,7 +153,7 @@ class Agent {
                     return true;
                 }
 
-                if (progress)
+                if (progress && message['progress'])
                     progress(message['progress'], message['status']);
 
                 return false;
@@ -194,7 +194,7 @@ class Agent {
                     return true;
                 }
 
-                if (progress)
+                if (progress && message['progress'])
                     progress(message['progress'], message['status']);
 
                 return false;
