@@ -154,7 +154,7 @@ class Agent {
                 }
 
                 if (message['error']) {
-                    reject(message['error']);
+                    reject(new Error(message['error']));
                     return true;
                 }
 
@@ -200,7 +200,7 @@ class Agent {
                 }
 
                 if (message['error']) {
-                    reject(message['error']);
+                    reject(new Error(message['error']));
                     return true;
                 }
 
@@ -233,11 +233,6 @@ class Agent {
                     return true;
                 }
 
-                if (message['error']) {
-                    reject(message['error']);
-                    return true;
-                }
-
                 reject(new Error(message['error']));
                 return true;
             });
@@ -262,7 +257,7 @@ class Agent {
 
             if (message['id'] !== undefined) {
                 if (message['error']) {
-                    reject(message['error']);
+                    reject(new Error(message['error']));
                     return true;
                 }
 
