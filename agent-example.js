@@ -23,7 +23,7 @@ async function main() {
     // Get the instances in the project.
     console.log('Getting instances...');
     let instances = await project.instances();
-    let instance = instances[0];
+    let instance = instances.find(instance => instance.name === "Test-Nikias");
 
     console.log('Getting agent...');
     let agent = await instance.agent();
@@ -32,7 +32,18 @@ async function main() {
     await agent.ready();
     
     console.log('Agent is ready.');
+
+    let stream = agent.download('/usr/libexec/corelliumd');
+    console.log(stream);
     
+    await new Promise(resolve => {
+        stream.pipe(fs.createWriteStream('/tmp/downloaded'));
+        stream.on('end', resolve);
+    });
+
+    console.log('downloaded');
+    return;
+
     let appList = await agent.appList();
     let apps = new Map();
     for (let app of await agent.appList()) {

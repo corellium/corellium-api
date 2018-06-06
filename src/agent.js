@@ -245,7 +245,7 @@ class Agent {
                 return true;
             }
 
-            if (typeof message === 'string')
+            if (message['id'] !== undefined)
                 return false;
 
             if (message.length === 0) {
