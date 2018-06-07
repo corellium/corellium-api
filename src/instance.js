@@ -2,10 +2,9 @@ const {fetchApi} = require('./util/fetch');
 const EventEmitter = require('events');
 const c3po = require('./c3po');
 const websocket = require('websocket-stream');
-const util = require('util');
 const Snapshot = require('./snapshot');
 const Agent = require('./agent');
-const sleep = util.promisify(setTimeout);
+const Buttons = require('./buttons');
 
 class Instance extends EventEmitter {
     constructor(project, info) {
@@ -21,6 +20,8 @@ class Instance extends EventEmitter {
         this.agentStream = null;
         this.lastPanicLength = null;
         this.volumeId = null;
+
+        this.buttons = new Buttons(this);
 
         this.on('newListener', () => this.manageUpdates());
     }
@@ -145,7 +146,10 @@ class Instance extends EventEmitter {
 
     async takeScreenshot() {
         const res = await this._fetch('/screenshot.png', {response: 'raw'});
-        return await res.buffer();
+        if (res.buffer)
+            return await res.buffer(); // node
+        else
+            return await res.blob(); // browser
     }
 
     async update() {
@@ -166,7 +170,7 @@ class Instance extends EventEmitter {
             this.updating = true;
             do {
                 await this.update();
-                await sleep(1000);
+                await new Promise(resolve => setTimeout(resolve, 1000));
             } while (this.listenerCount('change') != 0);
             this.updating = false;
         });

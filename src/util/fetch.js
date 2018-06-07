@@ -1,9 +1,9 @@
-// Wrapper around node-fetch that adds a few goodies:
+// Wrapper around fetch that adds a few goodies:
 //  - token option that sets Authorization header
 //  - json option that automatically does JSON.stringify and sets Content-Type: application/json
 //  - throws CorelliumErrors for API errors
 //  - returns the parsed JSON response
-const nodeFetch = require('node-fetch');
+const realFetch = require('cross-fetch');
 
 class CorelliumError extends Error {
     constructor(message, code) {
@@ -13,19 +13,20 @@ class CorelliumError extends Error {
     }
 }
 
-async function fetch(url, {json, token, ...options}) {
+async function fetch(url, options) {
     if (options.headers === undefined)
         options.headers = {};
 
-    if (json !== undefined) {
-        options.body = JSON.stringify(json);
+    if (options.json !== undefined) {
+        options.body = JSON.stringify(options.json);
         options.headers['Content-Type'] = 'application/json';
+        delete options.json;
     }
-    if (token !== undefined) {
-        options.headers['Authorization'] = token;
+    if (options.token !== undefined) {
+        options.headers['Authorization'] = options.token;
     }
 
-    const res = await nodeFetch(url, options);
+    const res = await realFetch(url, options);
     if (res.status == 204)
         return;
     if (res.status >= 400 && res.status < 500) {

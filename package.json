@@ -8,9 +8,9 @@
   },
   "author": "",
   "dependencies": {
+    "cross-fetch": "^2.2.1",
     "fast-stable-stringify": "^1.0.0",
     "hkdf": "0.0.2",
-    "node-fetch": "^2.1.1",
     "uuid": "^3.2.1",
     "websocket-stream": "^5.1.1"
   },
