@@ -124,6 +124,7 @@ async function main() {
     }
 
     for (let vm of toDeploy) {
+        console.log('starting', vm);
         project.createInstance({
             'flavor': vm.flavor,
             'os': vm.version
@@ -198,6 +199,8 @@ async function main() {
                 crashListener.disconnect();
             }
         });
+
+        await new Promise(resolve => setTimeout(resolve, 10000));
     }
 }
 
