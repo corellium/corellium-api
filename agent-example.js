@@ -23,7 +23,7 @@ async function main() {
     // Get the instances in the project.
     console.log('Getting instances...');
     let instances = await project.instances();
-    let instance = instances[0];
+    let instance = instances.find(instance => instance.name === 'API Demo');
 
     console.log('Getting agent...');
     let agent = await instance.agent();
