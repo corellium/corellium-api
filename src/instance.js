@@ -18,6 +18,7 @@ class Instance extends EventEmitter {
         this.hash = null;
         this.hypervisorStream = null;
         this.agentStream = null;
+        this.lastAgentEndpoint = null;
         this.lastPanicLength = null;
         this.volumeId = null;
 
@@ -102,25 +103,28 @@ class Instance extends EventEmitter {
     }
 
     async agent() {
+        if (this.agentStream)
+            return this.agentStream.connect();
+
+        this.agentStream = new Agent(this);
+        return this.agentStream.connect();
+    }
+
+    async agentEndpoint() {
         await this._waitFor(() => !!this.info.agent);
-        let endpoint = this.project.api + '/agent/' + this.info.agent.info;
-
-        if (this.agentStream && this.agentStream.active) {
-            if (endpoint === this.agentStream.endpoint)
-                return this.agentStream;
-
-            this.agentStream.disconnect();
-            this.agentStream = null;
+        if (this.lastAgentEndpoint) {
+            // We already have an agentEndpoint, we probably should refresh it.
+            await this.update();
         }
 
-        this.agentStream = new Agent(endpoint);
-        return this.agentStream;
+        this.lastAgentEndpoint = this.project.api + '/agent/' + this.info.agent.info;
+        return this.lastAgentEndpoint;
     }
 
     async newAgent() {
         await this._waitFor(() => !!this.info.agent);
         let endpoint = this.project.api + '/agent/' + this.info.agent.info;
-        return new Agent(endpoint);
+        return (new Agent(this)).connect();
     }
 
     async console() {

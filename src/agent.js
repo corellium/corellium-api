@@ -7,8 +7,8 @@ class DownloadStream extends stream.Readable {
 }
 
 class Agent {
-    constructor(endpoint) {
-        this.endpoint = endpoint;
+    constructor(instance) {
+        this.instance = instance;
         this.active = true;
         this.pending = new Map();
         this.id = 0;
@@ -16,8 +16,17 @@ class Agent {
         this.connectResolve = null;
         this.reconnect();
     }
-    
-    reconnect() {
+
+    async connect() {
+        if (this.connectPromise) {
+            await this.connectPromise;
+            return this;
+        }
+
+        return this;
+    }
+
+    async reconnect() {
         if (!this.active)
             return;
 
@@ -27,7 +36,8 @@ class Agent {
             });
         }
 
-        this.ws = new WebSocket(this.endpoint);
+        let endpoint = await this.instance.agentEndpoint();
+        this.ws = new WebSocket(endpoint);
         this.ws.on('message', data => {
             try {
                 let message;

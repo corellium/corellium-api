@@ -1,6 +1,30 @@
 const {Corellium} = require('./src/corellium');
 const fs = require('fs');
 
+async function launch(instance, bundleID) {
+    let agent = await instance.agent();
+    let retries = 10;
+    while (true) {
+        try {
+            await agent.run(bundleID);
+            break;
+        } catch (e) {
+            if (e.message === 'Screen is locked. Please unlock device and run again.') {
+                await instance.buttons.pressAndRelease('home');
+                continue;
+            }
+
+            --retries;
+            if (retries !== 0) {
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                continue;
+            }
+
+            throw e;
+        }
+    }
+}
+
 async function main() {
     // Configure the API.
     let corellium = new Corellium({
@@ -73,7 +97,8 @@ async function main() {
             crashed = true;
         });
 
-        await agent.run(app['bundleID']);
+        await launch(instance, app['bundleID']);
+
         await new Promise(resolve => {
             timeoutComplete = resolve;
             timeout = setTimeout(timeoutComplete, 15000);
