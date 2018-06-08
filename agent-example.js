@@ -75,6 +75,9 @@ async function main() {
         console.log('Facebook installed');
     }
 
+    console.log('Unlocking device');
+    await agent.unlockDevice();
+
     for (let [, app] of apps) {
         let crashListener = await instance.newAgent();
         console.log('Running ' + app['bundleID']);

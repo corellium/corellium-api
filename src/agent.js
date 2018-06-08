@@ -326,6 +326,18 @@ class Agent {
             return false;
         });
     }
+
+    async lockDevice() {
+        let results = await this.command({'type': 'system', 'op': 'lock'});
+        return results['success'];
+    }
+
+    async unlockDevice() {
+        let results = await this.command({'type': 'system', 'op': 'unlock'});
+        if (!results['success'])
+            throw new Error(results['error']);
+        return results['success'];
+    }
 }
 
 module.exports = Agent;
