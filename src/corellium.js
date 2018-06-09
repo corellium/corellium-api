@@ -42,6 +42,11 @@ class Corellium {
         return project;
     }
 
+    async projectNamed(name) {
+        const projects = await this.projects();
+        return projects.find(project => project.name === name);
+    }
+
     async supported() {
         if (!this.supportedDevices)
             this.supportedDevices = await fetchApi(this, '/supported');
