@@ -35,6 +35,8 @@ function versionCompare(a, b) {
 async function launch(instance, bundleID) {
     let agent = await instance.agent();
     let retries = 10;
+
+    // Try ten times to launch the app. If the screen is locked, push the home button (which wakes or unlocks the phone).
     while (true) {
         try {
             await agent.run(bundleID);
@@ -65,6 +67,7 @@ async function main() {
     });
 
     console.log('Logging in...');
+
     // Login.
     await corellium.login();
 
@@ -79,12 +82,13 @@ async function main() {
     console.log('Getting instances...');
     let instances = await project.instances();
 
+    // Create map of supported devices.
     let supported = {};
-
     (await corellium.supported()).forEach(modelInfo => {
         supported[modelInfo.name] = modelInfo;
     });
 
+    // Get how many CPUs we're currently using.
     let cpusUsed = 0;
     instances.forEach(instance => {
         cpusUsed += supported[instance.flavor].quotas.cpus;
@@ -92,6 +96,7 @@ async function main() {
 
     console.log('Used: ' + cpusUsed + '/' + project.quotas.cpus);
 
+    // Sort firmware supported by each device from latest to earliest.
     let toDeploy = [];
     let sortedVersions = new Map();
     for (let flavorId of Object.keys(supported)) {
@@ -102,6 +107,7 @@ async function main() {
         sortedVersions.set(flavorId, versions);
     }
 
+    // Generate a list of virtual devices to start by looping through each model and taking the latest version we haven't started yet, until we run out of cpus.
     while(cpusUsed < project.quotas.cpus) {
         for (let flavorId of Object.keys(supported)) {
             let flavor = supported[flavorId];
@@ -124,19 +130,26 @@ async function main() {
     }
 
     for (let vm of toDeploy) {
+        // Start the devices.
         console.log('starting', vm);
         project.createInstance({
             'flavor': vm.flavor,
             'os': vm.version
         }).then(async instance => {
+            // Finish restoring the device.
             await instance.finishRestore();
             console.log('finished restoring', vm);
+
+            // Wait for the agent to start working on device and report that SpringBoard is started.
             await new Promise(async resolve => {
                 while (true) {
                     try {
+                        // Wait for the agent to respond.
                         console.log('waiting for agent', vm);
                         let agent = await instance.agent();
                         console.log('connected to agent', vm);
+
+                        // Wait for SpringBoard to finish loading.
                         await agent.ready();
                         break;
                     } catch(e) {
@@ -148,6 +161,7 @@ async function main() {
             });
             console.log('device is booted', vm);
 
+            // Get a list of apps.
             let agent = await instance.agent();
             let appList = await agent.appList();
             let apps = new Map();
@@ -155,7 +169,9 @@ async function main() {
                 apps.set(app['bundleID'], app);
             }
 
+            // Run each app while listening for crashes of that app. Wait 15 seconds and kill the app.
             for (let [, app] of apps) {
+                // Create a crash listenr.
                 let crashListener = await instance.newAgent();
                 console.log(vm, 'Running ' + app['bundleID']);
                 let timeout = null;
@@ -168,6 +184,7 @@ async function main() {
                         return;
                     }
 
+                    // If we're waiting the 15 seconds, stop waiting.
                     if (timeout) {
                         clearTimeout(timeout);
                         timeoutComplete();
@@ -177,8 +194,10 @@ async function main() {
                     crashed = true;
                 });
 
+                // Run the app.
                 await launch(instance, app['bundleID']);
 
+                // Wait 15 seconds, while letting the crash listener interrupt it if necessary.
                 await new Promise(resolve => {
                     timeoutComplete = resolve;
                     timeout = setTimeout(timeoutComplete, 15000);
@@ -186,6 +205,7 @@ async function main() {
 
                 timeout = null;
 
+                // If there were no crashes, kill the app.
                 if (!crashed) {
                     console.log(vm, 'Killing ' + app['bundleID']);
 
@@ -196,11 +216,10 @@ async function main() {
                     }
                 }
 
+                // Stop the crash listener.
                 crashListener.disconnect();
             }
         });
-
-        await new Promise(resolve => setTimeout(resolve, 10000));
     }
 }
 

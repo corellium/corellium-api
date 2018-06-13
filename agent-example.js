@@ -4,6 +4,8 @@ const fs = require('fs');
 async function launch(instance, bundleID) {
     let agent = await instance.agent();
     let retries = 10;
+    
+    // Try ten times to launch the app. If the screen is locked, push the home button (which wakes or unlocks the phone).
     while (true) {
         try {
             await agent.run(bundleID);
@@ -41,22 +43,27 @@ async function main() {
     // Get the list of projects.
     let projects = await corellium.projects();
 
-    // Find the project called "David's Project".
+    // Find the project called "Default Project".
     let project = projects.find(project => project.name === "Default Project");
 
     // Get the instances in the project.
     console.log('Getting instances...');
     let instances = await project.instances();
+
+    // Use an instance named "API Demo"
     let instance = instances.find(instance => instance.name === 'API Demo');
 
+    // Wait for the agent to respond.
     console.log('Getting agent...');
     let agent = await instance.agent();
 
+    // Wait for SpringBoard to finish loading.
     console.log('Waiting until agent is ready...');
     await agent.ready();
     
     console.log('Agent is ready.');
     
+    // List the apps.
     let appList = await agent.appList();
     let apps = new Map();
     for (let app of await agent.appList()) {
@@ -65,6 +72,7 @@ async function main() {
 
     console.log(apps);
 
+    // Install the Facebook IPA if it's not already installed.
     if (!apps.get('com.facebook.Facebook')) {
         console.log('Installing Facebook...');
 
@@ -75,10 +83,13 @@ async function main() {
         console.log('Facebook installed');
     }
 
+    // Unlock the device.
     console.log('Unlocking device');
     await agent.unlockDevice();
 
+    // Run each app while listening for crashes of that app. Wait 15 seconds and kill the app.
     for (let [, app] of apps) {
+        // Create a crash listenr.
         let crashListener = await instance.newAgent();
         console.log('Running ' + app['bundleID']);
         let timeout = null;
@@ -91,6 +102,7 @@ async function main() {
                 return;
             }
 
+            // If we're waiting the 15 seconds, stop waiting.
             if (timeout) {
                 clearTimeout(timeout);
                 timeoutComplete();
@@ -100,8 +112,10 @@ async function main() {
             crashed = true;
         });
 
+        // Run the app.
         await launch(instance, app['bundleID']);
 
+        // Wait 15 seconds, while letting the crash listener interrupt it if necessary.
         await new Promise(resolve => {
             timeoutComplete = resolve;
             timeout = setTimeout(timeoutComplete, 15000);
@@ -109,6 +123,7 @@ async function main() {
 
         timeout = null;
 
+        // If there were no crashes, kill the app.
         if (!crashed) {
             console.log('Killing ' + app['bundleID']);
 
@@ -119,6 +134,7 @@ async function main() {
             }
         }
 
+        // Stop the crash listener.
         crashListener.disconnect();
     }
 
