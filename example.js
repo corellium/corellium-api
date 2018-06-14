@@ -26,18 +26,11 @@ async function main() {
     let instance;
     if (instances.length === 0) {
         // If there's currently no instance, create one!
-
-        // Get the firmware for iPhone 6 11.2.6.
-        let firmware =
-            (await corellium.supported())
-                .find({name: 'iPhone 6'})
-                .find({version: '11.2.6'});
-
-        // Create the instance.
         console.log('Creating new instance...');
         instance = await project.createInstance({
             'name': 'Test Device',
-            'firmware': firmware,
+            'flavor': 'iphone7',
+            'os': '11.3.1',
             'patches': 'jailbroken'
         });
 
@@ -80,11 +73,11 @@ async function main() {
     // If there's a freshly restored snapshot...
     console.log('Getting snapshots...');
     let snapshots = await instance.snapshots();
-    let freshSnapshots = snapshots.filter(snapshot => snapshot.isFresh());
-    if (freshSnapshots.length > 0) {
+    let freshSnapshot = snapshots.find(snapshot => snapshot.fresh);
+    if (freshSnapshot) {
         // Restore to the freshly restored snapshot.
         console.log("Restoring to freshly restored snapshot...");
-        await freshSnapshots[0].restore();
+        await freshSnapshot.restore();
     }
 
     console.log("Taking new snapshot...");
