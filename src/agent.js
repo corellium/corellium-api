@@ -147,7 +147,7 @@ class Agent {
     async ready() {
         let results = await this.command({'type': 'app', 'op': 'ready'});
         if (!results['success'])
-            throw new Error(results['error']);
+            throw Object.assign(new Error(), results['error']);
     }
 
     async uninstall(bundleID, progress) {
@@ -164,7 +164,7 @@ class Agent {
                 }
 
                 if (message['error']) {
-                    reject(new Error(message['error']));
+                    reject(Object.assign(new Error(), message['error']));
                     return true;
                 }
 
@@ -179,19 +179,19 @@ class Agent {
     async run(bundleID) {
         let results = await this.command({'type': 'app', 'op': 'run', 'bundleID': bundleID});
         if (!results['success'])
-            throw new Error(results['error']);
+            throw Object.assign(new Error(), results['error']);
     }
 
     async kill(bundleID) {
         let results = await this.command({'type': 'app', 'op': 'kill', 'bundleID': bundleID});
         if (!results['success'])
-            throw new Error(results['error']);
+            throw Object.assign(new Error(), results['error']);
     }
 
     async appList() {
         let results = await this.command({'type': 'app', 'op': 'list'});
         if (!results['success'])
-            throw new Error(results['error']);
+            throw Object.assign(new Error(), results['error']);
 
         return results['apps'];
     }
@@ -210,7 +210,7 @@ class Agent {
                 }
 
                 if (message['error']) {
-                    reject(new Error(message['error']));
+                    reject(Object.assign(new Error(), message['error']));
                     return true;
                 }
 
@@ -225,7 +225,7 @@ class Agent {
     async tempFile() {
         let results = await this.command({'type': 'file', 'op': 'temp'});
         if (!results['success'])
-            throw new Error(results['error']);
+            throw Object.assign(new Error(), results['error']);
 
         return results['path'];
     }
@@ -243,7 +243,7 @@ class Agent {
                     return true;
                 }
 
-                reject(new Error(message['error']));
+                reject(Object.assign(new Error(), message['error']));
                 return true;
             });
 
@@ -267,7 +267,7 @@ class Agent {
 
             if (message['id'] !== undefined) {
                 if (message['error']) {
-                    reject(new Error(message['error']));
+                    reject(Object.assign(new Error(), message['error']));
                     return true;
                 }
 
@@ -295,7 +295,7 @@ class Agent {
     async deleteFile(path) {
         let results = await this.command({'type': 'file', 'op': 'delete', 'path': path});
         if (!results['success'])
-            throw new Error(results['error']);
+            throw Object.assign(new Error(), results['error']);
 
         return results['path'];
     }
@@ -335,7 +335,7 @@ class Agent {
     async unlockDevice() {
         let results = await this.command({'type': 'system', 'op': 'unlock'});
         if (!results['success'])
-            throw new Error(results['error']);
+            throw Object.assign(new Error(), results['error']);
         return results['success'];
     }
 }

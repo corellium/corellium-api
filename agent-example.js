@@ -11,7 +11,7 @@ async function launch(instance, bundleID) {
             await agent.run(bundleID);
             break;
         } catch (e) {
-            if (e.message === 'Screen is locked. Please unlock device and run again.') {
+            if (e.name === 'DeviceLocked') {
                 await instance.buttons.pressAndRelease('home');
                 continue;
             }
