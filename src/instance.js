@@ -148,8 +148,9 @@ class Instance extends EventEmitter {
         await this._fetch('', {method: 'DELETE'});
     }
 
-    async takeScreenshot() {
-        const res = await this._fetch('/screenshot.png', {response: 'raw'});
+    async takeScreenshot(options) {
+        const {format = 'png', scale = 1} = options || {};
+        const res = await this._fetch(`/screenshot.${format}?scale=${scale}`, {response: 'raw'});
         if (res.buffer)
             return await res.buffer(); // node
         else
