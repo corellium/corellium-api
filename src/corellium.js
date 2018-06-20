@@ -1,5 +1,6 @@
 const {fetch, fetchApi, CorelliumError} = require('./util/fetch');
 const Project = require('./project');
+const {I} = require('./input');
 
 class Corellium {
     constructor(options) {
@@ -57,4 +58,5 @@ class Corellium {
 module.exports = {
     Corellium,
     CorelliumError,
+    I,
 };

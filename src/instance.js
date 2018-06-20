@@ -132,6 +132,10 @@ class Instance extends EventEmitter {
         return websocket(url, ['binary']);
     }
 
+    async sendInput(input) {
+        await this._fetch('/input', {method: 'POST', json: input.points});
+    }
+
     async start() {
         await this._fetch('/start', {method: 'POST'});
     }
