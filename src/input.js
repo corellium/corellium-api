@@ -46,7 +46,7 @@ class Input {
         return this;
     }
 
-    pressAndRelease(button, delay=0) {
+    pressRelease(button, delay=100) {
         return this.press(button).delay(delay).release(button);
     }
 
@@ -65,6 +65,10 @@ class Input {
         if (!(this.pressed & TOUCH))
             throw new Error('touch must be down to swipe');
         return this._addPoint({pos: [x, y], curve});
+    }
+
+    tap(x, y, delay=100) {
+        this.touch(x, y).delay(delay).touchUp();
     }
 }
 
