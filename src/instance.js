@@ -86,7 +86,7 @@ class Instance extends EventEmitter {
     }
 
     async hypervisor() {
-        await this._waitFor(() => this.info.services.vpn && this.info.services.vpn.ip);
+        await this._waitFor(() => !!this.info.c3po);
 
         let endpoint = this.project.api + '/c3po/' + this.info.c3po;
 
