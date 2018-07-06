@@ -11,21 +11,24 @@ class Corellium {
     }
 
     async getToken() {
-        if (this.token && this.token.expiration > new Date())
-            return this.token.token;
+        const token = await this.token;
+        if (token && token.expiration > new Date())
+            return token.token;
 
-        const res = await fetch(`${this.api}/tokens`, {
-            method: 'POST',
-            json: {
-                username: this.options.username,
-                password: this.options.password,
-            },
-        });
-        this.token = {
-            token: res.token,
-            expiration: new Date(res.expiration),
-        };
-        return this.token.token;
+        this.token = (async () => {
+            const res = await fetch(`${this.api}/tokens`, {
+                method: 'POST',
+                json: {
+                    username: this.options.username,
+                    password: this.options.password,
+                },
+            });
+            return {
+                token: res.token,
+                expiration: new Date(res.expiration),
+            };
+        })();
+        return (await this.token).token;
     }
 
     async login() {

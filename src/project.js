@@ -14,22 +14,25 @@ class Project {
     }
 
     async getToken() {
-        if (this.token && this.token.expiration > new Date())
-            return this.token.token;
+        const token = await this.token;
+        if (token && token.expiration > new Date())
+            return token.token;
 
-        const unscopedToken = await this.client.getToken();
-        const res = await fetch(`${this.api}/tokens`, {
-            method: 'POST',
-            token: unscopedToken,
-            json: {
-                project: this.id
-            },
-        });
-        this.token = {
-            token: res.token,
-            expiration: new Date(res.expiration),
-        };
-        return this.token.token;
+        this.token = (async () => {
+            const unscopedToken = await this.client.getToken();
+            const res = await fetch(`${this.api}/tokens`, {
+                method: 'POST',
+                token: unscopedToken,
+                json: {
+                    project: this.id
+                },
+            });
+            return {
+                token: res.token,
+                expiration: new Date(res.expiration),
+            };
+        })();
+        return (await this.token).token;
     }
 
     async instances() {

@@ -175,12 +175,12 @@ class Instance extends EventEmitter {
     manageUpdates() {
         if (this.updating)
             return;
-        process.nextTick(async () => {
-            this.updating = true;
-            do {
+        this.updating = true;
+        setImmediate(async () => {
+            while (this.listenerCount('change') != 0) {
                 await this.update();
-                await new Promise(resolve => setTimeout(resolve, 1000));
-            } while (this.listenerCount('change') != 0);
+                await new Promise(resolve => setTimeout(resolve, 5000));
+            }
             this.updating = false;
         });
     }
