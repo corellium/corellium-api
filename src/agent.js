@@ -222,6 +222,37 @@ class Agent {
         });
     }
 
+    async profileList() {
+        let results = await this.command({'type': 'profile', 'op': 'list'});
+        if (!results['success'])
+            throw Object.assign(new Error(), results['error']);
+
+        return results['profiles'];
+    }
+
+    async installProfile(profile) {
+        let results = await this.command({'type': 'profile', 'op': 'install', 'profile': Buffer.from(profile).toString('base64')});
+        if (!results['success'])
+            throw Object.assign(new Error(), results['error']);
+        return true;
+    }
+
+    async removeProfile(profileID) {
+        let results = await this.command({'type': 'profile', 'op': 'remove', 'profileID': profileID});
+        if (!results['success'])
+            throw Object.assign(new Error(), results['error']);
+        return true;
+    }
+
+    async getProfile(profileID) {
+        let results = await this.command({'type': 'profile', 'op': 'get', 'profileID': profileID});
+        if (!results['success'])
+            throw Object.assign(new Error(), results['error']);
+        if (!results['profile'])
+            return null;
+        return new Buffer(results['profile'], 'base64');
+    }
+
     async tempFile() {
         let results = await this.command({'type': 'file', 'op': 'temp'});
         if (!results['success'])
