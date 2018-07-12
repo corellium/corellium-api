@@ -4,6 +4,7 @@
 //  - throws CorelliumErrors for API errors
 //  - returns the parsed JSON response
 const realFetch = require('cross-fetch');
+const pRetry = require('p-retry');
 
 class CorelliumError extends Error {
     constructor(message, code) {
@@ -28,7 +29,7 @@ async function fetch(url, options) {
 
     let res;
     while (true) {
-        res = await realFetch(url, options);
+        res = await pRetry(() => realFetch(url, options));
         if (res.status == 429) {
             const retryAfter = res.headers.get('retry-after');
             await new Promise(resolve => setTimeout(resolve, retryAfter));

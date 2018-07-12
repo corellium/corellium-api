@@ -11,6 +11,7 @@
     "cross-fetch": "^2.2.1",
     "fast-stable-stringify": "^1.0.0",
     "hkdf": "0.0.2",
+    "p-retry": "^2.0.0",
     "uuid": "^3.2.1",
     "websocket-stream": "^5.1.1"
   },
