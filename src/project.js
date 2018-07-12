@@ -37,7 +37,7 @@ class Project {
 
     async instances() {
         const instances = await fetchApi(this, '/instances');
-        return await Promise.all(instances.map(instance => this.getInstance(instance.id)));
+        return await Promise.all(instances.map(info => new Instance(this, info)));
     }
 
     async getInstance(id) {
