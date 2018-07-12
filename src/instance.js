@@ -178,7 +178,12 @@ class Instance extends EventEmitter {
         this.updating = true;
         setImmediate(async () => {
             while (this.listenerCount('change') != 0) {
-                await this.update();
+                try {
+                    await this.update();
+                } catch (e) {
+                    // what am I supposed to do
+                    console.error(`Failed updating instace: ${e.stack}`);
+                }
                 await new Promise(resolve => setTimeout(resolve, 5000));
             }
             this.updating = false;
