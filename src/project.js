@@ -56,6 +56,15 @@ class Project {
     get quotas() {
         return this.info.quotas;
     }
+    async quotasUsed() {
+        const supported = await this.client.supported();
+        let cpusUsed = 0;
+        (await this.instances()).forEach(instance => {
+            const device = supported.find(device => device.name === instance.flavor);
+            cpusUsed += device.quotas.cpus;
+        });
+        return {cpus: cpusUsed};
+    }
 
     get name() {
         return this.info.name;
