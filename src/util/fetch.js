@@ -26,7 +26,17 @@ async function fetch(url, options) {
         options.headers['Authorization'] = options.token;
     }
 
-    const res = await realFetch(url, options);
+    let res;
+    while (true) {
+        res = await realFetch(url, options);
+        if (res.status == 429) {
+            const retryAfter = res.headers.get('retry-after');
+            await new Promise(resolve => setTimeout(resolve, retryAfter));
+            continue;
+        }
+        break;
+    }
+
     if (res.status == 204)
         return;
     if (res.status >= 400 && res.status < 500) {
