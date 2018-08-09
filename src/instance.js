@@ -5,6 +5,12 @@ const websocket = require('websocket-stream');
 const Snapshot = require('./snapshot');
 const Agent = require('./agent');
 
+/**
+ * Instances of this class are returned from {@link Project#instances}, {@link
+ * Project#getInstance}, and {@link Project#createInstance}. They should not be
+ * created using the constructor.
+ * @hideconstructor
+ */
 class Instance extends EventEmitter {
     constructor(project, info) {
         super();
@@ -31,18 +37,44 @@ class Instance extends EventEmitter {
         });
     }
 
+    /**
+     * The instance name.
+     */
     get name() {
         return this.info.name;
     }
 
+    /**
+     * The instance state. Possible values include:
+     *
+     * State|Description
+     * -|-
+     * `on`|The instance is powered on.
+     * `off`|The instance is powered off.
+     * `creating`|The instance is in the process of creating.
+     * `deleting`|The instance is in the process of deleting.
+     *
+     * A full list of possible values is available in the API documentation.
+     */
     get state() {
         return this.info.state;
     }
 
+    /**
+     * The instance flavor, such as `iphone6`.
+     */
     get flavor() {
         return this.info.flavor;
     }
 
+    /**
+     * Rename an instance.
+     * @param {string} name - The new name of the instance.
+     * @example <caption>Renaming the first instance named `foo` to `bar`</caption>
+     * const instances = await project.instances();
+     * const instance = instances.find(instance => instance.name == 'foo');
+     * await instance.rename('bar');
+     */
     async rename(name) {
         await this._fetch('', {
             method: 'PATCH',
@@ -50,11 +82,20 @@ class Instance extends EventEmitter {
         });
     }
 
+    /**
+     * Return an array of this instance's {@link Snapshot}s.
+     * @returns {Snapshot[]} This instance's snapshots
+     */
     async snapshots() {
         const snapshots = await this._fetch('/snapshots');
         return snapshots.map(snap => new Snapshot(this, snap));
     }
 
+    /**
+     * Take a new snapshot of this instance.
+     * @param {string} name - The name for the new snapshot.
+     * @returns {Snapshot} The new snapshot
+     */
     async takeSnapshot(name) {
         const snapshot = await this._fetch('/snapshots', {
             method: 'POST',
@@ -63,6 +104,9 @@ class Instance extends EventEmitter {
         return new Snapshot(this, snapshot);
     }
 
+    /**
+     * Returns a dump of this instance's serial port log.
+     */
     async consoleLog() {
         let hypervisor = await this.hypervisor();
         let results = await hypervisor.command(await hypervisor.signedCommand(this.id, Buffer.from(this.info.key, 'hex'), {
@@ -72,6 +116,7 @@ class Instance extends EventEmitter {
         return results['log'];
     }
 
+    /** Return an array of recorded kernel panics. */
     async panics() {
         let hypervisor = await this.hypervisor();
         let results = await hypervisor.command(await hypervisor.signedCommand(this.id, Buffer.from(this.info.key, 'hex'), {
@@ -81,6 +126,7 @@ class Instance extends EventEmitter {
         return results['panics'];
     }
 
+    /** Clear the recorded kernel panics of this instance. */
     async clearPanics() {
         let hypervisor = await this.hypervisor();
         return hypervisor.command(await hypervisor.signedCommand(this.id, Buffer.from(this.info.key, 'hex'), {
@@ -106,6 +152,10 @@ class Instance extends EventEmitter {
         return this.hypervisorStream;
     }
 
+    /**
+     * Return an {@link Agent} connected to this instance. Calling this
+     * method multiple times will reuse the same agent connection.
+     */
     async agent() {
         if (this.agentStream)
             return this.agentStream.connect();
@@ -125,37 +175,71 @@ class Instance extends EventEmitter {
         return this.lastAgentEndpoint;
     }
 
+    /**
+     * Create a new {@link Agent} connection to this instance. This is
+     * useful for agent tasks that don't finish and thus consume the
+     * connection, such as {@link Agent#crashes}.
+     */
     async newAgent() {
         await this._waitFor(() => !!this.info.agent);
         let endpoint = this.project.api + '/agent/' + this.info.agent.info;
         return (new Agent(this)).connect();
     }
 
+    /**
+     * Returns a bidirectional node stream for this instance's serial console.
+     * @example
+     * const consoleStream = await instance.console();
+     * console.pipe(process.stdout);
+     */
     async console() {
         const {url} = await this._fetch('/console');
         return websocket(url, ['binary']);
     }
 
+    /**
+     * Send an input to this instance.
+     * @param {Input} input - The input to send.
+     * @see Input
+     * @example
+     * await instance.sendInput(I.pressRelease('home'));
+     */
     async sendInput(input) {
         await this._fetch('/input', {method: 'POST', json: input.points});
     }
 
+    /** Start this instance. */
     async start() {
         await this._fetch('/start', {method: 'POST'});
     }
 
+    /** Stop this instance. */
     async stop() {
         await this._fetch('/stop', {method: 'POST'});
     }
 
+    /** Reboot this instance. */
     async reboot() {
         await this._fetch('/reboot', {method: 'POST'});
     }
 
+    /** Destroy this instance. */
     async destroy() {
         await this._fetch('', {method: 'DELETE'});
     }
 
+    /**
+     * Takes a screenshot of this instance's screen. Returns a Buffer containing image data.
+     * @param {Object} options
+     * @param {string} [options.format=png] - Either `png` or `jpg`.
+     * @param {int} [options.scale=1] - The image scale. Specifying 2 would result
+     * in an image with half the instance's native resolution. This is useful
+     * because smaller images are quicker to capture and transmit over the
+     * network.
+     * @example
+     * const screenshot = await instance.takeScreenshot();
+     * fs.writeFileSync('screenshot.png', screenshot);
+     */
     async takeScreenshot(options) {
         const {format = 'png', scale = 1} = options || {};
         const res = await this._fetch(`/screenshot.${format}?scale=${scale}`, {response: 'raw'});
@@ -173,8 +257,36 @@ class Instance extends EventEmitter {
         // one way of checking object equality
         if (JSON.stringify(info) != JSON.stringify(this.info)) {
             this.info = info;
+            /**
+             * Fired when a property of an instance changes, such as its name or its state.
+             * @event Instance#change
+             * @example
+             * instance.on('change', () => {
+             *     console.log(instance.id, instance.name, instance.state);
+             * });
+             */
             this.emit('change');
             if (info.panicked)
+                /**
+                 * Fired when an instance panics. The panic information can be retrieved with {@link Instance#panics}.
+                 * @event Instance#panic
+                 * @example
+                 * instance.on('panic', async () => {
+                 *     try {
+                 *         console.log('Panic detected!');
+                 *         // get the panic log(s)
+                 *         console.log(await instance.panics());
+                 *         // Download the console log.
+                 *         console.log(await instance.consoleLog());
+                 *         // Clear the panic log.
+                 *         await instance.clearPanics();
+                 *         // Reboot the instance.
+                 *         await instance.reboot();
+                 *     } catch (e) {
+                 *         // handle the error somehow to avoid an unhandled promise rejection
+                 *     }
+                 * });
+                 */
                 this.emit('panic');
         }
     }
@@ -199,10 +311,12 @@ class Instance extends EventEmitter {
         });
     }
 
+    /** Wait for the instance to finish restoring and start its first boot. */
     async finishRestore() {
         await this._waitFor(() => this.state !== 'creating');
     }
 
+    /** Wait for the instance to enter the given state. */
     async waitForState(state) {
         await this._waitFor(() => this.state === state);
     }

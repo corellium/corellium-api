@@ -2,6 +2,12 @@ const {fetch, fetchApi} = require('./util/fetch');
 const Instance = require('./instance');
 const InstanceUpdater = require('./instance-updater');
 
+/**
+ * Instances of this class are returned from {@link Corellium#projects}, {@link
+ * Corellium#getProject}, and {@link Corellium#projectNamed}. They should not
+ * be created using the constructor.
+ * @hideconstructor
+ */
 class Project {
     constructor(client, id) {
         this.client = client;
@@ -11,6 +17,10 @@ class Project {
         this.updater = new InstanceUpdater(this);
     }
 
+    /**
+     * Reload the project info. This currently consists of name and quotas, but
+     * will likely include more in the future.
+     */
     async refresh() {
         this.info = await fetchApi(this, `/projects/${this.id}`);
     }
@@ -37,16 +47,49 @@ class Project {
         return (await this.token).token;
     }
 
+    /**
+     * Returns an array of the {@link Instance}s in this project.
+     * @returns {Instance[]} The instances in this project
+     * @example <caption>Finding the first instance with a given name</caption>
+     * const instances = await project.instances();
+     * const instance = instances.find(instance => instance.name === 'Test Device');
+     */
     async instances() {
         const instances = await fetchApi(this, '/instances');
         return await Promise.all(instances.map(info => new Instance(this, info)));
     }
 
+    /**
+     * Returns the {@link Instance} with the given ID.
+     * @returns {Instance}
+     * @param {string} id
+     */
     async getInstance(id) {
         const info = await fetchApi(this, `/instances/${id}`);
         return new Instance(this, info);
     }
 
+    /**
+     * Creates an instance and returns the {@link Instance} object. The options
+     * are passed directly to the API.
+     *
+     * @param {Object} options - The options for instance creation. These are
+     * the same as the JSON options passed to the instance creation API
+     * endpoint. For a full list of possible options, see the API documentation.
+     * @param {string} options.flavor - The device flavor, such as `iphone6`
+     * @param {string} options.os - The device operating system version
+     * @param {string} [options.name] - The device name
+     * @param {string|string[]} [options.patches] - Instance patches, such as `jailbroken` (default)
+     * @returns {Instance}
+     *
+     * @example <caption>Creating an instance and waiting for it to start its first boot</caption>
+     * const instance = await project.createInstance({
+     *     flavor: 'iphone6',
+     *     os: '11.3',
+     *     name: 'Test Device',
+     * });
+     * await instance.finishRestore();
+     */
     async createInstance(options) {
         const {id} = await fetchApi(this, '/instances', {
             method: 'POST',
@@ -55,13 +98,22 @@ class Project {
         return await this.getInstance(id);
     }
 
+    /**
+     * The project quotas.
+     * @property {number} cpus - Number of avilable CPU cores
+     */
     get quotas() {
         return this.info.quotas;
     }
+    /**
+     * How much of the project's quotas are currently used. To ensure this information is up to date, call {@link Project#refresh()} first.
+     * @property {number} cpus - Number of used CPU cores
+     */
     get quotasUsed() {
         return this.info.quotasUsed;
     }
 
+    /** The project's name. */
     get name() {
         return this.info.name;
     }

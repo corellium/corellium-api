@@ -4,7 +4,8 @@
   "description": "",
   "main": "src/corellium.js",
   "scripts": {
-    "test": "nyc mocha"
+    "test": "nyc mocha",
+    "docs": "jsdoc -c .jsdocrc.js"
   },
   "author": "",
   "dependencies": {
