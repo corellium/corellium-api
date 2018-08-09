@@ -1,5 +1,6 @@
 const {fetch, fetchApi} = require('./util/fetch');
 const Instance = require('./instance');
+const InstanceUpdater = require('./instance-updater');
 
 class Project {
     constructor(client, id) {
@@ -7,6 +8,7 @@ class Project {
         this.api = this.client.api;
         this.id = id;
         this.token = null;
+        this.updater = new InstanceUpdater(this);
     }
 
     async refresh() {

@@ -24,7 +24,14 @@ class Instance extends EventEmitter {
 
         this.buttons = new Buttons(this);
 
-        this.on('newListener', () => this.manageUpdates());
+        this.on('newListener', (event) => {
+            if (event === 'change')
+                this.project.updater.add(this);
+        });
+        this.on('removelistener', () => {
+            if (event === 'change' && this.listenercount('change') == 0)
+                this.project.updater.remove(this);
+        });
     }
 
     get name() {
@@ -162,7 +169,10 @@ class Instance extends EventEmitter {
     }
 
     async update() {
-        const info = await this._fetch('');
+        this.receiveUpdate(await this._fetch(''));
+    }
+
+    receiveUpdate(info) {
         // one way of checking object equality
         if (JSON.stringify(info) != JSON.stringify(this.info)) {
             this.info = info;
@@ -170,24 +180,6 @@ class Instance extends EventEmitter {
             if (info.panicked)
                 this.emit('panic');
         }
-    }
-
-    manageUpdates() {
-        if (this.updating)
-            return;
-        this.updating = true;
-        setImmediate(async () => {
-            while (this.listenerCount('change') != 0) {
-                try {
-                    await this.update();
-                } catch (e) {
-                    // what am I supposed to do
-                    console.error(`Failed updating instace: ${e.stack}`);
-                }
-                await new Promise(resolve => setTimeout(resolve, 5000));
-            }
-            this.updating = false;
-        });
     }
 
     async _waitFor(callback) {
