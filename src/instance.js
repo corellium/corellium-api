@@ -28,8 +28,8 @@ class Instance extends EventEmitter {
             if (event === 'change')
                 this.project.updater.add(this);
         });
-        this.on('removelistener', () => {
-            if (event === 'change' && this.listenercount('change') == 0)
+        this.on('removeListener', (event) => {
+            if (event === 'change' && this.listenerCount('change') == 0)
                 this.project.updater.remove(this);
         });
     }
