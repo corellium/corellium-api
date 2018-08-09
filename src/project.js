@@ -58,8 +58,7 @@ class Project {
     get quotas() {
         return this.info.quotas;
     }
-    async quotasUsed() {
-        await this.refresh();
+    get quotasUsed() {
         return this.info.quotasUsed;
     }
 
