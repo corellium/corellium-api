@@ -205,15 +205,6 @@ instances.forEach(instance => {
 });
 ```
 
-### Property: buttons
-
-Returns an instance of `Buttons` that allows to interact with the buttons of a running `Instance`.
-
-Example:
-```javascript=
-await instance.buttons.pressAndRelease('home');
-```
-
 ### async rename(name)
 
 Renames an `Instance` to `name`.
@@ -590,67 +581,6 @@ new Promise(resolve => {
 
 // crashListener not required anymore
 crashListener.disconnect();
-```
-
-## class Buttons
-
-**Note:** Instances of the class `Buttons` are only supposed to be retrieved with `Instance#buttons`. Every `Instance` provides an instance of `Buttons`.
-
-The following buttons are currently supported:
-- `home` The home button.
-
-### async press(button)
-
-Simulates the press of the button identified by `button`. To release the button, use the `Buttons#release()` method.
-
-Example:
-```javascript=
-await instance.buttons.press('home');
-```
-
-### async release(button)
-
-Releases the (pressed) button identified by `button`.
-
-Example:
-```javascript=
-await instance.buttons.release('home');
-```
-
-### async pressAndRelease(button)
-
-Presses and releases the button identified by `button`.
-
-Example:
-```javascript=
-await instance.buttons.pressAndRelease('home');
-```
-
-### async touch(x, y)
-
-Simulates a touch at given coordinates `x`, `y`.
-
-Example:
-```javascript=
-await instance.buttons.touch(50,50);
-```
-
-### async releaseTouch()
-
-Releases the touch.
-
-Example:
-```javascript=
-await instance.buttons.releaseTouch();
-```
-
-### async touchAndRelease(x, y)
-
-Simulates a tap (touch immediately followed by a release).
-
-Example:
-```javascript=
-await instance.buttons.touchAndRelease(50, 50);
 ```
 
 ## class Snapshot

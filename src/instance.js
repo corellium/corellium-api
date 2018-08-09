@@ -4,7 +4,6 @@ const c3po = require('./c3po');
 const websocket = require('websocket-stream');
 const Snapshot = require('./snapshot');
 const Agent = require('./agent');
-const Buttons = require('./buttons');
 
 class Instance extends EventEmitter {
     constructor(project, info) {
@@ -21,8 +20,6 @@ class Instance extends EventEmitter {
         this.lastAgentEndpoint = null;
         this.lastPanicLength = null;
         this.volumeId = null;
-
-        this.buttons = new Buttons(this);
 
         this.on('newListener', (event) => {
             if (event === 'change')
