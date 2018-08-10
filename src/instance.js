@@ -22,7 +22,7 @@ class Instance extends EventEmitter {
 
         this.hash = null;
         this.hypervisorStream = null;
-        this.agentStream = null;
+        this._agent = null;
         this.lastAgentEndpoint = null;
         this.lastPanicLength = null;
         this.volumeId = null;
@@ -155,13 +155,12 @@ class Instance extends EventEmitter {
     /**
      * Return an {@link Agent} connected to this instance. Calling this
      * method multiple times will reuse the same agent connection.
+     * @returns {Agent}
      */
     async agent() {
-        if (this.agentStream)
-            return this.agentStream.connect();
-
-        this.agentStream = new Agent(this);
-        return this.agentStream.connect();
+        if (!this._agent)
+            this._agent = await this.newAgent();
+        return this._agent;
     }
 
     async agentEndpoint() {
@@ -179,11 +178,12 @@ class Instance extends EventEmitter {
      * Create a new {@link Agent} connection to this instance. This is
      * useful for agent tasks that don't finish and thus consume the
      * connection, such as {@link Agent#crashes}.
+     * @returns {Agent}
      */
     async newAgent() {
-        await this._waitFor(() => !!this.info.agent);
-        let endpoint = this.project.api + '/agent/' + this.info.agent.info;
-        return (new Agent(this)).connect();
+        const agent = new Agent(this);
+        await agent.connect();
+        return agent;
     }
 
     /**
