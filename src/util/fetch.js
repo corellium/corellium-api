@@ -29,7 +29,7 @@ async function fetch(url, options) {
 
     let res;
     while (true) {
-        res = await pRetry(() => realFetch(url, options));
+        res = await pRetry(() => realFetch(url, options), {retries: 3});
         if (res.status == 429) {
             const retryAfter = res.headers.get('retry-after');
             await new Promise(resolve => setTimeout(resolve, retryAfter));
