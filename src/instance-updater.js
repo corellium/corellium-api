@@ -13,7 +13,7 @@ class InstanceUpdater {
         this.startUpdating();
     }
     remove(instance) {
-        this.instances.delete(instance);
+        this.instances.delete(instance.id);
     }
 
     async startUpdating() {
