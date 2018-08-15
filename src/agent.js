@@ -76,13 +76,6 @@ class Agent {
             }
         });
 
-        this.ws.on('error', err => {
-            this.pending.forEach(handler => {
-                handler(err);
-            });
-            this.pending = new Map();
-            console.error(err);
-        });
         this.ws.on('close', (code, reason) => {
             this.pending.forEach(handler => {
                 handler(new Error(`disconnected ${reason}`));
@@ -92,7 +85,18 @@ class Agent {
         });
 
         await new Promise((resolve, reject) => {
-            this.ws.once('open', resolve);
+            this.ws.once('open', () => {
+                this.ws.on('error', err => {
+                    this.pending.forEach(handler => {
+                        handler(err);
+                    });
+                    this.pending = new Map();
+                    console.error(err);
+                });
+
+                resolve();
+            });
+
             this.ws.once('error', reject);
         });
         this.connected = true;
