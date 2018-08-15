@@ -11,6 +11,7 @@ class HypervisorStream {
         this.timeout = null;
         this.connectPromise = null;
         this.connectResolve = null;
+        this.connectReject = null;
         this.reconnect();
         this.resetTimeout();
     }
@@ -20,8 +21,9 @@ class HypervisorStream {
             return;
 
         if (!this.connectPromise) {
-            this.connectPromise = new Promise(resolve => {
+            this.connectPromise = new Promise((resolve, reject) => {
                 this.connectResolve = resolve;
+                this.connectReject = reject;
             });
         }
 
@@ -44,6 +46,7 @@ class HypervisorStream {
             this.connectResolve();
             this.connectPromise = null;
             this.connectResolve = null;
+            this.connectReject = null;
         });
 
         this.ws.on('error', err => {
@@ -57,8 +60,15 @@ class HypervisorStream {
                 setTimeout(() => {
                     this.connectPromise = null;
                     this.connectResolve = null;
-                    this.reconnect();
-                    this.connectPromise.then(oldResolve);
+                    if (this.active) {
+                        this.connectReject = null;
+                        this.reconnect();
+                        if (this.connectPromise)
+                            this.connectPromise.then(oldResolve);
+                    } else {
+                        this.connectReject(err);
+                        this.connectReject = null;
+                    }
                 }, 1000);
             } else {
                 console.error(err);
