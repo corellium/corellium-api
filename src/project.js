@@ -27,7 +27,9 @@ class Project {
 
     async getToken() {
         const token = await this.token;
-        if (token && token.expiration > new Date())
+        
+        // If the token is more than 15 minutes from expiring, we don't need to refresh it.
+        if (token && token.expiration > new Date((new Date()).getTime() + 15 * 60 * 1000))
             return token.token;
 
         this.token = (async () => {
