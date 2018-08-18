@@ -38,7 +38,7 @@ class HypervisorStream {
                     this.pending.delete(id);
                 }
             } catch (err) {
-                console.error(err);
+                console.error('error in HypervisorStream message handler', err);
             }
         });
         
@@ -71,7 +71,7 @@ class HypervisorStream {
                     }
                 }, 1000);
             } else {
-                console.error(err);
+                console.error('HypervisorStream error', err);
                 this.disconnect();
             }
         });

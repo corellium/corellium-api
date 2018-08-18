@@ -72,7 +72,7 @@ class Agent {
                     });
                 }
             } catch (err) {
-                console.error(err);
+                console.error('error in agent message handler', err);
             }
         });
 
@@ -91,7 +91,7 @@ class Agent {
                         handler(err);
                     });
                     this.pending = new Map();
-                    console.error(err);
+                    console.error('error during agent connection', err);
                 });
 
                 resolve();
