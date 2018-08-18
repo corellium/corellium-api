@@ -1,6 +1,8 @@
 const WebSocket = require('ws');
 const stream = require('stream');
 
+let Sockets = new Set();
+
 /**
  * A connection to the agent running on an instance.
  *
@@ -50,8 +52,12 @@ class Agent {
     async _connect() {
         this.pending = new Map();
 
-        this.ws = new WebSocket(await this.instance.agentEndpoint());
-        this.ws.on('message', data => {
+        let ws = new WebSocket(await this.instance.agentEndpoint());
+
+        Sockets.add(ws); console.log('(open) num agent sockets = ', Sockets.size);
+        this.ws = ws;
+
+        ws.on('message', data => {
             try {
                 let message;
                 let id;
@@ -76,7 +82,7 @@ class Agent {
             }
         });
 
-        this.ws.on('close', (code, reason) => {
+        ws.on('close', (code, reason) => {
             this.pending.forEach(handler => {
                 handler(new Error(`disconnected ${reason}`));
             });
@@ -85,19 +91,40 @@ class Agent {
         });
 
         await new Promise((resolve, reject) => {
-            this.ws.once('open', () => {
-                this.ws.on('error', err => {
+            ws.once('open', () => {
+                ws.on('error', err => {
                     this.pending.forEach(handler => {
                         handler(err);
                     });
                     this.pending = new Map();
-                    console.error('error during agent connection', err);
+
+                    if (this.ws === ws) {
+                        this.disconnect();
+                    } else {
+                        try {
+                            ws.close()
+                        } catch (e) {}
+                        Sockets.delete(ws); console.log('(close) num agent sockets = ', Sockets.size);
+                    }
+
+                    console.error('error in agent socket', err);
                 });
 
                 resolve();
             });
 
-            this.ws.once('error', reject);
+            ws.once('error', err => {
+                if (this.ws === ws) {
+                    this.disconnect();
+                } else {
+                    try {
+                        ws.close()
+                    } catch (e) {}
+                    Sockets.delete(ws); console.log('(close) num agent sockets = ', Sockets.size);
+                }
+
+                reject(err);
+            });
         });
         this.connected = true;
     }
@@ -110,7 +137,11 @@ class Agent {
      */
     disconnect() {
         this.connected = false;
-        this.ws.close();
+        try {
+            this.ws.close();
+        } catch (e) {}
+        Sockets.delete(this.ws); console.log('(close) num agent sockets = ', Sockets.size);
+        this.ws = null;
     }
 
     /**

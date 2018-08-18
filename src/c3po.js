@@ -2,6 +2,8 @@ const WebSocket = require('ws');
 const HKDF = require('hkdf');
 const crypto = require('crypto');
 
+let Sockets = new Set();
+
 class HypervisorStream {
     constructor(endpoint) {
         this.endpoint = endpoint;
@@ -27,8 +29,12 @@ class HypervisorStream {
             });
         }
 
-        this.ws = new WebSocket(this.endpoint);
-        this.ws.on('message', data => {
+        let ws = new WebSocket(this.endpoint);
+
+        Sockets.add(ws); console.log('(open) num hypervisor sockets = ', Sockets.size);
+        this.ws = ws;
+
+        ws.on('message', data => {
             try {
                 let message = JSON.parse(data);
                 let id = message['id'];
@@ -42,20 +48,25 @@ class HypervisorStream {
             }
         });
         
-        this.ws.on('open', err => {
+        ws.on('open', err => {
             this.connectResolve();
             this.connectPromise = null;
             this.connectResolve = null;
             this.connectReject = null;
         });
 
-        this.ws.on('error', err => {
+        ws.on('error', err => {
             this.pending.forEach(handler => {
                 handler(err);
             });
             this.pending = new Map();
 
             if (this.connectResolve) {
+                try {
+                    ws.close()
+                } catch (e) {}
+                Sockets.delete(ws); console.log('(close) num hypervisor sockets = ', Sockets.size);
+
                 let oldResolve = this.connectResolve;
                 setTimeout(() => {
                     this.connectPromise = null;
@@ -76,13 +87,20 @@ class HypervisorStream {
             }
         });
         
-        this.ws.on('close', () => {
+        ws.on('close', () => {
             this.pending.forEach(handler => {
                 handler(new Error('disconnected'));
             });
             this.pending = new Map();
 
-            this.disconnect();
+            if (this.ws === ws) {
+                this.disconnect();
+            } else {
+                try {
+                    ws.close()
+                } catch (e) {}
+                Sockets.delete(ws); console.log('(close) num hypervisor sockets = ', Sockets.size);
+            }
         });
     }
 
@@ -101,6 +119,8 @@ class HypervisorStream {
         
         if (this.timeout)
             clearTimeout(this.timeout);
+        Sockets.delete(this.ws); console.log('(close) num hypervisor sockets = ', Sockets.size);
+        this.ws = null;
     }
 
     command(message) {
