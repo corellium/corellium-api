@@ -195,9 +195,7 @@ class Instance extends EventEmitter {
      * @returns {Agent}
      */
     async newAgent() {
-        const agent = new Agent(this);
-        await agent.connect();
-        return agent;
+        return new Agent(this);
     }
 
     /**
