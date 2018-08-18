@@ -92,6 +92,16 @@ class Agent {
 
         await new Promise((resolve, reject) => {
             ws.once('open', () => {
+                if (this.ws !== ws) {
+                    try {
+                        ws.close()
+                    } catch (e) {}
+                    Sockets.delete(ws); console.log('(close) num agent sockets = ', Sockets.size);
+
+                    reject(new Error('connection cancelled'));
+                    return;
+                }
+
                 ws.on('error', err => {
                     this.pending.forEach(handler => {
                         handler(err);
@@ -137,11 +147,13 @@ class Agent {
      */
     disconnect() {
         this.connected = false;
-        try {
-            this.ws.close();
-        } catch (e) {}
-        Sockets.delete(this.ws); console.log('(close) num agent sockets = ', Sockets.size);
-        this.ws = null;
+        if (this.ws) {
+            try {
+                this.ws.close();
+            } catch (e) {}
+            Sockets.delete(this.ws); console.log('(close) num agent sockets = ', Sockets.size);
+            this.ws = null;
+        }
     }
 
     /**
