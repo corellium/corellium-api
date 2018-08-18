@@ -38,7 +38,7 @@ class InstanceUpdater {
                 }
             } catch (e) {
                 // this is a background task, so the only sane way to handle an exception is to log it
-                console.error('error asking for instance update', this.project, e.stack);
+                console.error('error asking for instance update', this.project.id, e.stack);
             }
             await new Promise(resolve => setTimeout(resolve, 5000));
         }
