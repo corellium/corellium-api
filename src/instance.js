@@ -185,7 +185,7 @@ class Instance extends EventEmitter {
         // We want to avoid a situation where we were not listening for updates, and the info we have is stale (from last boot),
         // and the instance has started again but this time with no agent info yet or new agent info. Therefore, we can use
         // cached if only if it's recent.
-        if (((new Date()).getTime() - this.infoDate.getTime()) > this.project.updater.updateInterval)
+        if (((new Date()).getTime() - this.infoDate.getTime()) > (2 * this.project.updater.updateInterval))
             await this.update();
 
         return this.project.api + '/agent/' + this.info.agent.info;
