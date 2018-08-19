@@ -52,6 +52,8 @@ class Agent {
 
             this.connectPromise = null;
         })();
+
+        return this.connectPromise;
     }
 
     async _connect() {
