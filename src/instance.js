@@ -17,13 +17,13 @@ class Instance extends EventEmitter {
 
         this.project = project;
         this.info = info;
+        this.infoDate = new Date();
         this.id = info.id;
         this.updating = false;
 
         this.hash = null;
         this.hypervisorStream = null;
         this._agent = null;
-        this.lastAgentEndpoint = null;
         this.lastPanicLength = null;
         this.volumeId = null;
 
@@ -178,14 +178,17 @@ class Instance extends EventEmitter {
     }
 
     async agentEndpoint() {
-        await this._waitFor(() => !!this.info.agent);
-        if (this.lastAgentEndpoint) {
-            // We already have an agentEndpoint, we probably should refresh it.
-            await this.update();
-        }
+        // Extra while loop to avoid races where info.agent gets unset again before we wake back up.
+        while (!this.info.agent)
+            await this._waitFor(() => !!this.info.agent);
 
-        this.lastAgentEndpoint = this.project.api + '/agent/' + this.info.agent.info;
-        return this.lastAgentEndpoint;
+        // We want to avoid a situation where we were not listening for updates, and the info we have is stale (from last boot),
+        // and the instance has started again but this time with no agent info yet or new agent info. Therefore, we can use
+        // cached if only if it's recent.
+        if (((new Date()).getTime() - this.infoDate.getTime()) > this.project.updater.updateInterval)
+            await this.update();
+
+        return this.project.api + '/agent/' + this.info.agent.info;
     }
 
     /**
@@ -266,6 +269,7 @@ class Instance extends EventEmitter {
     }
 
     receiveUpdate(info) {
+        this.infoDate = new Date();
         // one way of checking object equality
         if (JSON.stringify(info) != JSON.stringify(this.info)) {
             this.info = info;

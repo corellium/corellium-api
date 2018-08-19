@@ -5,6 +5,7 @@ class InstanceUpdater {
         this.project = project;
         this.instances = new Map();
         this.updating = false;
+        this.updateInterval = 5000;
     }
 
     add(instance) {
@@ -40,7 +41,7 @@ class InstanceUpdater {
                 // this is a background task, so the only sane way to handle an exception is to log it
                 console.error('error asking for instance update', this.project.id, e.stack);
             }
-            await new Promise(resolve => setTimeout(resolve, 5000));
+            await new Promise(resolve => setTimeout(resolve, this.updateInterval));
         }
 
         this.updating = false;
