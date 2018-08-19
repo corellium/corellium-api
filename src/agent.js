@@ -36,18 +36,22 @@ class Agent {
     async reconnect() {
         if (this.connected)
             this.disconnect();
-        while (this.pendingConnect) {
-            if (this.connectPromise === null)
-                this.connectPromise = this._connect();
-            try {
-                await this.connectPromise;
-                break;
-            } catch (e) {
-                await new Promise(resolve => setTimeout(resolve, 1000));
-            } finally {
-                this.connectPromise = null;
+
+        if (this.connectPromise)
+            return this.connectPromise;
+
+        this.connectPromise = (async () => {
+            while (this.pendingConnect) {
+                try {
+                    await this._connect();
+                    break;
+                } catch (e) {
+                    await new Promise(resolve => setTimeout(resolve, 1000));
+                }
             }
-        }
+
+            this.connectPromise = null;
+        })();
     }
 
     async _connect() {
@@ -94,7 +98,7 @@ class Agent {
                 handler(new Error(`disconnected ${reason}`));
             });
             this.pending = new Map();
-            this.disconnect();
+            this._disconnect();
         });
 
         await new Promise((resolve, reject) => {
@@ -116,7 +120,7 @@ class Agent {
                     this.pending = new Map();
 
                     if (this.ws === ws) {
-                        this.disconnect();
+                        this._disconnect();
                     } else {
                         try {
                             ws.close()
@@ -132,7 +136,7 @@ class Agent {
 
             ws.once('error', err => {
                 if (this.ws === ws) {
-                    this.disconnect();
+                    this._disconnect();
                 } else {
                     try {
                         ws.close()
@@ -153,8 +157,12 @@ class Agent {
      * needed anymore.
      */
     disconnect() {
-        this.connected = false;
         this.pendingConnect = false;
+        this._disconnect();
+    }
+
+    _disconnect() {
+        this.connected = false;
         if (this.ws) {
             try {
                 this.ws.close();
