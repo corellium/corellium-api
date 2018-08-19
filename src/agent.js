@@ -24,6 +24,7 @@ class Agent {
      * @private
      */
     async connect() {
+        this.pendingConnect = true;
         if (!this.connected)
             await this.reconnect();
     }
@@ -35,7 +36,7 @@ class Agent {
     async reconnect() {
         if (this.connected)
             this.disconnect();
-        while (true) {
+        while (this.pendingConnect) {
             if (this.connectPromise === null)
                 this.connectPromise = this._connect();
             try {
@@ -52,7 +53,13 @@ class Agent {
     async _connect() {
         this.pending = new Map();
 
-        let ws = new WebSocket(await this.instance.agentEndpoint());
+        const endpoint = await this.instance.agentEndpoint();
+        
+        // Detect if a disconnection happened before we were able to get the agent endpoint.
+        if (!this.pendingConnect)
+            throw new Error('connection cancelled');
+
+        let ws = new WebSocket(endpoint);
 
         Sockets.add(ws); console.log('(open) num agent sockets = ', Sockets.size);
         this.ws = ws;
@@ -147,6 +154,7 @@ class Agent {
      */
     disconnect() {
         this.connected = false;
+        this.pendingConnect = false;
         if (this.ws) {
             try {
                 this.ws.close();
