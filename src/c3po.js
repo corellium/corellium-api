@@ -115,12 +115,14 @@ class HypervisorStream {
 
     disconnect() {
         this.active = false;
-        this.ws.close();
-        
         if (this.timeout)
             clearTimeout(this.timeout);
-        Sockets.delete(this.ws); console.log('(close) num hypervisor sockets = ', Sockets.size);
-        this.ws = null;
+
+        if (this.ws) {
+            this.ws.close();
+            Sockets.delete(this.ws); console.log('(close) num hypervisor sockets = ', Sockets.size);
+            this.ws = null;
+        }
     }
 
     command(message) {
