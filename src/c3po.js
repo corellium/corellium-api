@@ -2,8 +2,6 @@ const WebSocket = require('ws');
 const HKDF = require('hkdf');
 const crypto = require('crypto');
 
-let Sockets = new Set();
-
 class HypervisorStream {
     constructor(endpoint) {
         this.endpoint = endpoint;
@@ -31,7 +29,6 @@ class HypervisorStream {
 
         let ws = new WebSocket(this.endpoint);
 
-        Sockets.add(ws); console.log('(open) num hypervisor sockets = ', Sockets.size);
         this.ws = ws;
 
         ws.on('message', data => {
@@ -65,7 +62,6 @@ class HypervisorStream {
                 try {
                     ws.close()
                 } catch (e) {}
-                Sockets.delete(ws); console.log('(close) num hypervisor sockets = ', Sockets.size);
 
                 let oldResolve = this.connectResolve;
                 setTimeout(() => {
@@ -99,7 +95,6 @@ class HypervisorStream {
                 try {
                     ws.close()
                 } catch (e) {}
-                Sockets.delete(ws); console.log('(close) num hypervisor sockets = ', Sockets.size);
             }
         });
     }
@@ -120,7 +115,6 @@ class HypervisorStream {
 
         if (this.ws) {
             this.ws.close();
-            Sockets.delete(this.ws); console.log('(close) num hypervisor sockets = ', Sockets.size);
             this.ws = null;
         }
     }

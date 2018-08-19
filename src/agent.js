@@ -1,8 +1,6 @@
 const WebSocket = require('ws');
 const stream = require('stream');
 
-let Sockets = new Set();
-
 /**
  * A connection to the agent running on an instance.
  *
@@ -67,7 +65,6 @@ class Agent {
 
         let ws = new WebSocket(endpoint);
 
-        Sockets.add(ws); console.log('(open) num agent sockets = ', Sockets.size);
         this.ws = ws;
 
         ws.on('message', data => {
@@ -109,7 +106,6 @@ class Agent {
                     try {
                         ws.close()
                     } catch (e) {}
-                    Sockets.delete(ws); console.log('(close) num agent sockets = ', Sockets.size);
 
                     reject(new Error('connection cancelled'));
                     return;
@@ -127,7 +123,6 @@ class Agent {
                         try {
                             ws.close()
                         } catch (e) {}
-                        Sockets.delete(ws); console.log('(close) num agent sockets = ', Sockets.size);
                     }
 
                     console.error('error in agent socket', err);
@@ -143,7 +138,6 @@ class Agent {
                     try {
                         ws.close()
                     } catch (e) {}
-                    Sockets.delete(ws); console.log('(close) num agent sockets = ', Sockets.size);
                 }
 
                 reject(err);
@@ -169,7 +163,6 @@ class Agent {
             try {
                 this.ws.close();
             } catch (e) {}
-            Sockets.delete(this.ws); console.log('(close) num agent sockets = ', Sockets.size);
             this.ws = null;
         }
     }
