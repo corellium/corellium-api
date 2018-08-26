@@ -30,7 +30,7 @@ async function launch(instance, bundleID) {
 async function main() {
     // Configure the API.
     let corellium = new Corellium({
-        endpoint: 'https://pdev2.corellium.com',
+        endpoint: 'https://client.corellium.com',
         username: 'admin',
         password: 'password'
     });

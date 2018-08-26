@@ -17,7 +17,7 @@ Sets up a new Corellium endpoint to use. Accepted options are:
 Example:
 ```javascript=
 let corellium = new Corellium({
-    endpoint: 'https://pdev2.corellium.com',
+    endpoint: 'https://client.corellium.com',
     username: 'admin',
     password: 'password'
 });
