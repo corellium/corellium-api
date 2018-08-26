@@ -3,7 +3,7 @@ const {Corellium} = require('./src/corellium');
 async function main() {
     // Configure the API.
     let corellium = new Corellium({
-        endpoint: 'https://pdev2.corellium.com',
+        endpoint: 'https://client.corellium.com',
         username: 'admin',
         password: 'password'
     });
@@ -16,7 +16,7 @@ async function main() {
     // Get the list of projects.
     let projects = await corellium.projects();
 
-    // Find the project called "David's Project".
+    // Find the project called "Default Project".
     let project = projects.find(project => project.name === "Default Project");
 
     // Get the instances in the project.
@@ -29,8 +29,8 @@ async function main() {
         console.log('Creating new instance...');
         instance = await project.createInstance({
             'name': 'Test Device',
-            'flavor': 'iphone7',
-            'os': '11.3.1',
+            'flavor': 'iphone6',
+            'os': '11.0',
             'patches': 'jailbroken'
         });
 

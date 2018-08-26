@@ -1,4 +1,4 @@
-const {Corellium} = require('./src/corellium');
+const {Corellium, I} = require('./src/corellium');
 const fs = require('fs');
 
 function versionParse(version) {
@@ -43,7 +43,7 @@ async function launch(instance, bundleID) {
             break;
         } catch (e) {
             if (e.name === 'DeviceLocked') {
-                await instance.buttons.pressAndRelease('home');
+                await instance.sendInput(I.pressRelease('home'));
                 continue;
             }
 
@@ -89,10 +89,7 @@ async function main() {
     });
 
     // Get how many CPUs we're currently using.
-    let cpusUsed = 0;
-    instances.forEach(instance => {
-        cpusUsed += supported[instance.flavor].quotas.cpus;
-    });
+    let cpusUsed = project.quotasUsed.cpus;
 
     console.log('Used: ' + cpusUsed + '/' + project.quotas.cpus);
 
@@ -109,6 +106,7 @@ async function main() {
 
     // Generate a list of virtual devices to start by looping through each model and taking the latest version we haven't started yet, until we run out of cpus.
     while(cpusUsed < project.quotas.cpus) {
+        let added = 0;
         for (let flavorId of Object.keys(supported)) {
             let flavor = supported[flavorId];
             let versions = sortedVersions.get(flavorId);
@@ -126,7 +124,11 @@ async function main() {
                 continue;
 
             cpusUsed += flavor.quotas.cpus;
+            ++added;
         }
+
+        if (added === 0)
+            break;
     }
 
     for (let vm of toDeploy) {
