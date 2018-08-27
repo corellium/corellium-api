@@ -1,6 +1,5 @@
 const {fetchApi} = require('./util/fetch');
 const EventEmitter = require('events');
-const c3po = require('./c3po');
 const websocket = require('websocket-stream');
 const Snapshot = require('./snapshot');
 const Agent = require('./agent');
@@ -108,62 +107,18 @@ class Instance extends EventEmitter {
      * Returns a dump of this instance's serial port log.
      */
     async consoleLog() {
-        let hypervisor = await this.newHypervisor();
-        try {
-            let results = await hypervisor.command(await hypervisor.signedCommand(this.id, Buffer.from(this.info.key, 'hex'), {
-                'type': 'console',
-                'op': 'get'
-            }));
-            return results['log'];
-        } finally {
-            hypervisor.disconnect();
-        }
+        const response = await this._fetch('/consoleLog', {response: 'raw'});
+        return await response.text();
     }
 
     /** Return an array of recorded kernel panics. */
     async panics() {
-        let hypervisor = await this.newHypervisor();
-        try {
-            let results = await hypervisor.command(await hypervisor.signedCommand(this.id, Buffer.from(this.info.key, 'hex'), {
-                'type': 'panic',
-                'op': 'get'
-            }));
-            return results['panics'];
-        } finally {
-            hypervisor.disconnect();
-        }
+        return await this._fetch('/panics');
     }
 
     /** Clear the recorded kernel panics of this instance. */
     async clearPanics() {
-        let hypervisor = await this.newHypervisor();
-        return hypervisor.command(await hypervisor.signedCommand(this.id, Buffer.from(this.info.key, 'hex'), {
-            'type': 'panic',
-            'op': 'clear'
-        }));
-    }
-
-    async newHypervisor() {
-        await this._waitFor(() => !!this.info.c3po);
-        let endpoint = this.project.api + '/c3po/' + this.info.c3po;
-        return new c3po.HypervisorStream(endpoint);
-    }
-
-    async hypervisor() {
-        await this._waitFor(() => !!this.info.c3po);
-
-        let endpoint = this.project.api + '/c3po/' + this.info.c3po;
-
-        if (this.hypervisorStream && this.hypervisorStream.active) {
-            if (endpoint === this.hypervisorStream.endpoint)
-                return this.hypervisorStream;
-
-            this.hypervisorStream.disconnect();
-            this.hypervisorStream = null;
-        }
-
-        this.hypervisorStream = new c3po.HypervisorStream(endpoint);
-        return this.hypervisorStream;
+        await this._fetch('/panics', {method: 'DELETE'});
     }
 
     /**
