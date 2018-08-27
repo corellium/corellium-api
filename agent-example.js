@@ -12,7 +12,7 @@ async function launch(instance, bundleID) {
             break;
         } catch (e) {
             if (e.name === 'DeviceLocked') {
-                await instance.buttons.pressAndRelease('home');
+                await instance.sendInput(I.pressRelease('home'));
                 continue;
             }
 
