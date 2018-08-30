@@ -284,6 +284,12 @@ class Agent {
     }
 
     /**
+     * A callback for file upload progress messages. Can be passed to {@link Agent#upload} and {@link Agent#installFile}
+     * @callback Agent~uploadProgressCallback
+     * @param {number} bytes - The number of bytes that has been uploaded.
+     */
+
+    /**
      * A callback for progress messages. Can be passed to {@link Agent#install}, {@link Agent#installFile}, {@link Agent#uninstall}.
      * @callback Agent~progressCallback
      * @param {number} progress - The progress, as a number between 0 and 1.
@@ -349,14 +355,20 @@ class Agent {
      * Reads from the specified stream and uploads the data to a file on the VM.
      * @param {string} path - The file path to upload the data to.
      * @param {ReadableStream} stream - The stream to read the file data from.
+     * @param {Agent~uploadProgressCallback} progress - The callback for install progress information.
      * @example
      * const tmpName = await agent.tempFile();
      * await agent.upload(tmpName, fs.createReadStream('test.ipa'));
      */
-    async upload(path, stream) {
+    async upload(path, stream, progress) {
         await this.command('file', 'upload', {path}, undefined, (id) => {
+            let total = 0;
+
             stream.on('data', data => {
                 this.sendBinaryData(id, data);
+                total += data.length;
+                if (progress)
+                    progress(total);
             });
             stream.on('end', () => {
                 this.sendBinaryData(id);
@@ -397,14 +409,15 @@ class Agent {
      * using {@link Agent#upload}, and installs it using {@link Agent#install}.
      * @param {ReadableStream} stream - The app to install.
      * @param {Agent~progressCallback} progress - The callback for install progress information.
+     * @param {Agent~uploadProgressCallback} progress - The callback for file upload progress information.
      * @example
      * await agent.installFile(fs.createReadStream('test.ipa'), (progress, status) => {
      *     console.log(progress, status);
      * });
      */
-    async installFile(stream, progress) {
+    async installFile(stream, progress, uploadProgress) {
         let path = await this.tempFile();
-        await this.upload(path, stream);
+        await this.upload(path, stream, uploadProgress);
         await this.install(path, progress);
     }
 
