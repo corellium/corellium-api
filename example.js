@@ -3,9 +3,9 @@ const {Corellium} = require('./src/corellium');
 async function main() {
     // Configure the API.
     let corellium = new Corellium({
-        endpoint: 'https://client.corellium.com',
+        endpoint: 'https://legion.corellium.com',
         username: 'admin',
-        password: 'password'
+        password: 'dorswsap'
     });
 
     console.log('Logging in...');
@@ -17,71 +17,23 @@ async function main() {
     let projects = await corellium.projects();
 
     // Find the project called "Default Project".
-    let project = projects.find(project => project.name === "Default Project");
+    let project = projects.find(project => project.name === "Testing");
 
     // Get the instances in the project.
     console.log('Getting instances...');
     let instances = await project.instances();
 
-    let instance;
-    if (instances.length === 0) {
-        // If there's currently no instance, create one!
-        console.log('Creating new instance...');
-        instance = await project.createInstance({
-            'name': 'Test Device',
-            'flavor': 'iphone6',
-            'os': '11.0',
-            'patches': 'jailbroken'
-        });
+    let instance = instances.find(instance => instance.id === "fc5926e8-a41a-43b6-98f2-4d0d8e3de0fa");
 
-        // Wait for it to finish restoring.
-        console.log('Waiting for device to finish restoring...');
-        await instance.finishRestore();
-    } else {
-        // Use the first instance as our example.
-        instance = instances[0];
-    }
+    console.log('Got instance');
+    let agent = await instance.newAgent();
+    console.log('Got agent');
+    await agent.ready();
+    console.log('Agent ready');
 
-    console.log('Got instance: ' + instance.id);
-    // The instance's console is accessible as a node stream and can be piped to stdout.
-    //(await instance.console()).pipe(process.stdout);
-
-    // Instances have the 'panic' event that can be listened for.
-    instance.on('panic', async () => {
-        console.log('Panic detected!');
-
-        // If there's a panic, get the panic log.
-        console.log(await instance.panics());
-
-        // Download the console log.
-        console.log(await instance.consoleLog());
-
-        // Clear the panic log.
-        await instance.clearPanics();
-
-        // Reboot the instance.
-        await instance.reboot();
-    });
-
-    instance.on('change', async () => {
-        // You can listen for change events on instances. This also demonstrates publicly accessible properties on isntances.
-        console.log(instance.id, instance.name, instance.state);
-    });
+    await agent.disconnect();
 
     return;
-
-    // If there's a freshly restored snapshot...
-    console.log('Getting snapshots...');
-    let snapshots = await instance.snapshots();
-    let freshSnapshot = snapshots.find(snapshot => snapshot.fresh);
-    if (freshSnapshot) {
-        // Restore to the freshly restored snapshot.
-        console.log("Restoring to freshly restored snapshot...");
-        await freshSnapshot.restore();
-    }
-
-    console.log("Taking new snapshot...");
-    console.log('new snapshot', await instance.takeSnapshot('New snapshot'));
 }
 
 main().catch(err => {

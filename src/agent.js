@@ -15,6 +15,9 @@ class Agent {
         this.connected = false;
         this.connectPromise = null;
         this.id = 0;
+        this._keepAliveTimeout = null;
+        this._lastPong = null;
+        this._lastPing = null;
     }
 
     /**
@@ -128,6 +131,7 @@ class Agent {
                     console.error('error in agent socket', err);
                 });
 
+                this._startKeepAlive();
                 resolve();
             });
 
@@ -146,6 +150,47 @@ class Agent {
         this.connected = true;
     }
 
+    _startKeepAlive() {
+        let ws = this.ws;
+
+        ws.ping();
+        
+        this._keepAliveTimeout = setTimeout(() => {
+            if (this.ws !== ws) {
+                try {
+                    ws.close()
+                } catch (e) {}
+                return;
+            }
+
+            let err = new Error('Agent did not get a response to pong in 10 seconds, disconnecting.');
+            console.error('Agent did not get a response to pong in 10 seconds, disconnecting.');
+
+            this.pending.forEach(handler => {
+                handler(err);
+            });
+            this.pending = new Map();
+
+            this._disconnect();
+        }, 10000);
+
+        ws.once('pong', () => {
+            if (ws !== this.ws)
+                return;
+
+            clearTimeout(this._keepAliveTimeout);
+            this._keepAliveTimeout = null;
+            this._startKeepAlive();
+        });
+    }
+
+    _stopKeepAlive() {
+        if (this._keepAliveTimeout) {
+            clearTimeout(this._keepAliveTimeout);
+            this._keepAliveTimeout = null;
+        }
+    }
+
     /**
      * Disconnect an agent connection. This is usually only required if a new
      * agent connection has been created and is no longer needed, for example
@@ -159,6 +204,7 @@ class Agent {
 
     _disconnect() {
         this.connected = false;
+        this._stopKeepAlive();
         if (this.ws) {
             try {
                 this.ws.close();
