@@ -131,7 +131,6 @@ class Agent {
                     console.error('error in agent socket', err);
                 });
 
-                this._startKeepAlive();
                 resolve();
             });
 
@@ -147,10 +146,15 @@ class Agent {
                 reject(err);
             });
         });
+
         this.connected = true;
+        this._startKeepAlive();
     }
 
     _startKeepAlive() {
+        if (!this.connected)
+            return;
+
         let ws = this.ws;
 
         ws.ping();
@@ -174,12 +178,15 @@ class Agent {
             this._disconnect();
         }, 10000);
 
-        ws.once('pong', () => {
+        ws.once('pong', async () => {
             if (ws !== this.ws)
                 return;
 
             clearTimeout(this._keepAliveTimeout);
             this._keepAliveTimeout = null;
+
+            await new Promise(resolve => setTimeout(resolve, 10000));
+
             this._startKeepAlive();
         });
     }
