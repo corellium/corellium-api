@@ -149,7 +149,7 @@ class Input {
      * @param {number} [delay=100] The number of milliseconds to hold down the touch.
      */
     tap(x, y, delay=100) {
-        this.touch(x, y).delay(delay).touchUp();
+        return this.touch(x, y).delay(delay).touchUp();
     }
 }
 
