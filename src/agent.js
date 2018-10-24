@@ -534,6 +534,14 @@ class Agent {
     async unlockDevice() {
         await this.command('system', 'unlock');
     }
+
+    async acquireDisableAutolockAssertion() {
+        await this.command('system', 'acquireDisableAutolockAssertion');
+    }
+
+    async releaseDisableAutolockAssertion() {
+        await this.command('system', 'releaseDisableAutolockAssertion');
+    }
 }
 
 module.exports = Agent;
