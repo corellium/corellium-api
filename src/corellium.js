@@ -66,7 +66,7 @@ class Corellium {
      * @returns {Project[]}
      */
     async projects() {
-        const projects = await fetchApi(this, '/projects');
+        const projects = await fetchApi(this, '/projects?ids_only=1');
         return await Promise.all(projects.map(project => this.getProject(project.id)));
     }
 
