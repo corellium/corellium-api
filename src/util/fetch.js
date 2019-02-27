@@ -7,9 +7,10 @@ const realFetch = require('cross-fetch');
 const pRetry = require('p-retry');
 
 class CorelliumError extends Error {
-    constructor(message, code) {
-        super(message);
+    constructor(error, code) {
+        super(error.error);
         this.name = this.constructor.name;
+        this.field = error.field;
         this.code = code;
     }
 }
@@ -42,7 +43,7 @@ async function fetch(url, options) {
         return;
     if (res.status >= 400 && res.status < 500) {
         const body = await res.json();
-        throw new CorelliumError(body.error, res.status);
+        throw new CorelliumError(body, res.status);
     } else if (res.status >= 500) {
         throw new Error(`${res.status} ${res.statusText}`);
     }
