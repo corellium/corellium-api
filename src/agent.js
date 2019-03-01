@@ -542,6 +542,14 @@ class Agent {
     async releaseDisableAutolockAssertion() {
         await this.command('system', 'releaseDisableAutolockAssertion');
     }
+
+    async connectToWifi() {
+        await this.command('wifi', 'connect');
+    }
+
+    async disconnectFromWifi() {
+        await this.command('wifi', 'disconnect');
+    }
 }
 
 module.exports = Agent;
