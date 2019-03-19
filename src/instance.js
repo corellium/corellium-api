@@ -67,6 +67,13 @@ class Instance extends EventEmitter {
     }
 
     /**
+     * The instance type, such as `ios`.
+     */
+    get type() {
+        return this.info.type;
+    }
+
+    /**
      * Rename an instance.
      * @param {string} name - The new name of the instance.
      * @example <caption>Renaming the first instance named `foo` to `bar`</caption>
