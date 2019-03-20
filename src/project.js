@@ -1,6 +1,7 @@
 const {fetch, fetchApi} = require('./util/fetch');
 const Instance = require('./instance');
 const InstanceUpdater = require('./instance-updater');
+const uuidv4 = require('uuid/v4');
 
 /**
  * Instances of this class are returned from {@link Corellium#projects}, {@link
@@ -98,6 +99,24 @@ class Project {
             json: options,
         });
         return await this.getInstance(id);
+    }
+
+    /**
+     * Get the VPN configuration to connect to the project network. This is only
+     * available for cloud. At least one instance must be on in the project.
+     *
+     * @param {string} type -       Could be either "ovpn" or "tblk" to select between OpenVPN and TunnelBlick configuration formats.
+     *                              TunnelBlick files are delivered as a ZIP file and OpenVPN configuration is just a text file.
+     * @param {string} clientUUID - An arbitrary UUID to uniquely associate this VPN configuration with so it can be later identified
+     *                              in a list of connected clients. Optional.
+     * @returns {Buffer}
+     */
+    async vpnConfig(type = 'ovpn', clientUUID) {
+        if (!clientUUID)
+            clientUUID = uuidv4();
+
+        const response = await fetchApi(this, `/projects/${this.id}/vpn-configs/${clientUUID}.${type}`, {response: 'raw'});
+        return await response.buffer();
     }
 
     /**
