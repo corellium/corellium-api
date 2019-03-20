@@ -74,6 +74,18 @@ class Instance extends EventEmitter {
     }
 
     /**
+     * The pending task that is being requested by the user and is being executed by the backend.
+     * This field is null when no tasks are pending. The returned object has two fields: name and options.
+     *
+     * Current options for name are start, stop, pause, unpause, snapshot, revert.
+     * For start and revert, options.bootOptions contains the boot options the instance is to be started with.
+     *
+     */
+    get userTask() {
+        return this.info.userTask;
+    }
+
+    /**
      * Rename an instance.
      * @param {string} name - The new name of the instance.
      * @example <caption>Renaming the first instance named `foo` to `bar`</caption>
