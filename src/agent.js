@@ -337,6 +337,15 @@ class Agent {
     }
 
     /**
+     * Gets information about the file at the specified path. Fields are atime, mtime, ctime (in seconds after the epoch), size, mode (see mode_t in man 2 stat), uid, gid. If the path specified is a directory, an entries field will be present with
+     * the same structure (and an additional name field) for each immediate child of the directory.
+     */
+    async stat(path) {
+        const response = await this.command('file', 'stat', {path});
+        return response.stat;
+    }
+
+    /**
      * A callback for file upload progress messages. Can be passed to {@link Agent#upload} and {@link Agent#installFile}
      * @callback Agent~uploadProgressCallback
      * @param {number} bytes - The number of bytes that has been uploaded.
