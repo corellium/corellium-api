@@ -493,6 +493,16 @@ class Agent {
     }
 
     /**
+     * Change file attributes of the file at the specified path on the VM's filesystem.
+     * @param {string} path - The path of the file on the VM's filesystem to delete.
+     * @param {Object} attributes - An object whose members and values are the file attributes to change and what to change them to respectively. File attributes path, mode, uid and gid are supported.
+     */
+    async changeFileAttributes(path, attributes) {
+        const response = await this.command('file', 'modify', {path, attributes});
+        return response;
+    }
+
+    /**
      * Subscribe to crash events for the app with the given bundle ID. The callback will be called as soon as the agent finds a new crash log.
      *
      * The callback takes two parameters:
