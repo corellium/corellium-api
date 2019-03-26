@@ -25,7 +25,13 @@ class InstanceUpdater {
         while (this.instances.size != 0) {
             try {
                 const ids = [...this.instances.keys()];
-                const infos = await fetchApi(this.project, `/instances?id=${ids.join(',')}`);
+                let url;
+                if (ids.length < 100)
+                    url = `/instances?id=${ids.join(',')}`;
+                else
+                    url = `/instances`;
+
+                const infos = await fetchApi(this.project, url);
                 for (const info of infos) {
                     if (this.instances.has(info.id))
                         this.instances.get(info.id).receiveUpdate(info);
