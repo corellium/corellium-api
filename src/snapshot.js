@@ -8,8 +8,17 @@
 class Snapshot {
     constructor(instance, snap) {
         this.instance = instance;
+        this.receiveUpdate(snap);
+    }
+
+    async update() {
+        this.receiveUpdate(await this._fetch(''));
+    }
+
+    receiveUpdate(snap) {
         this.id = snap.id;
         this.name = snap.name;
+        this.status = snap.status;
         this.created = new Date(snap.created);
         this.fresh = snap.fresh;
     }
@@ -25,7 +34,7 @@ class Snapshot {
      * }
      */
     async rename(name) {
-        await this._fetch('', {method: 'POST', json: {name}});
+        await this._fetch('', {method: 'PATCH', json: {name}});
     }
 
     /**
