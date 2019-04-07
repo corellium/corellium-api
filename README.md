@@ -150,7 +150,7 @@ Creates a new instance with the given options. The following options are support
 Example:
 ```javascript=
 // create instance
-instance = await project.createInstance({
+let instance = await project.createInstance({
     'name': 'Test Device',
     'flavor': 'iphonex',
     'os': '11.3.1'
