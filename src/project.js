@@ -119,16 +119,43 @@ class Project {
         return await response.buffer();
     }
 
+    /** Destroy this project. */
+    async destroy() {
+        return await fetchApi(this, `/projects/${this.id}`, {
+            method: 'DELETE'
+        });
+    }
+
     /**
      * The project quotas.
-     * @property {number} cpus - Number of avilable CPU cores
+     * @property {number} cores - Number of avilable CPU cores
      */
     get quotas() {
         return this.info.quotas;
     }
+
+    set quotas(quotas) {
+        setQuotas(quotas)
+    }
+
+    /**
+     * Sets the project quotas. Only the cores property is currently respected.
+     */
+    async setQuotas(quotas) {
+        this.info.quotas = Object.assign({}, this.info.quotas, quotas);
+        await fetchApi(this, `/projects/${this.id}`, {
+            method: 'PATCH',
+            json: {
+                quotas: {
+                    cores: quotas.cores || quotas.cpus
+                }
+            }
+        });
+    }
+
     /**
      * How much of the project's quotas are currently used. To ensure this information is up to date, call {@link Project#refresh()} first.
-     * @property {number} cpus - Number of used CPU cores
+     * @property {number} cores - Number of used CPU cores
      */
     get quotasUsed() {
         return this.info.quotasUsed;

@@ -81,6 +81,23 @@ class Corellium {
     }
 
     /**
+     * Creates a {@link Project} with the given name {@link Color} and {@link ProjectSettings}.
+     * @returns {Project}
+     */
+    async createProject(name, color = 1, settings = {version: 1, 'internet-access': true}) {
+        const response = await fetchApi(this, '/projects', {
+            method: 'POST',
+            json: {
+                name,
+                color,
+                settings
+            }
+        });
+
+        return await this.getProject(response.id);
+    }
+
+    /**
      * Returns the {@link Project} with the given name. If the project doesn't
      * exist, returns undefined.
      * @returns {Project}
