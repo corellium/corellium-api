@@ -165,6 +165,25 @@ class Project {
     get name() {
         return this.info.name;
     }
+
+    /**
+     * Returns a list of {@link Role}s associated with this project, showing who has permissions over this project.
+     *
+     * This function is only available to domain and project administrators.
+     */
+    async roles() {
+        const roles = await this.client.roles();
+        return roles.get(this.id);
+    }
+
+    /**
+     * Give permissions tho this project for a {@link Team} or a {@link User} (adds a {@link Role}).
+     *
+     * This function is only available to domain and project administrators.
+     */
+    async createRole(grantee, type = 'user') {
+        await this.client.createRole(this.id, grantee, type);
+    }
 }
 
 module.exports = Project;

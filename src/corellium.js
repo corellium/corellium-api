@@ -1,5 +1,8 @@
 const {fetch, fetchApi, CorelliumError} = require('./util/fetch');
 const Project = require('./project');
+const Team = require('./team');
+const User = require('./user');
+const Role = require('./role');
 const {I} = require('./input');
 
 /**
@@ -24,6 +27,7 @@ class Corellium {
         this.api = options.endpoint + '/api/v1';
         this.token = null;
         this.supportedDevices = null;
+        this._teams = null;
     }
 
     async getToken() {
@@ -68,6 +72,135 @@ class Corellium {
     async projects() {
         const projects = await fetchApi(this, '/projects?ids_only=1');
         return await Promise.all(projects.map(project => this.getProject(project.id)));
+    }
+
+    /**
+     * Returns teams and users belonging to the domain.
+     *
+     * This function is only available to administrators.
+     */
+    async getTeamsAndUsers() {
+        const teams = this._teams = new Map();
+        for (const team of await fetchApi(this, '/teams')) {
+            teams.set(team.id, new Team(this, team));
+        }
+        
+        const users = this._users = new Map();
+        for (const user of teams.get('all-users').info.users) {
+            users.set(user.id, new User(this, user));
+        }
+
+        return {teams, users};
+    }
+
+    /**
+     * Returns {@link Role}s belonging to the domain.
+     *
+     * This function is only available to domain and project administrators.
+     */
+    async roles() {
+        const roles = this._roles = new Map();
+
+        for (const role of await fetchApi(this, '/roles')) {
+            let rolesForProject = roles.get(role.project);
+            if (!rolesForProject) {
+                rolesForProject = [];
+                roles.set(role.project, rolesForProject);
+            }
+            rolesForProject.push(new Role(this, role));
+        }
+    }
+
+    /**
+     * Returns {@link Team}s belonging to the domain.
+     *
+     * This function is only available to domain and project administrators.
+     */
+    async teams() {
+        return (await this.getTeamsAndUsers()).teams;
+    }
+
+    /**
+     * Returns {@link User}s belonging to the domain.
+     *
+     * This function is only available to domain and project administrators.
+     */
+    async users() {
+        return (await this.getTeamsAndUsers()).users;
+    }
+
+    /**
+     * Given a user id, returns the {@link User}.
+     *
+     * This function is only available to domain and project administrators.
+     */
+    getUser(id) {
+        return this._users.get(id);
+    }
+
+    /**
+     * Given a team id, returns the {@link Team}.
+     *
+     * This function is only available to domain and project administrators.
+     */
+    getTeam(id) {
+        return this._teams.get(id);
+    }
+
+    /**
+     * Creates a new user in the domain.
+     *
+     * This function is only available to domain administrators.
+     */
+    async createUser(login, name, email, password) {
+        const response = await fetchApi(this, '/users', {
+            method: 'POST',
+            json: {
+                label: name,
+                name: login,
+                email,
+                password
+            }
+        });
+
+        await this.getTeamsAndUsers();
+        return this.getUser(response.id);
+    }
+
+    /**
+     * Destroys a user in the domain.
+     *
+     * This function is only available to domain administrators.
+     */
+    async destroyUser(id) {
+        await fetchApi(this, `/users/${id}`, {
+            method: 'DELETE'
+        });
+    }
+
+    /**
+     * Creates a {@link Role} for a {@link Project} and a @{link Team} or @{link User}.
+     */
+    async createRole(project, grantee, type = 'user') {
+        let usersOrTeams = grantee instanceof User && 'users';
+        if (!usersOrTeams)
+            usersOrTeams = grantee instanceof Team;
+        if (!usersOrTeams)
+            throw 'Grantee not User or Team';
+
+        await fetchApi(this, `/roles/projects/${project}/${usersOrTeams}/${grantee.id}/roles/{$type}`, {
+            method: 'PUT'
+        });
+    }
+
+    /**
+     * Destroys a {@link Role}
+     */
+    async destroyRole(role) {
+        let usersOrTeams = role.isUser ? 'users' : 'teams';
+        await fetchApi(this, `/roles/projects/${role.project}/${usersOrTeams}/${role.grantee.id}/roles/{$role.type}`, {
+            method: 'DELETE'
+        });
     }
 
     /**
