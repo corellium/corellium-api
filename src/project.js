@@ -27,27 +27,7 @@ class Project {
     }
 
     async getToken() {
-        const token = await this.token;
-        
-        // If the token is more than 15 minutes from expiring, we don't need to refresh it.
-        if (token && token.expiration > new Date((new Date()).getTime() + 15 * 60 * 1000))
-            return token.token;
-
-        this.token = (async () => {
-            const unscopedToken = await this.client.getToken();
-            const res = await fetch(`${this.api}/tokens`, {
-                method: 'POST',
-                token: unscopedToken,
-                json: {
-                    project: this.id
-                },
-            });
-            return {
-                token: res.token,
-                expiration: new Date(res.expiration),
-            };
-        })();
-        return (await this.token).token;
+        return await this.client.getToken();
     }
 
     /**
@@ -58,7 +38,7 @@ class Project {
      * const instance = instances.find(instance => instance.name === 'Test Device');
      */
     async instances() {
-        const instances = await fetchApi(this, '/instances');
+        const instances = await fetchApi(this, `/projects/${this.id}/instances`);
         return await Promise.all(instances.map(info => new Instance(this, info)));
     }
 
@@ -96,7 +76,7 @@ class Project {
     async createInstance(options) {
         const {id} = await fetchApi(this, '/instances', {
             method: 'POST',
-            json: options,
+            json: Object.assign({}, options, {project: this.id}),
         });
         return await this.getInstance(id);
     }
