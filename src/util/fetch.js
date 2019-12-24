@@ -40,12 +40,16 @@ async function fetch(url, options) {
     }
 
     if (res.status == 204)
-        return;
+        return null;
     if (res.status >= 400 && res.status < 500) {
         const body = await res.json();
         throw new CorelliumError(body, res.status);
     } else if (res.status >= 500) {
-        throw new Error(`${res.status} ${res.statusText}`);
+        console.warn(`[fetch] ${options.method || 'GET'} ${url}, status: ${res.status}`);
+        if (options.body)
+            console.warn('request body', options.body);
+
+        throw new Error(`${options.method || 'GET'} ${url} -- ${res.status} ${res.statusText}`);
     }
     if (options.response === 'raw')
         return res;
