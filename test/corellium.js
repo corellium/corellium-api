@@ -1,6 +1,8 @@
 const Corellium = require('../src/corellium').Corellium;
 const config = require('./config.json');
 const assert = require('assert');
+const fs = require('fs');
+const path = require('path');
 
 describe('Corellium API', function() {
     this.slow(10000);
@@ -92,6 +94,36 @@ describe('Corellium API', function() {
             it('refuses to take snapshot if instance is on', async function() {
                 await turnOn(instance);
                 await assert.rejects(() => instance.takeSnapshot());
+            });
+        });
+
+        describe('apps', function() {
+            let agent;
+            before(async function() {
+                await turnOn(instance);
+                agent = await instance.agent();
+            });
+
+            describe('installation', async function() {
+                let lastStatus;
+                it('should succeed with signed app', async function() {
+                    try {
+                        await agent.installFile(fs.createReadStream(path.join(__dirname, 'Red_signed.ipa')), (_progress, status) => {
+                            lastStatus = status;
+                        });
+                    } catch (err) {
+                        assert(false, `Error installing app during '${lastStatus} stage: ${err}`);
+                    }
+                });
+
+                it('should fail with unsigned app', async function() {
+                    try {
+                        await agent.installFile(fs.createReadStream(path.join(__dirname, 'Red.ipa')), (_progress, status) => {
+                            lastStatus = status;
+                        });
+                        assert(false, 'Installation should fail.');
+                    } catch (err) {}
+                });
             });
         });
     });
