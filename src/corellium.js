@@ -184,7 +184,7 @@ class Corellium {
     async createRole(project, grantee, type = 'user') {
         let usersOrTeams = grantee instanceof User && 'users';
         if (!usersOrTeams)
-            usersOrTeams = grantee instanceof Team;
+            usersOrTeams = grantee instanceof Team && 'teams';
         if (!usersOrTeams)
             throw 'Grantee not User or Team';
 
