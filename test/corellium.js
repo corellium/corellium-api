@@ -4,6 +4,9 @@ const assert = require('assert');
 const fs = require('fs');
 const path = require('path');
 
+/** @typedef {import('../src/project.js')} Project */
+/** @typedef {import('../src/instance.js')} Instance */
+
 describe('Corellium API', function() {
     this.slow(10000);
     this.timeout(20000);
@@ -15,11 +18,14 @@ describe('Corellium API', function() {
 
     it('lists projects', async function() {
         const projects = await corellium.projects();
-        assert(projects.find(project => project.info.name === config.project) !== undefined);
+        if (projects.find(project => project.info.name === config.project) === undefined)
+            new Error(`Your test config specifies a project named "${config.project}", ` +
+                      `but no such project was found on ${config.endpoint}`);
     });
 
     describe('instances', function() {
-        let instance, project;
+        let instance = /** @type {Instance} */(null),
+            project = /** @type {Project} */(null);
         before(async function() {
             const projects = await corellium.projects();
             project = projects.find(project => project.info.name === config.project);
@@ -27,6 +33,20 @@ describe('Corellium API', function() {
             instance = instances[0];
             if (instance === undefined)
                 throw new Error('no device found in specified project, please create one');
+        });
+
+        it('can add and remove keys', async function() {
+            const keyInfo = await project.addKey(
+                'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCqpvRmc/JQoH9P6XVlHnod0wRCg+7iSGfpyoBoe+nWwp2iEqPyM7A2RzW7ZIX2FZmlD5ldR6Oj5Z+LUR/GXfCFQvpQkidL5htzGMoI59SwntpSMvHlFLOcbyS7VmI4MKbdIF+UrelPCcCJjOaZIFOJfNtuLWDx0L14jW/4wflzcj6Fd1rBTVh2SB3mvhsraOuv9an74zr/PMSHtpFnt5m4SYWpE4HLTf0FJksEe/Qda9jQu5i86Mhu6ewSAVccUDLzgz6E4i8hvSqfctcYGT7asqxsubPTpTPfuOkc3WOxlqZYnnAbpGh8NvCu9uC+5gfWRcLoyRBE4J2Y3wcfOueP example-key'
+            );
+
+            assert(keyInfo.label === 'example-key', 'label defaults to public key comment');
+            assert(keyInfo.fingerprint === '9c:71:e5:40:08:fb:cd:88:1b:6d:8e:4f:c0:4c:0f:dd');
+
+            const keys = await project.keys();
+            assert(!!keys.find(key => key.identifier === keyInfo.identifier));
+
+            await project.deleteKey(keyInfo.identifier);
         });
 
         it('lists supported devices', async function() {

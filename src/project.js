@@ -1,7 +1,23 @@
-const {fetch, fetchApi} = require('./util/fetch');
+const {fetchApi} = require('./util/fetch');
 const Instance = require('./instance');
 const InstanceUpdater = require('./instance-updater');
 const uuidv4 = require('uuid/v4');
+
+/**
+ * @typedef {object} ProjectKey
+ * @property {string} identifier
+ * @property {string} label
+ * @property {string} key
+ * @property {'ssh'|'adb'} kind - public key
+ * @property {string} fingerprint
+ * @property {string} createdAt - ISO datetime string
+ * @property {string} updatedAt - ISO datetime string
+ */
+
+/**
+ * @typedef {object} ProjectQuotas
+ * @property {number} cores - Number of available CPU cores
+ */
 
 /**
  * Instances of this class are returned from {@link Corellium#projects}, {@link
@@ -32,7 +48,7 @@ class Project {
 
     /**
      * Returns an array of the {@link Instance}s in this project.
-     * @returns {Instance[]} The instances in this project
+     * @returns {Promise<Instance[]>} The instances in this project
      * @example <caption>Finding the first instance with a given name</caption>
      * const instances = await project.instances();
      * const instance = instances.find(instance => instance.name === 'Test Device');
@@ -44,8 +60,8 @@ class Project {
 
     /**
      * Returns the {@link Instance} with the given ID.
-     * @returns {Instance}
      * @param {string} id
+     * @returns {Promise<Instance>}
      */
     async getInstance(id) {
         const info = await fetchApi(this, `/instances/${id}`);
@@ -63,7 +79,7 @@ class Project {
      * @param {string} options.os - The device operating system version
      * @param {string} [options.name] - The device name
      * @param {string|string[]} [options.patches] - Instance patches, such as `jailbroken` (default)
-     * @returns {Instance}
+     * @returns {Promise<Instance>}
      *
      * @example <caption>Creating an instance and waiting for it to start its first boot</caption>
      * const instance = await project.createInstance({
@@ -89,7 +105,7 @@ class Project {
      *                              TunnelBlick files are delivered as a ZIP file and OpenVPN configuration is just a text file.
      * @param {string} clientUUID - An arbitrary UUID to uniquely associate this VPN configuration with so it can be later identified
      *                              in a list of connected clients. Optional.
-     * @returns {Buffer}
+     * @returns {Promise<Buffer>}
      */
     async vpnConfig(type = 'ovpn', clientUUID) {
         if (!clientUUID)
@@ -108,18 +124,20 @@ class Project {
 
     /**
      * The project quotas.
-     * @property {number} cores - Number of avilable CPU cores
+     * @returns {ProjectQuotas}
      */
     get quotas() {
         return this.info.quotas;
     }
 
     set quotas(quotas) {
-        setQuotas(quotas)
+        this.setQuotas(quotas);
     }
 
     /**
      * Sets the project quotas. Only the cores property is currently respected.
+     *
+     * @param {ProjectQuotas} quotas
      */
     async setQuotas(quotas) {
         this.info.quotas = Object.assign({}, this.info.quotas, quotas);
@@ -157,12 +175,44 @@ class Project {
     }
 
     /**
-     * Give permissions tho this project for a {@link Team} or a {@link User} (adds a {@link Role}).
+     * Give permissions to this project for a {@link Team} or a {@link User} (adds a {@link Role}).
      *
      * This function is only available to domain and project administrators.
      */
     async createRole(grantee, type = 'user') {
         await this.client.createRole(this.id, grantee, type);
+    }
+
+    /**
+     * Returns a list of authorized keys associated with the project. When a new
+     * instance is created in this project, its authorized_keys (iOS) or adbkeys
+     * (Android) will be populated with these keys by default. Adding or
+     * removing keys from the project will have no effect on existing instances.
+     *
+     * @returns {Promise<ProjectKey[]>}
+     */
+    async keys() {
+        return await this.client.projectKeys(this.id);
+    }
+
+    /**
+     * Add a public key to project.
+     *
+     * @param {string} key - the public key, as formatted in a .pub file
+     * @param {'ssh'|'adb'} kind
+     * @param {string} [label] - defaults to the public key comment, if present
+     *
+     * @returns {Promise<ProjectKey>}
+     */
+    async addKey(key, kind='ssh', label=null) {
+        return await this.client.addProjectKey(this.id, key, kind, label);
+    }
+
+    /**
+     * @param {string} keyId
+     */
+    async deleteKey(keyId) {
+        return await this.client.deleteProjectKey(this.id, keyId);
     }
 }
 

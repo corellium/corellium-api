@@ -78,6 +78,8 @@ class Corellium {
      * Returns teams and users belonging to the domain.
      *
      * This function is only available to administrators.
+     *
+     * @returns {Promise<{ teams: Map<string, Team>, users: Map<string, User>}>}
      */
     async getTeamsAndUsers() {
         const teams = this._teams = new Map();
@@ -133,6 +135,8 @@ class Corellium {
      * Given a user id, returns the {@link User}.
      *
      * This function is only available to domain and project administrators.
+     *
+     * @returns {Promise<User>}
      */
     getUser(id) {
         return this._users.get(id);
@@ -205,7 +209,7 @@ class Corellium {
 
     /**
      * Returns the {@link Project} with the given ID.
-     * @returns {Project}
+     * @returns {Promise<Project>}
      */
     async getProject(projectId) {
         const project = new Project(this, projectId);
@@ -215,7 +219,7 @@ class Corellium {
 
     /**
      * Creates a {@link Project} with the given name {@link Color} and {@link ProjectSettings}.
-     * @returns {Project}
+     * @returns {Promise<Project>}
      */
     async createProject(name, color = 1, settings = {version: 1, 'internet-access': true}) {
         const response = await fetchApi(this, '/projects', {
@@ -233,7 +237,7 @@ class Corellium {
     /**
      * Returns the {@link Project} with the given name. If the project doesn't
      * exist, returns undefined.
-     * @returns {Project}
+     * @returns {Promise<Project>}
      */
     async projectNamed(name) {
         const projects = await this.projects();
@@ -245,6 +249,25 @@ class Corellium {
         if (!this.supportedDevices)
             this.supportedDevices = await fetchApi(this, '/supported');
         return this.supportedDevices;
+    }
+
+    async projectKeys(project) {
+        return await fetchApi(this, `/projects/${project}/keys`);
+    }
+
+    async addProjectKey(project, key, kind='ssh', label=null) {
+        return await fetchApi(this, `/projects/${project}/keys`, {
+            method: 'POST',
+            json: {
+                key, label, kind
+            }
+        });
+    }
+
+    async deleteProjectKey(project, keyId) {
+        return await fetchApi(this, `/projects/${project}/keys/${keyId}`, {
+            method: 'DELETE'
+        });
     }
 }
 
