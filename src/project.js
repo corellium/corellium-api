@@ -78,6 +78,7 @@ class Project {
      * @param {string} options.flavor - The device flavor, such as `iphone6`
      * @param {string} options.os - The device operating system version
      * @param {string} [options.name] - The device name
+     * @param {Object} [options.bootOptions] - Boot options for the instance
      * @param {string|string[]} [options.patches] - Instance patches, such as `jailbroken` (default)
      * @returns {Promise<Instance>}
      *

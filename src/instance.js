@@ -101,6 +101,28 @@ class Instance extends EventEmitter {
     }
 
     /**
+     * The instance boot options.
+     */
+    get bootOptions() {
+        return this.info.bootOptions;
+    }
+
+    /**
+     * Change boot options for an instance.
+     * @param {Object} bootOptions - The new boot options for the instance.
+     * @example <caption>Changing the boot arguments for the instance.</caption>
+     * const instances = await project.instances();
+     * const instance = instances.find(instance => instance.name == 'foo');
+     * await instance.modifyBootOptions(Object.assign({}, instance.bootOptions, {bootArgs: 'new-boot-args'}));
+     */
+    async modifyBootOptions(bootOptions) {
+        await this._fetch('', {
+            method: 'PATCH',
+            json: {bootOptions},
+        });
+    }
+
+    /**
      * Return an array of this instance's {@link Snapshot}s.
      * @returns {Snapshot[]} This instance's snapshots
      */
