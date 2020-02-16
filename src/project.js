@@ -255,6 +255,8 @@ class Project {
                     'Authorization': token 
                 },
                 uploadMethod: 'PUT',
+                chunkSize: 5 * 1024 * 1024,
+                prioritizeFirstAndLastChunk: true,
                 method: 'octet'
             });
 
