@@ -2,6 +2,23 @@ const {fetchApi} = require('./util/fetch');
 const Instance = require('./instance');
 const InstanceUpdater = require('./instance-updater');
 const uuidv4 = require('uuid/v4');
+const Resumable = require('../resumable');
+const util = require('util');
+const fs = require('fs');
+const path = require('path');
+
+class File {
+    constructor({filePath, type, size}) {
+        this.path = filePath;
+        this.name = path.basename(filePath);
+        this.type = type;
+        this.size = size;
+    }
+
+    slice(start, end, contentType) {
+        return fs.createReadStream(this.path, {start, end});
+    }
+}
 
 /**
  * @typedef {object} ProjectKey
@@ -77,6 +94,7 @@ class Project {
      * endpoint. For a full list of possible options, see the API documentation.
      * @param {string} options.flavor - The device flavor, such as `iphone6`
      * @param {string} options.os - The device operating system version
+     * @param {string} options.ipsw - The ID of a previously uploaded image in the project to use as the firmware
      * @param {string} [options.name] - The device name
      * @param {Object} [options.bootOptions] - Boot options for the instance
      * @param {string|string[]} [options.patches] - Instance patches, such as `jailbroken` (default)
@@ -214,6 +232,54 @@ class Project {
      */
     async deleteKey(keyId) {
         return await this.client.deleteProjectKey(this.id, keyId);
+    }
+
+    /**
+     * Add an image to the project. These images may be removed at any time and are meant to facilitate creating a new Instance with images.
+     *
+     * @param {string} id - UUID of the image to create. Required to be universally unique but can be user-provided. You may resume uploads if you provide the same UUID.
+     * @param {string} type - E.g. fw for the main firmware image.
+     * @param {string} path - The path on the local file system to get the file.
+     * @param {string} name - The name of the file to identify the file on the server. Usually the basename of the path.
+     * @param {Project~progressCallback} [progress] - The callback for file upload progress information.
+     *
+     * @returns {Promise<ProjectKey>}
+     */
+    async uploadImage(id, type, path, name, progress) {
+        const token = await this.getToken();
+        return new Promise(async (resolve, reject) => {
+            const url =  this.api + '/projects/' + encodeURIComponent(this.id) + '/image-upload/' + encodeURIComponent(type) + '/' + encodeURIComponent(id) + '/' + encodeURIComponent(name);
+            const r = new Resumable({
+                target: url,
+                headers: {
+                    'Authorization': token 
+                },
+                uploadMethod: 'PUT',
+                method: 'octet'
+            });
+
+            r.on('fileAdded', (file, event) => {
+                r.upload();
+            });
+
+            r.on('progress', () => {
+                if (progress)
+                    progress(r.progress());
+            });
+
+            r.on('fileError', (a, b) => {
+                console.log('gadgsa', a, b);
+                reject();
+            });
+
+            r.on('fileSuccess', () => {
+                resolve();
+            });
+
+            const stat = await util.promisify(fs.stat)(path);
+            const file = new File({filePath: path, type: 'application/octet-stream', size: stat.size});
+            r.addFile(file);
+        });
     }
 }
 
