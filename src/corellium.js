@@ -111,6 +111,8 @@ class Corellium {
             }
             rolesForProject.push(new Role(this, role));
         }
+
+        return roles;
     }
 
     /**
