@@ -130,30 +130,31 @@ let instance = project.getInstance('a9212122-40b0-1387-7feb-7a721916580d');
 Creates a new instance with the given options. The following options are supported:
 - `options.name`: The name of the new Instance.
 - `options.flavor`: The flavor of the `Instance` that is being created. Currently, the following flavors are supported:
--- `iphone6`
--- `iphone6plus`
--- `iphone6s`
--- `iphone6splus`
--- `iphone7`
--- `iphone7plus`
--- `iphonese`
--- `iphone8`
--- `iphone8plus`
--- `iphonex`
--- `ipodtouch6`
--- `ipadmini4wifi`
-- `options.os`: The software version, e.g. `11.3.1`.
+   - `ranchu` for Android devices
+   - `iphone6`
+   - `iphone6plus`
+   - `iphone6s`
+   - `iphone6splus`
+   - `iphone7`
+   - `iphone7plus`
+   - `iphonese`
+   - `iphone8`
+   - `iphone8plus`
+   - `iphonex`
+   - `ipodtouch6`
+   - `ipadmini4wifi`
+- `options.os`: The software version, e.g. `11.3.1` for iOS, or `11.0.0` for Android
 - `options.patches`: The following values are supported:
--- `jailbroken` The instance should be jailbroken (default).
--- `nonjailbroken` The instance should not be jailbroken.
+   - `jailbroken` The instance should be jailbroken (default).
+   - `nonjailbroken` The instance should not be jailbroken.
 
 Example:
 ```javascript=
 // create instance
 let instance = await project.createInstance({
     'name': 'Test Device',
-    'flavor': 'iphonex',
-    'os': '11.3.1'
+    'flavor': 'ranchu',
+    'os': '11.0.0'
 });
 // wait for the instance to finish restoring
 await instance.finishRestore();
@@ -523,6 +524,8 @@ await agent.deleteFile('/var/tmp/test.log');
 ### crashes(bundleID, callback)
 
 Subscribes to crash events for a given app identified by `bundleID`. The callback will be called as soon as the agent found a new crash log. The signature is `(err, crashReport)` where `err` is only defined if an error occured setting up or watching for crash logs and `crashReport` will contain the full crash report data.
+
+Currently this is only available on iOS virtual devices.
 
 **Note:** Since this method blocks the communication channel of the agent to wait for crash reports, a new `Agent` connection should be created with `Instance#newAgent()`.
 
