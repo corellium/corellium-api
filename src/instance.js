@@ -3,6 +3,8 @@ const EventEmitter = require('events');
 const websocket = require('websocket-stream');
 const Snapshot = require('./snapshot');
 const Agent = require('./agent');
+const pTimeout = require('p-timeout')
+
 
 /**
  * Instances of this class are returned from {@link Project#instances}, {@link
@@ -52,6 +54,7 @@ class Instance extends EventEmitter {
      * `off`|The instance is powered off.
      * `creating`|The instance is in the process of creating.
      * `deleting`|The instance is in the process of deleting.
+     * `paused`|The instance is paused.
      *
      * A full list of possible values is available in the API documentation.
      */
@@ -187,6 +190,31 @@ class Instance extends EventEmitter {
         return this.project.api + '/agent/' + this.info.agent.info;
     }
 
+    async waitForAgentReady() {
+        while (true) {
+            try {
+                await this.agentEndpoint()
+
+                const agentObtained = await pTimeout((async () => {
+                    const agent = await this.newAgent()
+                    try {
+                        await agent.ready()
+                        return true
+                    } finally {
+                        agent.disconnect()
+                    }
+                })(), 20000, () => {
+                    return false
+                })
+
+                if (agentObtained)
+                    break
+            } catch (e) {
+                console.log(e)
+            }
+        }
+    }
+
     /**
      * Create a new {@link Agent} connection to this instance. This is
      * useful for agent tasks that don't finish and thus consume the
@@ -227,6 +255,16 @@ class Instance extends EventEmitter {
     /** Stop this instance. */
     async stop() {
         await this._fetch('/stop', {method: 'POST'});
+    }
+
+    /** Pause this instance */
+    async pause() {
+        await this._fetch('/pause', {method: 'POST'});
+    }
+
+    /** Unpause this instance */
+    async unpause() {
+        await this._fetch('/unpause', {method: 'POST'});
     }
 
     /** Reboot this instance. */
