@@ -554,6 +554,11 @@ class Agent {
         await this.command('system', 'unlock');
     }
 
+    /** Shuts down the device. */
+    async shutdown() {
+        await this.command('system', 'shutdown');
+    }
+
     async acquireDisableAutolockAssertion() {
         await this.command('system', 'acquireDisableAutolockAssertion');
     }
