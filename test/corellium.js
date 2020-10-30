@@ -217,14 +217,18 @@ describe('Corellium API', function() {
             }
         })
 
-        // it('has a console', async function() {
-        //     const consoleStream = await testInstance.console();
-        //     // try {
-        //         await consoleStream.destroy();
-        //     // } catch (e) {
-        //     //     console.log(e);
-        //     // }
-        // });
+        it('has a console', async function() {
+            const consoleStream = await testInstance.console();
+            // Wait for the socket to open before killing it,
+            // otherwise this will throw an error
+            consoleStream.socket.on('open', function(err) {
+                consoleStream.socket.close();
+            });
+            // When the socket closes, it will be safe to destroy the console duplexify object
+            consoleStream.socket.on('close', function() {
+                consoleStream.destroy();
+            });
+        });
 
         it('can send input', async function() {
             const input = new Input();
