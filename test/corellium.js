@@ -56,12 +56,6 @@ describe('Corellium API', function() {
                 throw new Error('no room for an extra device to be made, please free at least two cores');
         });
 
-        it('can list supported devices', async function() {
-            const supportedDevices = await corellium.supported();
-            const firmware = supportedDevices.find(device => device.name === 'ranchu');
-            assert(firmware);
-        });
-
         it('can start create', async function() {
             const os = '11.0.0';
             const flavor = 'ranchu';
@@ -81,6 +75,23 @@ describe('Corellium API', function() {
             assert(name, testInstance.name);
             assert(flavor, testInstance.flavor);
         })
+
+        it('can list supported devices', async function() {
+            const supportedDevices = await corellium.supported();
+            const firmware = supportedDevices.find(device => device.name === 'ranchu');
+            assert(firmware);
+        });
+
+        it('can get teams and users', async function() {
+            let teamsAndUsers = await corellium.getTeamsAndUsers();
+            teamsAndUsers.users.forEach((value, key) => {
+                assert.strictEqual(value, corellium._users.get(key))
+            });
+
+            teamsAndUsers.teams.forEach((value, key) => {
+                assert.strictEqual(value, corellium._teams.get(key))
+            });
+        });
 
         // Not visible to cloud users with one project:
         it('can add and remove keys', async function() {
