@@ -4,6 +4,7 @@ const config = require('./config.json');
 const assert = require('assert');
 const fs = require('fs');
 const path = require('path');
+const stream = require('stream');
 
 /** @typedef {import('../src/project.js')} Project */
 /** @typedef {import('../src/instance.js')} Instance */
@@ -18,9 +19,10 @@ describe('Corellium API', function() {
         if (config.endpoint === undefined ||
             config.username === undefined ||
             config.password === undefined ||
-            config.project === undefined) {
+            config.project === undefined ||
+            config.testFlavor === undefined) {
                 new Error(`Bad configuration for testing provided, requires endpoint,` +
-                `username, password and project defined to work`);
+                `username, password, project and testFlavor defined to work`);
             }
     })
 
@@ -58,11 +60,10 @@ describe('Corellium API', function() {
 
         it('can start create', async function() {
             const os = '11.0.0';
-            const flavor = 'ranchu';
             const name = 'api test';
             testInstance = await project.createInstance({
                 os: os,
-                flavor: flavor,
+                flavor: config.testFlavor,
                 name: name,
             })
             .then((instance) => {
@@ -72,13 +73,13 @@ describe('Corellium API', function() {
             });
 
             await testInstance.waitForState('creating');
-            assert(name, testInstance.name);
-            assert(flavor, testInstance.flavor);
+            assert.strictEqual(testInstance.name, name);
+            assert.strictEqual(testInstance.flavor, config.testFlavor);
         })
 
         it('can list supported devices', async function() {
             const supportedDevices = await corellium.supported();
-            const firmware = supportedDevices.find(device => device.name === 'ranchu');
+            const firmware = supportedDevices.find(device => device.name === config.testFlavor);
             assert(firmware);
         });
 
@@ -91,6 +92,10 @@ describe('Corellium API', function() {
             teamsAndUsers.teams.forEach((value, key) => {
                 assert.strictEqual(value, corellium._teams.get(key))
             });
+        });
+
+        it('can get roles', async function() {
+            assert.doesNotReject(() => corellium.roles());
         });
 
         // Not visible to cloud users with one project:
@@ -235,12 +240,16 @@ describe('Corellium API', function() {
             });
 
             beforeEach(async function() {
-                agent = await testInstance.newAgent();
-                await agent.ready();
+                if (agent === undefined || !agent.connected) {
+                    agent = await testInstance.newAgent();
+                    await agent.ready();
+                }
             });
 
-            afterEach(async function() {
-                agent.disconnect();
+            after(async function() {
+                if (agent !== undefined && agent.connected) {
+                    agent.disconnect();
+                }
             });
 
             it('can list device apps', async function() {
@@ -248,18 +257,194 @@ describe('Corellium API', function() {
                 assert(appList !== undefined && appList.length > 0);
             });
 
-            it('can install a signed apk', async function() {
-                let lastStatus;
-                let rs = fs.createReadStream(path.join(__dirname, 'test.apk'));
-                try {
-                    await agent.installFile(rs, (_progress, status) => {
-                        lastStatus = status;
+            describe('file control', async function() {
+                let expectedData = Buffer.from('D1FF', 'hex');
+                let testPath;
+                it('can get temp file', async function() {
+                    testPath = await agent.tempFile();
+                });
+
+                it('can upload a file', async function() {
+                    let rs = stream.Readable.from(expectedData);
+
+                    let lastStatus;
+                    try {
+                        await agent.upload(testPath, rs, (_progress, status) => {
+                            lastStatus = status;
+                        });
+                    } catch (err) {
+                        assert(false, `Error uploading file during '${lastStatus} stage: ${err}`);
+                    }
+                });
+
+                it('can stat a file', async function() {
+                    let stat = await agent.stat(testPath);
+                    assert.strictEqual(stat.name, testPath);
+                });
+
+                it('can change a files attributes', async function() {
+                    await agent.changeFileAttributes(testPath, {mode: 511});
+                    let stat = await agent.stat(testPath);
+                    assert.strictEqual(stat.mode, 33279);
+                });
+
+                it('can download files', async function() {
+                    try {
+                        let downloaded = await new Promise(resolve => {
+                            const rs = agent.download(testPath)
+                            let bufs = [];
+                            rs.on('data', function (chunk) {
+                                bufs.push(chunk);
+                            });
+                            rs.on('end', function() {
+                                resolve(Buffer.concat(bufs));
+                            });
+                        });
+
+                        assert(Buffer.compare(downloaded, expectedData) === 0);
+                    } catch (err) {
+                        assert(false, `Error reading downloadable file ${err}`);
+                    }
+                });
+
+                it('can delete files', async function() {
+                    await agent.deleteFile(testPath)
+                    .then((path) => {
+                        assert(path === undefined);
+                    })
+
+                    // We should get an OperationFailed since the file is gone
+                    try {
+                        await agent.stat(testPath)
+                    } catch (error) {
+                        assert(error.toString().includes('No such file or directory'));
+                    }
+                });
+            });
+
+            describe('profiles', async function() {
+                if(config.testFlavor === 'ranchu') {
+                    // These are unimplemented on ranchu devices
+                    it('cannot use profile/list', async function() {
+                        assert.rejects(() => agent.profileList());
                     });
-                } catch (err) {
-                    assert(false, `Error installing app during '${lastStatus} stage: ${err}`);
-                } finally {
-                    rs.close();
+
+                    it('cannot use profile/install', async function() {
+                        assert.rejects(() => agent.installProfile('test'));
+                    });
+
+                    it('cannot use profile/remove', async function() {
+                        assert.rejects(() => agent.removeProfile('test'));
+                    });
+
+                    it('cannot use profile/get', async function() {
+                        assert.rejects(() => agent.getProfile('test'));
+                    });
                 }
+            });
+
+            describe('locks', async function() {
+                if(config.testFlavor === 'ranchu') {
+                    // These are unimplemented on ranchu devices
+                    it('cannot use lock', async function() {
+                        assert.rejects(() => agent.lockDevice());
+                    });
+
+                    it('cannot use unlock', async function() {
+                        assert.rejects(() => agent.unlockDevice());
+                    });
+
+                    it('cannot use acquireDisableAutolockAssertion', async function() {
+                        assert.rejects(() => agent.acquireDisableAutolockAssertion());
+                    });
+
+                    it('cannot use releaseDisableAutolockAssertion', async function() {
+                        assert.rejects(() => agent.releaseDisableAutolockAssertion());
+                    });
+                }
+            });
+
+            describe('wifi', async function() {
+                if(config.testFlavor === 'ranchu') {
+                    // These are unimplemented on ranchu devices
+                    it('cannot use connectToWifi', async function() {
+                        assert.rejects(() => agent.connectToWifi());
+                    });
+
+                    it('cannot use disconnectFromWifi', async function() {
+                        assert.rejects(() => agent.disconnectFromWifi());
+                    });
+                }
+            });
+
+            describe('crashes', async function() {
+                // TODO : test for crashes
+            })
+
+            describe('app control', async function() {
+                let installSuccess;
+                it('can install a signed apk', async function() {
+                    this.slow(50000);
+                    this.timeout(100000);
+                    let retries = 3;
+
+                    while (true) {
+                        let lastStatus;
+                        let rs = fs.createReadStream(path.join(__dirname, 'test.apk'));
+                        try {
+                            await agent.installFile(rs, (_progress, status) => {
+                                console.log(_progress);
+                                lastStatus = status;
+                            });
+                            installSuccess = true;
+                        } catch (err) {
+                            if (err.toString().includes('Agent did not get a response to pong in 10 seconds, disconnecting.')) {
+                                --retries;
+                                if (retries !== 0) {
+                                    agent.disconnect();
+                                    agent = await testInstance.newAgent();
+                                    await agent.ready();
+                                    continue;
+                                }
+                            }
+
+                            assert(false, `Error installing app during '${lastStatus} stage: ${err}`);
+                            installSuccess = false;
+                        } finally {
+                            rs.close();
+                        }
+
+                        break;
+                    }
+                });
+
+                it('can run an app', async function() {
+                    if (!installSuccess)
+                    assert(false, "Install of app failed, this test cannot run, artifically forcing a failure");
+
+                    assert.doesNotReject(() => agent.run('com.corellium.test.app'));
+                });
+
+                it('can kill an app', async function() {
+                    if (!installSuccess)
+                        assert(false, "Install of app failed, this test cannot run, artifically forcing a failure");
+
+                    assert.doesNotReject(() => agent.kill('com.corellium.test.app'));
+                });
+
+                it('can uninstall an app', async function() {
+                    if (!installSuccess)
+                        assert(false, "Install of app failed, this test cannot run, artifically forcing a failure");
+
+                    let lastStatus;
+                    try {
+                        await agent.uninstall('com.corellium.test.app', (_progress, status) => {
+                            lastStatus = status;
+                        });
+                    } catch (err) {
+                        assert(false, `Error uninstalling app during '${lastStatus} stage: ${err}`);
+                    }
+                });
             });
         });
 
