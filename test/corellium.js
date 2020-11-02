@@ -397,7 +397,6 @@ describe('Corellium API', function() {
                         let rs = fs.createReadStream(path.join(__dirname, 'test.apk'));
                         try {
                             await agent.installFile(rs, (_progress, status) => {
-                                console.log(_progress);
                                 lastStatus = status;
                             });
                             installSuccess = true;
@@ -620,7 +619,7 @@ describe('Corellium API', function() {
                     let host = message.request.headers.find(entry => entry.key === 'Host');
                     netmonOutput = host.value;
                 });
-                
+
                 await netmon.start();
                 // Let monitor to start capturing data
                 await new Promise(resolve => setTimeout(resolve, 5000));
@@ -668,7 +667,7 @@ describe('Corellium API', function() {
                     if (name == 'keystore') {
                         break;
                     }
-                }    
+                }
                 assert(pid != 0);
             });
 
@@ -682,7 +681,7 @@ describe('Corellium API', function() {
                 let s = '';
                 for(s of scriptList) {
                     if (s == 'hook_native.js')
-                        break;    
+                        break;
                 }
                 assert(s != '');
             });
@@ -714,7 +713,7 @@ describe('Corellium API', function() {
                     });
                     fridaConsole.pipe(w);
                 });
-    
+
                 assert(fridaOutput.toString().includes('Hook android_log_write()'));
             });
 

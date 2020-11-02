@@ -61,7 +61,7 @@ class Agent {
         this.pending = new Map();
 
         const endpoint = await this.instance.agentEndpoint();
-        
+
         // Detect if a disconnection happened before we were able to get the agent endpoint.
         if (!this.pendingConnect)
             throw new Error('connection cancelled');
@@ -554,21 +554,24 @@ class Agent {
      * Run frida on the device.
      */
     async runFrida(pid, name) {
-        return await this.command('system', 'run-frida', { "target_pid": pid.toString(), "target_name": name.toString() });
+        return await this.command('frida', 'run-frida', {
+            "target_pid": pid.toString(),
+            "target_name": name.toString()
+        });
     }
 
     /**
      * Run frida-ps on the device and return the command's output.
      */
     async runFridaPs() {
-        return await this.command('system', 'run-frida-ps');
+        return await this.command('frida', 'run-frida-ps');
     }
 
     /**
      * Run frida-kill on the device.
      */
     async runFridaKill() {
-        return await this.command('system', 'run-frida-kill');
+        return await this.command('frida', 'run-frida-kill');
     }
 
     /** Unlocks the device software-wise. */
@@ -595,6 +598,33 @@ class Agent {
 
     async disconnectFromWifi() {
         await this.command('wifi', 'disconnect');
+    }
+
+    async shutdown() {
+        await this.command('system', 'shutdown');
+    }
+
+    async getProp(property) {
+        await this.command('system', 'getprop', property);
+    }
+
+    async network() {
+        await this.command('system', 'network');
+    }
+
+    async runFrida(name, pid) {
+        await this.command('frida', 'run-frida', {
+            target_pid: pid,
+            target_name: name,
+        });
+    }
+
+    async runFridaKill() {
+        await this.command('frida', 'run-frida-kill');
+    }
+
+    async runFridaPS() {
+        await this.command('frida', 'run-frida-ps');
     }
 }
 

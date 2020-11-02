@@ -251,7 +251,7 @@ class Instance extends EventEmitter {
             await this.update();
 
         return this.project.api + '/agent/' + this.info.netmon.info;
-    }    
+    }
 
     /**
      * Create a new {@link NetworkMonitor} connection to this instance.
@@ -265,7 +265,7 @@ class Instance extends EventEmitter {
      * Returns a bidirectional node stream for this instance's serial console.
      * @example
      * const consoleStream = await instance.console();
-     * console.pipe(process.stdout);
+     * consoleStream.pipe(process.stdout);
      */
     async console() {
         const {url} = await this._fetch('/console');
@@ -341,7 +341,7 @@ class Instance extends EventEmitter {
     async stopCoreTrace() {
         await this._fetch('/strace/disable', {method: 'POST'});
     }
-    
+
     /** Download CoreTrace Log */
     async downloadCoreTraceLog() {
         const token = await this._fetch('/strace-authorize', {method: 'GET'});
@@ -354,7 +354,12 @@ class Instance extends EventEmitter {
         await this._fetch('/strace', {method: 'DELETE'});
     }
 
-    /** Get FRIDA console */
+    /**
+     * Returns a bidirectional node stream for this instance's frida console.
+     * @example
+     * const consoleStream = await instance.console();
+     * consoleStream.pipe(process.stdout);
+     */
     async fridaConsole() {
         const {url} = await this._fetch('/console?type=frida');
         return websocket(url, ['binary']);
@@ -369,7 +374,7 @@ class Instance extends EventEmitter {
             frida_wc.close();
         });
     }
-    
+
     /**
      * Takes a screenshot of this instance's screen. Returns a Buffer containing image data.
      * @param {Object} options

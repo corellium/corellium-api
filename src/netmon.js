@@ -62,7 +62,7 @@ class NetworkMonitor {
         this.pending = new Map();
 
         const endpoint = await this.instance.netmonEndpoint();
-        
+
         // Detect if a disconnection happened before we were able to get the network monitor endpoint.
         if (!this.pendingConnect)
             throw new Error('connection cancelled');
@@ -221,7 +221,7 @@ class NetworkMonitor {
 
     /** Start Network Monitor */
     async start() {
-        await this.connect();        
+        await this.connect();
         await this._fetch('/sslsplit/enable', {method: 'POST'});
     }
 
