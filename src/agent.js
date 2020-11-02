@@ -107,7 +107,7 @@ class Agent {
             ws.once('open', () => {
                 if (this.ws !== ws) {
                     try {
-                        ws.close()
+                        ws.close();
                     } catch (e) {}
 
                     reject(new Error('connection cancelled'));
@@ -124,7 +124,7 @@ class Agent {
                         this._disconnect();
                     } else {
                         try {
-                            ws.close()
+                            ws.close();
                         } catch (e) {}
                     }
 
@@ -139,7 +139,7 @@ class Agent {
                     this._disconnect();
                 } else {
                     try {
-                        ws.close()
+                        ws.close();
                     } catch (e) {}
                 }
 
@@ -158,11 +158,11 @@ class Agent {
         let ws = this.ws;
 
         ws.ping();
-        
+
         this._keepAliveTimeout = setTimeout(() => {
             if (this.ws !== ws) {
                 try {
-                    ws.close()
+                    ws.close();
                 } catch (e) {}
                 return;
             }
@@ -261,6 +261,7 @@ class Agent {
                     reject(err);
                     return;
                 }
+
                 if (response.error) {
                     reject(Object.assign(new Error(), response.error));
                     return;
@@ -547,6 +548,27 @@ class Agent {
     /** Locks the device software-wise. */
     async lockDevice() {
         await this.command('system', 'lock');
+    }
+
+    /**
+     * Run frida on the device.
+     */
+    async runFrida(pid, name) {
+        return await this.command('system', 'run-frida', { "target_pid": pid.toString(), "target_name": name.toString() });
+    }
+
+    /**
+     * Run frida-ps on the device and return the command's output.
+     */
+    async runFridaPs() {
+        return await this.command('system', 'run-frida-ps');
+    }
+
+    /**
+     * Run frida-kill on the device.
+     */
+    async runFridaKill() {
+        return await this.command('system', 'run-frida-kill');
     }
 
     /** Unlocks the device software-wise. */

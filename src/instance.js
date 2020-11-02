@@ -1,10 +1,11 @@
 const {fetchApi} = require('./util/fetch');
 const EventEmitter = require('events');
 const websocket = require('websocket-stream');
+const ws = require('ws');
 const Snapshot = require('./snapshot');
 const Agent = require('./agent');
 const pTimeout = require('p-timeout')
-
+const NetworkMonitor = require('./netmon');
 
 /**
  * Instances of this class are returned from {@link Project#instances}, {@link
@@ -25,8 +26,10 @@ class Instance extends EventEmitter {
         this.hash = null;
         this.hypervisorStream = null;
         this._agent = null;
+        this._netmon = null;
         this.lastPanicLength = null;
         this.volumeId = null;
+        this.fridaScriptPath = '/data/corellium/frida/scripts/'
 
         this.on('newListener', (event) => {
             if (event === 'change')
@@ -226,6 +229,39 @@ class Instance extends EventEmitter {
     }
 
     /**
+     * Return an {@link NetworkMonitor} connected to this instance. Calling this
+     * method multiple times will reuse the same agent connection.
+     * @returns {NetworkMonitor}
+     */
+    async networkMonitor() {
+        if (!this._netmon)
+            this._netmon = await this.newNetworkMonitor();
+        return this._netmon;
+    }
+
+    async netmonEndpoint() {
+        // Extra while loop to avoid races where info.netmon gets unset again before we wake back up.
+        while (!this.info.netmon)
+            await this._waitFor(() => !!this.info.netmon);
+
+        // We want to avoid a situation where we were not listening for updates, and the info we have is stale (from last boot),
+        // and the instance has started again but this time with no agent info yet or new agent info. Therefore, we can use
+        // cached if only if it's recent.
+        if (((new Date()).getTime() - this.infoDate.getTime()) > (2 * this.project.updater.updateInterval))
+            await this.update();
+
+        return this.project.api + '/agent/' + this.info.netmon.info;
+    }    
+
+    /**
+     * Create a new {@link NetworkMonitor} connection to this instance.
+     * @returns {Agent}
+     */
+    async newNetworkMonitor() {
+        return new NetworkMonitor(this);
+    }
+
+    /**
      * Returns a bidirectional node stream for this instance's serial console.
      * @example
      * const consoleStream = await instance.console();
@@ -277,6 +313,63 @@ class Instance extends EventEmitter {
         await this._fetch('', {method: 'DELETE'});
     }
 
+    /** Get CoreTrace Thread List */
+    async getCoreTraceThreadList() {
+        return await this._fetch('/strace/thread-list', {method: 'GET'});
+    }
+
+    /** Add List of PIDs/Names/TIDs to CoreTrace filter */
+    async setCoreTraceFilter(pids, names, tids) {
+        let filter = [];
+        if (pids.length)  filter = filter.concat(pids.map (pid  => {return {trait: "pid",  value: pid.toString()}}));
+        if (names.length) filter = filter.concat(names.map(name => {return {trait: "name", value: name}}));
+        if (tids.length)  filter = filter.concat(tids.map (tid  => {return {trait: "tid",  value: tid.toString()}}));
+        await this._fetch('', {method: 'PATCH', json: { straceFilter: filter}});
+    }
+
+    /** Clear CoreTrace filter */
+    async clearCoreTraceFilter() {
+        await this._fetch('', {method: 'PATCH', json: {straceFilter: []}});
+    }
+
+    /** Start CoreTrace */
+    async startCoreTrace() {
+        await this._fetch('/strace/enable', {method: 'POST'});
+    }
+
+    /** Stop CoreTrace */
+    async stopCoreTrace() {
+        await this._fetch('/strace/disable', {method: 'POST'});
+    }
+    
+    /** Download CoreTrace Log */
+    async downloadCoreTraceLog() {
+        const token = await this._fetch('/strace-authorize', {method: 'GET'});
+        const response = await fetchApi(this.project, `/preauthed/` + token.token + `/coretrace.log`, {response: 'raw'});
+        return await response.buffer();
+    }
+
+    /** Clean CoreTrace log */
+    async clearCoreTraceLog() {
+        await this._fetch('/strace', {method: 'DELETE'});
+    }
+
+    /** Get FRIDA console */
+    async fridaConsole() {
+        const {url} = await this._fetch('/console?type=frida');
+        return websocket(url, ['binary']);
+    }
+
+    /** Execute FRIDA script by name */
+    async executeFridaScript(fileName) {
+        const {url} = await this._fetch('/console?type=frida');
+        let frida_wc = new ws(url);
+        await frida_wc.once('open', () => {
+            frida_wc.send('%load ' + this.fridaScriptPath + fileName + '\n');
+            frida_wc.close();
+        });
+    }
+    
     /**
      * Takes a screenshot of this instance's screen. Returns a Buffer containing image data.
      * @param {Object} options

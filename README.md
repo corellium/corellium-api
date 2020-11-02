@@ -343,6 +343,101 @@ instances.forEach(instance => {
 });
 ```
 
+### async getCoreTraceThreadList()
+
+Returns array of threads in the following format:
+```
+[ 
+	{ pid, kernelId, name, threads: [ { tid, kernelId }, ... ] },
+	...
+]
+```
+
+Example:
+```javascript=
+let procList = await instance.getCoreTraceThreadList();
+for (let p of procList) {
+	console.log(p.pid, p.kernelId, p.name);
+	for (let t of p.threads) {
+		console.log(t.tid, t.kernelId);
+	}
+}
+```
+
+### async setCoreTraceFilter(pids, names, tids)
+
+Creates CoreTrace filter from array of PIDs, TIDs and process names.
+
+Example:
+```javascript=
+await instance.setCoreTraceFilter([111, 222], ["proc_name"], [333]);
+```
+
+### async clearCoreTraceFilter()
+
+Clears CoreTrace filter.
+
+Example:
+```javascript=
+await instance.clearCoreTraceFilter();
+```
+
+### async startCoreTrace()
+
+Starts CoreTrace capture.
+
+Example:
+```javascript=
+await instance.startCoreTrace();
+```
+
+### async stopCoreTrace()
+
+Stops CoreTrace capture.
+
+Example:
+```javascript=
+await instance.stopCoreTrace();
+```
+
+### async downloadCoreTraceLog()
+
+Returns captured CoreTrace data.
+
+Example:
+```javascript=
+let trace = await instance.downloadCoreTraceLog();
+console.log(trace.toString());
+```
+
+### async clearCoreTraceLog()
+
+Clears captured CoreTrace data.
+
+Example:
+```javascript=
+await instance.clearCoreTraceLog();
+```
+
+### async fridaConsole()
+
+Returns a node stream for the `Instance`'s FRIDA console.
+
+Example:
+```javascript=
+let consoleStream = await instance.fridaConsole();
+consoleStream.pipe(process.stdout);
+```
+
+### async executeFridaScript(fileName)
+
+Execute installed FRIDA script with name.
+
+Example:
+```javascript=
+await instance.executeFridaScript("script.js");
+```
+
 ### async takeScreenshot()
 
 Instructions the `Instance` to create a screenshot of the device screen. Returns a `Buffer` with PNG data.
@@ -584,6 +679,88 @@ new Promise(resolve => {
 
 // crashListener not required anymore
 crashListener.disconnect();
+```
+
+### async runFridaPs()
+
+Returns processes avialable for FRIDA to attach.
+
+Example:
+```javascript=
+let procList = await agent.runFridaPs();
+let lines = procList.output.trim().split('\n');
+// Discard the first two lines.
+lines.shift();
+lines.shift();
+for (const line of lines) {
+    const [pid, name] = line.trim().split(/\s+/);
+    console.log(pid, name);
+}
+```
+
+### async runFrida(pid)
+
+Attaches FRIDA to the process with PID.
+
+Example:
+```javascript=
+await agent.runFrida(111);
+```
+
+### async runFridaKill()
+
+Detaches FRIDA from current process.
+
+Example:
+```javascript=
+await agent.runFridaKill();
+```
+
+## class NetworkMonitor
+
+**Note:** Instances of the class `NetworkMonitor` are only supposed to be retrieved with `Instance#networkMonitor()` or `Instance#newNetworkMonitor()`.
+
+### async handleMessage(handler)
+
+Install handler for captured Network Monitor data
+
+Example:
+```javascript=
+let netmon = await instance.newNetworkMonitor();
+netmon.handleMessage((message) => {
+    let host = message.request.headers.find(entry => entry.key === 'Host');
+    console.log(message.response.status, message.request.method, message.response.body.size, host.value);
+});
+```
+
+### async start()
+
+Starts capturing Network Monitor data
+
+Example:
+```javascript=
+let netmon = await instance.newNetworkMonitor();
+netmon.start();
+```
+
+### async stop()
+
+Stops capturing Network Monitor data
+
+Example:
+```javascript=
+let netmon = await instance.newNetworkMonitor();
+netmon.stop();
+```
+
+### async cleanLog()
+
+Clears captured Network Monitor data
+
+Example:
+```javascript=
+let netmon = await instance.newNetworkMonitor();
+netmon.clearLog();
 ```
 
 ## class Snapshot
