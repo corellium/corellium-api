@@ -132,7 +132,7 @@ describe('Corellium API', function() {
         });
 
         it('can get openvpn profile', async function() {
-            let expected = Buffer.from('client.dev');
+            let expected = Buffer.from('client');
 
             await project.vpnConfig('ovpn', undefined)
             .then((profile) => {
@@ -449,6 +449,187 @@ describe('Corellium API', function() {
                     }
                 });
             });
+
+            describe('netmon', function() {
+                let netmon;
+                let agent;
+
+                before(async function() {
+                    agent = await testInstance.newAgent();
+                    await agent.ready();
+                });
+
+                after(async function() {
+                    if (agent !== undefined && agent.connected) {
+                        agent.disconnect();
+                    }
+                });
+
+                it('can get monitor', async function() {
+                    netmon = await testInstance.newNetworkMonitor();
+                });
+
+                let netmonOutput;
+                it('can start monitor', async function() {
+                    this.slow(15000);
+                    netmon.handleMessage((message) => {
+                        let host = message.request.headers.find(entry => entry.key === 'Host');
+                        netmonOutput = host.value;
+                    });
+
+                    await netmon.start();
+                    // Let monitor to start capturing data
+                    await new Promise(resolve => setTimeout(resolve, 5000));
+                });
+
+                it('can monitor data', async function() {
+                    this.slow(15000);
+                    await agent.run('org.chromium.webview_shell');
+                    await new Promise(resolve => setTimeout(resolve, 5000));
+
+                    assert(netmonOutput == 'clientservices.googleapis.com');
+                });
+
+                it('can stop monitor', async function() {
+                    await netmon.stop();
+                });
+
+                it('can clear log', async function() {
+                    await netmon.clearLog();
+                });
+            });
+
+            describe('frida', function() {
+                let pid = 0;
+                let name = '';
+
+                before(async function() {
+                    agent = await testInstance.newAgent();
+                    await agent.ready();
+                    console.log("Agent ready!");
+                });
+
+                after(async function() {
+                    if (agent !== undefined && agent.connected) {
+                        agent.disconnect();
+                        console.log("Disconnected agent");
+                    }
+                });
+
+                it('can get process list', async function() {
+                    let procList = await agent.runFridaPs();
+                    let lines = procList.output.trim().split('\n');
+                    lines.shift();
+                    lines.shift();
+                    for (const line of lines) {
+                        [pid, name] = line.trim().split(/\s+/);
+                        if (name == 'keystore') {
+                            break;
+                        }
+                    }
+                    assert(pid != 0);
+                });
+
+                it('can get frida scripts', async function() {
+                    let fridaScripts = await agent.stat('/data/corellium/frida/scripts/');
+                    let scriptList = fridaScripts.entries.map(entry  => entry.name);
+                    let s = '';
+                    for(s of scriptList) {
+                        if (s == 'hook_native.js')
+                            break;
+                    }
+                    assert(s != '');
+                });
+
+                // it('can get console', async function() {
+                //     const consoleStream = await testInstance.fridaConsole();
+                //     // Wait for the socket to open before killing it,
+                //     // otherwise this will throw an error
+                //     consoleStream.socket.on('open', function(err) {
+                //         consoleStream.socket.close();
+                //     });
+                //     // When the socket closes, it will be safe to destroy the console duplexify object
+                //     consoleStream.socket.on('close', function() {
+                //         consoleStream.destroy();
+                //     });
+                // });
+
+                describe('frida attaching and execution', async function() {
+                    it('can attach frida', async function() {
+                        if (name === '') {
+                            name = 'keystore';
+                        }
+                        console.log("Attempting runFrida");
+                        await agent.runFrida(pid, name);
+                        console.log("Post runFrida");
+                    });
+
+                    it('can execute script', async function() {
+                        await testInstance.executeFridaScript('hook_native.js');
+                        await new Promise(resolve => setTimeout(resolve,1000));
+
+                        let fridaConsole = await testInstance.fridaConsole();
+                        let fridaOutput = await new Promise(resolve => {
+                            const w = new stream.Writable({
+                                write(chunk, encoding, callback) {
+                                    fridaConsole.destroy();
+                                    resolve(chunk);
+                                }
+                            });
+                            fridaConsole.pipe(w);
+                        });
+                        console.log("output length", fridaOutput.toString().length);
+                        assert(fridaOutput.toString().includes('Hook android_log_write()'));
+                    });
+
+                    it('can detach frida', async function() {
+                        await agent.runFridaKill();
+                    });
+                });
+            });
+        });
+
+        describe('coretrace', function() {
+            let pid = 0;
+
+            it('can get thread list', async function() {
+                let threadList = await testInstance.getCoreTraceThreadList();
+                for (let p of threadList) {
+                    if (p.name.includes("bluetooth@")) {
+                        pid = p.pid;
+                        break;
+                    }
+                }
+                assert(pid != 0);
+            });
+
+            it('can set filter', async function() {
+                await testInstance.setCoreTraceFilter([pid], [], []);
+            });
+
+            it('can start capture', async function() {
+                await testInstance.startCoreTrace();
+            });
+
+            it('can capture data', async function() {
+                this.slow(15000);
+                await new Promise(resolve => setTimeout(resolve, 5000));
+                let log = await testInstance.downloadCoreTraceLog();
+                assert(log !== undefined);
+                assert(log.toString().includes(':bluetooth@'));
+            });
+
+            it('can stop capture', async function() {
+                await testInstance.stopCoreTrace();
+            });
+
+            it('can clear filter', async function() {
+                await testInstance.clearCoreTraceFilter();
+            });
+
+            it('can clear log', async function() {
+                await testInstance.clearCoreTraceLog();
+            });
         });
 
         async function turnOn() {
@@ -549,176 +730,6 @@ describe('Corellium API', function() {
                 }
 
                 assert.doesNotReject(() => latest_snapshot.delete());
-            });
-        });
-
-        describe('coretrace', function() {
-            let pid = 0;
-
-            it('can get thread list', async function() {
-                let threadList = await testInstance.getCoreTraceThreadList();
-                for (let p of threadList) {
-                    if (p.name.includes("bluetooth@")) {
-                        pid = p.pid;
-                        break;
-                    }
-                }
-                assert(pid != 0);
-            });
-
-            it('can set filter', async function() {
-                await testInstance.setCoreTraceFilter([pid], [], []);
-            });
-
-            it('can start capture', async function() {
-                await testInstance.startCoreTrace();
-            });
-
-            it('can capture data', async function() {
-                await new Promise(resolve => setTimeout(resolve, 5000));
-                let log = await testInstance.downloadCoreTraceLog();
-                assert(log !== undefined);
-                assert(log.toString().includes(':bluetooth@'));
-            });
-
-            it('can stop capture', async function() {
-                await testInstance.stopCoreTrace();
-            });
-
-            it('can clear filter', async function() {
-                await testInstance.clearCoreTraceFilter();
-            });
-
-            it('can clear log', async function() {
-                await testInstance.clearCoreTraceLog();
-            });
-        });
-
-        describe('netmon', function() {
-            let netmon;
-            let agent;
-
-            before(async function() {
-                agent = await testInstance.newAgent();
-                await agent.ready();
-            });
-
-            after(async function() {
-                if (agent !== undefined && agent.connected) {
-                    agent.disconnect();
-                }
-            });
-
-            it('can get monitor', async function() {
-                netmon = await testInstance.newNetworkMonitor();
-            });
-
-            let netmonOutput;
-            it('can start monitor', async function() {
-                netmon.handleMessage((message) => {
-                    let host = message.request.headers.find(entry => entry.key === 'Host');
-                    netmonOutput = host.value;
-                });
-
-                await netmon.start();
-                // Let monitor to start capturing data
-                await new Promise(resolve => setTimeout(resolve, 5000));
-            });
-
-            it('can monitor data', async function() {
-                await agent.run('org.chromium.webview_shell');
-                await new Promise(resolve => setTimeout(resolve, 5000));
-
-                assert(netmonOutput == 'clientservices.googleapis.com');
-            });
-
-            it('can stop monitor', async function() {
-                await netmon.stop();
-            });
-
-            it('can clear log', async function() {
-                await netmon.clearLog();
-            });
-
-        });
-
-        describe('frida', function() {
-            let pid = 0;
-            let name = '';
-
-            before(async function() {
-                agent = await testInstance.newAgent();
-                await agent.ready();
-            });
-
-            after(async function() {
-                if (agent !== undefined && agent.connected) {
-                    agent.disconnect();
-                }
-            });
-
-            it('can get process list', async function() {
-                let procList = await agent.runFridaPs();
-                let lines = procList.output.trim().split('\n');
-                lines.shift();
-                lines.shift();
-                for (const line of lines) {
-                    [pid, name] = line.trim().split(/\s+/);
-                    if (name == 'keystore') {
-                        break;
-                    }
-                }
-                assert(pid != 0);
-            });
-
-            it('can attach frida', async function() {
-                await agent.runFrida(pid, name);
-            });
-
-            it('can get frida scripts', async function() {
-                let fridaScripts = await agent.stat('/data/corellium/frida/scripts/');
-                let scriptList = fridaScripts.entries.map(entry  => entry.name);
-                let s = '';
-                for(s of scriptList) {
-                    if (s == 'hook_native.js')
-                        break;
-                }
-                assert(s != '');
-            });
-
-            it('can get console', async function() {
-                const consoleStream = await testInstance.fridaConsole();
-                // Wait for the socket to open before killing it,
-                // otherwise this will throw an error
-                consoleStream.socket.on('open', function(err) {
-                    consoleStream.socket.close();
-                });
-                // When the socket closes, it will be safe to destroy the console duplexify object
-                consoleStream.socket.on('close', function() {
-                    consoleStream.destroy();
-                });
-            });
-
-            it('can execute script', async function() {
-                await testInstance.executeFridaScript('hook_native.js');
-                await new Promise(resolve => setTimeout(resolve,1000));
-
-                let fridaConsole = await testInstance.fridaConsole();
-                let fridaOutput = await new Promise(resolve => {
-                    const w = new stream.Writable({
-                        write(chunk, encoding, callback) {
-                            fridaConsole.destroy();
-                            resolve(chunk);
-                        }
-                    });
-                    fridaConsole.pipe(w);
-                });
-
-                assert(fridaOutput.toString().includes('Hook android_log_write()'));
-            });
-
-            it('can detach frida', async function() {
-                await agent.runFridaKill();
             });
         });
     });
