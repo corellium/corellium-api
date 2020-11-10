@@ -429,13 +429,13 @@ let consoleStream = await instance.fridaConsole();
 consoleStream.pipe(process.stdout);
 ```
 
-### async executeFridaScript(fileName)
+### async executeFridaScript(filePath)
 
-Execute installed FRIDA script with name.
+Execute installed FRIDA script with path.
 
 Example:
 ```javascript=
-await instance.executeFridaScript("script.js");
+await instance.executeFridaScript("/data/corellium/frida/scripts/script.js");
 ```
 
 ### async takeScreenshot()

@@ -452,18 +452,6 @@ describe('Corellium API', function() {
 
             describe('netmon', function() {
                 let netmon;
-                let agent;
-
-                before(async function() {
-                    agent = await testInstance.newAgent();
-                    await agent.ready();
-                });
-
-                after(async function() {
-                    if (agent !== undefined && agent.connected) {
-                        agent.disconnect();
-                    }
-                });
 
                 it('can get monitor', async function() {
                     netmon = await testInstance.newNetworkMonitor();
@@ -503,19 +491,6 @@ describe('Corellium API', function() {
                 let pid = 0;
                 let name = '';
 
-                before(async function() {
-                    agent = await testInstance.newAgent();
-                    await agent.ready();
-                    console.log("Agent ready!");
-                });
-
-                after(async function() {
-                    if (agent !== undefined && agent.connected) {
-                        agent.disconnect();
-                        console.log("Disconnected agent");
-                    }
-                });
-
                 it('can get process list', async function() {
                     let procList = await agent.runFridaPs();
                     let lines = procList.output.trim().split('\n');
@@ -541,31 +516,30 @@ describe('Corellium API', function() {
                     assert(s != '');
                 });
 
-                // it('can get console', async function() {
-                //     const consoleStream = await testInstance.fridaConsole();
-                //     // Wait for the socket to open before killing it,
-                //     // otherwise this will throw an error
-                //     consoleStream.socket.on('open', function(err) {
-                //         consoleStream.socket.close();
-                //     });
-                //     // When the socket closes, it will be safe to destroy the console duplexify object
-                //     consoleStream.socket.on('close', function() {
-                //         consoleStream.destroy();
-                //     });
-                // });
+                it('can get console', async function() {
+                    const consoleStream = await testInstance.fridaConsole();
+                    // Wait for the socket to open before killing it,
+                    // otherwise this will throw an error
+                    consoleStream.socket.on('open', function(err) {
+                        consoleStream.socket.close();
+                    });
+                    // When the socket closes, it will be safe to destroy the console duplexify object
+                    consoleStream.socket.on('close', function() {
+                        consoleStream.destroy();
+                    });
+                });
 
                 describe('frida attaching and execution', async function() {
+        
                     it('can attach frida', async function() {
                         if (name === '') {
                             name = 'keystore';
                         }
-                        console.log("Attempting runFrida");
                         await agent.runFrida(pid, name);
-                        console.log("Post runFrida");
                     });
 
                     it('can execute script', async function() {
-                        await testInstance.executeFridaScript('hook_native.js');
+                        await testInstance.executeFridaScript('/data/corellium/frida/scripts/hook_native.js');
                         await new Promise(resolve => setTimeout(resolve,1000));
 
                         let fridaConsole = await testInstance.fridaConsole();
@@ -578,7 +552,6 @@ describe('Corellium API', function() {
                             });
                             fridaConsole.pipe(w);
                         });
-                        console.log("output length", fridaOutput.toString().length);
                         assert(fridaOutput.toString().includes('Hook android_log_write()'));
                     });
 

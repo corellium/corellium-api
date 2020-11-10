@@ -29,7 +29,6 @@ class Instance extends EventEmitter {
         this._netmon = null;
         this.lastPanicLength = null;
         this.volumeId = null;
-        this.fridaScriptPath = '/data/corellium/frida/scripts/'
 
         this.on('newListener', (event) => {
             if (event === 'change')
@@ -366,11 +365,11 @@ class Instance extends EventEmitter {
     }
 
     /** Execute FRIDA script by name */
-    async executeFridaScript(fileName) {
+    async executeFridaScript(filePath) {
         const {url} = await this._fetch('/console?type=frida');
         let frida_wc = new ws(url);
         await frida_wc.once('open', () => {
-            frida_wc.send('%load ' + this.fridaScriptPath + fileName + '\n');
+            frida_wc.send('%load ' + filePath + '\n');
             frida_wc.close();
         });
     }
