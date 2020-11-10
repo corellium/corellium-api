@@ -13,8 +13,18 @@ describe('Corellium API', function() {
     this.slow(10000);
     this.timeout(20000);
 
+    const INSTANCE_VERSIONS = [
+        '7.1.2',
+        '8.1.0',
+        '9.0.0',
+        '10.0.0',
+        '11.0.0',
+    ];
+
+    const instanceMap = new Map();
+
     let project = /** @type {Project} */(null);
-    let testInstance = /** @type {Instance} */(null);
+
     before(async function() {
         if (config.endpoint === undefined ||
             config.username === undefined ||
@@ -26,11 +36,14 @@ describe('Corellium API', function() {
             }
     })
 
-    after(async function() {
-        if (testInstance !== undefined) {
-            await testInstance.destroy();
-            await testInstance.waitForState('deleting');
-        }
+    INSTANCE_VERSIONS.forEach((instanceVersion) => {
+        after(async function() {
+            const instance = instanceMap.get(instanceVersion);
+            if (instance !== undefined) {
+                await instance.destroy();
+                await instance.waitForState('deleting');
+            }
+        });
     });
 
     const corellium = new Corellium(config);
@@ -52,30 +65,28 @@ describe('Corellium API', function() {
             });
         });
 
-        it('has room for one new vm (get quota / quotasUsed)', async function() {
+        it(`has room for ${INSTANCE_VERSIONS.length} new VMs (get quota / quotasUsed)`, async function() {
             assert(project.quotas !== project.quotasUsed);
-            if (project.quotas - project.quotasUsed < 2)
-                throw new Error('no room for an extra device to be made, please free at least two cores');
+            if (project.quotas - project.quotasUsed < 2 * INSTANCE_VERSIONS.length)
+                throw new Error(`no room for an extra device to be made, please free at least ${2 * INSTANCE_VERSIONS.length} cores`);
         });
 
-        it('can start create', async function() {
-            const os = '11.0.0';
-            const name = 'api test';
-            testInstance = await project.createInstance({
-                os: os,
-                flavor: config.testFlavor,
-                name: name,
-            })
-            .then((instance) => {
-                return instance;
-            }).catch((error) => {
-                throw error;
-            });
+        INSTANCE_VERSIONS.forEach((instanceVersion) => {
+            it('can start create', async function() {
+                const name = `API Test ${instanceVersion}`;
+                const instance = await project.createInstance({
+                    flavor: config.testFlavor,
+                    name: name,
+                    os: instanceVersion,
+                });
 
-            await testInstance.waitForState('creating');
-            assert.strictEqual(testInstance.name, name);
-            assert.strictEqual(testInstance.flavor, config.testFlavor);
-        })
+                instanceMap.set(instanceVersion, instance);
+
+                await instance.waitForState('creating');
+                assert.strictEqual(instance.flavor, config.testFlavor);
+                assert.strictEqual(instance.name, name);
+            })
+        });
 
         it('can list supported devices', async function() {
             const supportedDevices = await corellium.supported();
@@ -126,9 +137,12 @@ describe('Corellium API', function() {
             assert(tempName === project.info.name);
         });
 
-        it('can getInstance', async function() {
-            let instance = await project.getInstance(testInstance.id);
-            assert(instance.id === testInstance.id);
+        INSTANCE_VERSIONS.forEach((instanceVersion) => {
+            it('can getInstance', async function() {
+                const instanceFromMap = instanceMap.get(instanceVersion);
+                const instance = await project.getInstance(instanceFromMap.id);
+                assert(instance.id === instanceFromMap.id);
+            });
         });
 
         it('can get openvpn profile', async function() {
@@ -167,542 +181,595 @@ describe('Corellium API', function() {
             });
         });
 
-        it('can finish create', async function() {
-            this.timeout(70000);
-            this.slow(40000);
-            await testInstance.finishRestore();
+        INSTANCE_VERSIONS.forEach((instanceVersion) => {
+            it('can finish create', async function() {
+                this.slow(40000);
+                this.timeout(70000);
+
+                const instance = instanceMap.get(instanceVersion);
+                await instance.finishRestore();
+            });
         });
     });
 
-    describe('panics', function() {
-        it('can request panics', async function() {
-            assert.doesNotReject(() => testInstance.panics());
-        });
 
-        it('can clear panics', async function() {
-            assert.doesNotReject(() => testInstance.clearPanics());
+    INSTANCE_VERSIONS.forEach((instanceVersion) => {
+        describe(`panics ${instanceVersion}`, function() {
+            it('can request panics', async function() {
+                const instance = instanceMap.get(instanceVersion);
+                assert.doesNotReject(() => instance.panics());
+            });
+
+            it('can clear panics', async function() {
+                const instance = instanceMap.get(instanceVersion);
+                assert.doesNotReject(() => instance.clearPanics());
+            });
         });
     });
 
-    describe('instances', function() {
-        before(async function() {
-            if (testInstance === undefined)
-                throw new Error('Previously created device does not seem to exist');
-            await testInstance.waitForState('on');
-        });
-
-        it('can take a screenshot', async function() {
-            let expected = Buffer.from('89504E470D0A1A0A', 'hex');
-            await testInstance.takeScreenshot()
-            .then((png) => {
-                assert(png.length > expected.length);
-                assert(png.compare(expected, 0, expected.length, 0, expected.length) === 0);
-            });
-        })
-
-        it('can rename', async function() {
-            async function rename(name) {
-                await testInstance.rename(name);
-                await testInstance.update();
-                assert.strictEqual(testInstance.name, name);
-            }
-            await rename('test rename foo');
-            await rename('api test');
-        });
-
-        it('has a console log', async function() {
-            let log = await testInstance.consoleLog();
-            if (log === undefined) {
-                throw new Error('Unable to acquire any console log');
-            }
-        })
-
-        it('has a console', async function() {
-            const consoleStream = await testInstance.console();
-            // Wait for the socket to open before killing it,
-            // otherwise this will throw an error
-            consoleStream.socket.on('open', function(err) {
-                consoleStream.socket.close();
-            });
-            // When the socket closes, it will be safe to destroy the console duplexify object
-            consoleStream.socket.on('close', function() {
-                consoleStream.destroy();
-            });
-        });
-
-        it('can send input', async function() {
-            const input = new Input();
-            assert.doesNotReject(() => testInstance.sendInput(input.pressRelease('home')));
-        });
-
-        describe('agent', function() {
-            let agent;
+    INSTANCE_VERSIONS.forEach((instanceVersion) => {
+        describe(`instances ${instanceVersion}`, function() {
             before(async function() {
-                this.timeout(100000);
-                await testInstance.waitForState('on');
-                await testInstance.waitForAgentReady();
+                const instance = instanceMap.get(instanceVersion);
+                if (instance === undefined)
+                    throw new Error('Previously created device does not seem to exist');
+                await instance.waitForState('on');
             });
 
-            beforeEach(async function() {
-                if (agent === undefined || !agent.connected) {
-                    agent = await testInstance.newAgent();
-                    await agent.ready();
-                }
-            });
-
-            after(async function() {
-                if (agent !== undefined && agent.connected) {
-                    agent.disconnect();
-                }
-            });
-
-            it('can list device apps', async function() {
-                let appList = await agent.appList();
-                assert(appList !== undefined && appList.length > 0);
-            });
-
-            describe('file control', async function() {
-                let expectedData = Buffer.from('D1FF', 'hex');
-                let testPath;
-                it('can get temp file', async function() {
-                    testPath = await agent.tempFile();
-                });
-
-                it('can upload a file', async function() {
-                    let rs = stream.Readable.from(expectedData);
-
-                    let lastStatus;
-                    try {
-                        await agent.upload(testPath, rs, (_progress, status) => {
-                            lastStatus = status;
-                        });
-                    } catch (err) {
-                        assert(false, `Error uploading file during '${lastStatus} stage: ${err}`);
-                    }
-                });
-
-                it('can stat a file', async function() {
-                    let stat = await agent.stat(testPath);
-                    assert.strictEqual(stat.name, testPath);
-                });
-
-                it('can change a files attributes', async function() {
-                    await agent.changeFileAttributes(testPath, {mode: 511});
-                    let stat = await agent.stat(testPath);
-                    assert.strictEqual(stat.mode, 33279);
-                });
-
-                it('can download files', async function() {
-                    try {
-                        let downloaded = await new Promise(resolve => {
-                            const rs = agent.download(testPath)
-                            let bufs = [];
-                            rs.on('data', function (chunk) {
-                                bufs.push(chunk);
-                            });
-                            rs.on('end', function() {
-                                resolve(Buffer.concat(bufs));
-                            });
-                        });
-
-                        assert(Buffer.compare(downloaded, expectedData) === 0);
-                    } catch (err) {
-                        assert(false, `Error reading downloadable file ${err}`);
-                    }
-                });
-
-                it('can delete files', async function() {
-                    await agent.deleteFile(testPath)
-                    .then((path) => {
-                        assert(path === undefined);
-                    })
-
-                    // We should get an OperationFailed since the file is gone
-                    try {
-                        await agent.stat(testPath)
-                    } catch (error) {
-                        assert(error.toString().includes('No such file or directory'));
-                    }
-                });
-            });
-
-            describe('profiles', async function() {
-                if(config.testFlavor === 'ranchu') {
-                    // These are unimplemented on ranchu devices
-                    it('cannot use profile/list', async function() {
-                        assert.rejects(() => agent.profileList());
+            it('can take a screenshot', async function() {
+                const expected = Buffer.from('89504E470D0A1A0A', 'hex');
+                const instance = instanceMap.get(instanceVersion);
+                await instance.takeScreenshot()
+                    .then((png) => {
+                        assert(png.length > expected.length);
+                        assert(png.compare(expected, 0, expected.length, 0, expected.length) === 0);
                     });
-
-                    it('cannot use profile/install', async function() {
-                        assert.rejects(() => agent.installProfile('test'));
-                    });
-
-                    it('cannot use profile/remove', async function() {
-                        assert.rejects(() => agent.removeProfile('test'));
-                    });
-
-                    it('cannot use profile/get', async function() {
-                        assert.rejects(() => agent.getProfile('test'));
-                    });
-                }
-            });
-
-            describe('locks', async function() {
-                if(config.testFlavor === 'ranchu') {
-                    // These are unimplemented on ranchu devices
-                    it('cannot use lock', async function() {
-                        assert.rejects(() => agent.lockDevice());
-                    });
-
-                    it('cannot use unlock', async function() {
-                        assert.rejects(() => agent.unlockDevice());
-                    });
-
-                    it('cannot use acquireDisableAutolockAssertion', async function() {
-                        assert.rejects(() => agent.acquireDisableAutolockAssertion());
-                    });
-
-                    it('cannot use releaseDisableAutolockAssertion', async function() {
-                        assert.rejects(() => agent.releaseDisableAutolockAssertion());
-                    });
-                }
-            });
-
-            describe('wifi', async function() {
-                if(config.testFlavor === 'ranchu') {
-                    // These are unimplemented on ranchu devices
-                    it('cannot use connectToWifi', async function() {
-                        assert.rejects(() => agent.connectToWifi());
-                    });
-
-                    it('cannot use disconnectFromWifi', async function() {
-                        assert.rejects(() => agent.disconnectFromWifi());
-                    });
-                }
-            });
-
-            describe('crashes', async function() {
-                // TODO : test for crashes
             })
 
-            describe('app control', async function() {
-                let installSuccess;
-                it('can install a signed apk', async function() {
-                    this.slow(50000);
-                    this.timeout(100000);
-                    let retries = 3;
+            it('can rename', async function() {
+                const instance = instanceMap.get(instanceVersion);
+                const instanceName = instance.name;
+                async function rename(name) {
+                    await instance.rename(name);
+                    await instance.update();
+                    assert.strictEqual(instance.name, name);
+                }
+                await rename('test rename foo');
+                await rename(instanceName);
+            });
 
-                    while (true) {
-                        let lastStatus;
-                        let rs = fs.createReadStream(path.join(__dirname, 'api-test.apk'));
-                        try {
-                            await agent.installFile(rs, (_progress, status) => {
-                                lastStatus = status;
-                            });
-                            installSuccess = true;
-                        } catch (err) {
-                            if (err.toString().includes('Agent did not get a response to pong in 10 seconds, disconnecting.')) {
-                                --retries;
-                                if (retries !== 0) {
-                                    agent.disconnect();
-                                    agent = await testInstance.newAgent();
-                                    await agent.ready();
-                                    continue;
-                                }
-                            }
+            it('has a console log', async function() {
+                const instance = instanceMap.get(instanceVersion);
+                const log = await instance.consoleLog();
+                if (log === undefined) {
+                    throw new Error('Unable to acquire any console log');
+                }
+            })
 
-                            assert(false, `Error installing app during '${lastStatus} stage: ${err}`);
-                            installSuccess = false;
-                        } finally {
-                            rs.close();
-                        }
-
-                        break;
-                    }
+            it('has a console', async function() {
+                const instance = instanceMap.get(instanceVersion);
+                const consoleStream = await instance.console();
+                // Wait for the socket to open before killing it,
+                // otherwise this will throw an error
+                consoleStream.socket.on('open', function(err) {
+                    consoleStream.socket.close();
                 });
-
-                it('can run an app', async function() {
-                    if (!installSuccess)
-                    assert(false, "Install of app failed, this test cannot run, artifically forcing a failure");
-
-                    assert.doesNotReject(() => agent.run('com.corellium.test.app'));
-                });
-
-                it('can kill an app', async function() {
-                    if (!installSuccess)
-                        assert(false, "Install of app failed, this test cannot run, artifically forcing a failure");
-
-                    assert.doesNotReject(() => agent.kill('com.corellium.test.app'));
-                });
-
-                it('can uninstall an app', async function() {
-                    if (!installSuccess)
-                        assert(false, "Install of app failed, this test cannot run, artifically forcing a failure");
-
-                    let lastStatus;
-                    try {
-                        await agent.uninstall('com.corellium.test.app', (_progress, status) => {
-                            lastStatus = status;
-                        });
-                    } catch (err) {
-                        assert(false, `Error uninstalling app during '${lastStatus} stage: ${err}`);
-                    }
+                // When the socket closes, it will be safe to destroy the console duplexify object
+                consoleStream.socket.on('close', function() {
+                    consoleStream.destroy();
                 });
             });
 
-            describe('netmon', function() {
-                let netmon;
+            it('can send input', async function() {
+                const input = new Input();
+                const instance = instanceMap.get(instanceVersion);
+                assert.doesNotReject(() => instance.sendInput(input.pressRelease('home')));
+            });
 
-                it('can get monitor', async function() {
-                    netmon = await testInstance.newNetworkMonitor();
+            describe(`agent ${instanceVersion}`, function() {
+                let agent;
+
+                before(async function() {
+                    this.timeout(100000);
+
+                    const instance = instanceMap.get(instanceVersion);
+                    await instance.waitForState('on');
+                    await instance.waitForAgentReady();
                 });
 
-                let netmonOutput;
-                it('can start monitor', async function() {
-                    this.slow(15000);
-                    netmon.handleMessage((message) => {
-                        let host = message.request.headers.find(entry => entry.key === 'Host');
-                        netmonOutput = host.value;
+                beforeEach(async function() {
+                    const instance = instanceMap.get(instanceVersion);
+                    if (agent === undefined || !agent.connected) {
+                        agent = await instance.newAgent();
+                        await agent.ready();
+                    }
+                });
+
+                after(async function() {
+                    if (agent !== undefined && agent.connected) {
+                        agent.disconnect();
+                    }
+                });
+
+                it('can list device apps', async function() {
+                    let appList = await agent.appList();
+                    assert(appList !== undefined && appList.length > 0);
+                });
+
+                describe(`Files ${instanceVersion}`, async function() {
+                    let expectedData = Buffer.from('D1FF', 'hex');
+                    let testPath;
+                    it('can get temp file', async function() {
+                        testPath = await agent.tempFile();
                     });
 
-                    await netmon.start();
-                    // Let monitor to start capturing data
-                    await new Promise(resolve => setTimeout(resolve, 5000));
+                    it('can upload a file', async function() {
+                        let rs = stream.Readable.from(expectedData);
+
+                        let lastStatus;
+                        try {
+                            await agent.upload(testPath, rs, (_progress, status) => {
+                                lastStatus = status;
+                            });
+                        } catch (err) {
+                            assert(false, `Error uploading file during '${lastStatus} stage: ${err}`);
+                        }
+                    });
+
+                    it('can stat a file', async function() {
+                        let stat = await agent.stat(testPath);
+                        assert.strictEqual(stat.name, testPath);
+                    });
+
+                    it('can change a files attributes', async function() {
+                        await agent.changeFileAttributes(testPath, {mode: 511});
+                        let stat = await agent.stat(testPath);
+                        assert.strictEqual(stat.mode, 33279);
+                    });
+
+                    it('can download files', async function() {
+                        try {
+                            let downloaded = await new Promise(resolve => {
+                                const rs = agent.download(testPath)
+                                let bufs = [];
+                                rs.on('data', function (chunk) {
+                                    bufs.push(chunk);
+                                });
+                                rs.on('end', function() {
+                                    resolve(Buffer.concat(bufs));
+                                });
+                            });
+
+                            assert(Buffer.compare(downloaded, expectedData) === 0);
+                        } catch (err) {
+                            assert(false, `Error reading downloadable file ${err}`);
+                        }
+                    });
+
+                    it('can delete files', async function() {
+                        await agent.deleteFile(testPath)
+                        .then((path) => {
+                            assert(path === undefined);
+                        })
+
+                        // We should get an OperationFailed since the file is gone
+                        try {
+                            await agent.stat(testPath)
+                        } catch (error) {
+                            assert(error.toString().includes('No such file or directory'));
+                        }
+                    });
                 });
 
-                it('can monitor data', async function() {
-                    this.slow(15000);
-                    await agent.runActivity('com.corellium.test.app', 'com.corellium.test.app/com.corellium.test.app.NetworkActivity');
-                    await new Promise(resolve => setTimeout(resolve, 5000));
+                describe(`profiles ${instanceVersion}`, async function() {
+                    if(config.testFlavor === 'ranchu') {
+                        // These are unimplemented on ranchu devices
+                        it('cannot use profile/list', async function() {
+                            assert.rejects(() => agent.profileList());
+                        });
 
-                    assert(netmonOutput == 'www.corellium.com');
+                        it('cannot use profile/install', async function() {
+                            assert.rejects(() => agent.installProfile('test'));
+                        });
+
+                        it('cannot use profile/remove', async function() {
+                            assert.rejects(() => agent.removeProfile('test'));
+                        });
+
+                        it('cannot use profile/get', async function() {
+                            assert.rejects(() => agent.getProfile('test'));
+                        });
+                    }
                 });
 
-                it('can stop monitor', async function() {
-                    await netmon.stop();
+                describe(`locks ${instanceVersion}`, async function() {
+                    if(config.testFlavor === 'ranchu') {
+                        // These are unimplemented on ranchu devices
+                        it('cannot use lock', async function() {
+                            assert.rejects(() => agent.lockDevice());
+                        });
+
+                        it('cannot use unlock', async function() {
+                            assert.rejects(() => agent.unlockDevice());
+                        });
+
+                        it('cannot use acquireDisableAutolockAssertion', async function() {
+                            assert.rejects(() => agent.acquireDisableAutolockAssertion());
+                        });
+
+                        it('cannot use releaseDisableAutolockAssertion', async function() {
+                            assert.rejects(() => agent.releaseDisableAutolockAssertion());
+                        });
+                    }
                 });
 
-                it('can clear log', async function() {
-                    await netmon.clearLog();
+                describe(`WiFi ${instanceVersion}`, async function() {
+                    if(config.testFlavor === 'ranchu') {
+                        // These are unimplemented on ranchu devices
+                        it('cannot use connectToWifi', async function() {
+                            assert.rejects(() => agent.connectToWifi());
+                        });
+
+                        it('cannot use disconnectFromWifi', async function() {
+                            assert.rejects(() => agent.disconnectFromWifi());
+                        });
+                    }
+                });
+
+                describe(`crashes ${instanceVersion}`, async function() {
+                    // TODO : test for crashes
+                })
+
+                describe(`Applications ${instanceVersion}`, async function() {
+                    const instance = instanceMap.get(instanceVersion);
+
+                    let installSuccess;
+                    it('can install a signed apk', async function() {
+                        this.slow(50000);
+                        this.timeout(100000);
+                        let retries = 3;
+
+                        while (true) {
+                            let lastStatus;
+                            let rs = fs.createReadStream(path.join(__dirname, 'api-test.apk'));
+                            try {
+                                await agent.installFile(rs, (_progress, status) => {
+                                    lastStatus = status;
+                                });
+                                installSuccess = true;
+                            } catch (err) {
+                                if (err.toString().includes('Agent did not get a response to pong in 10 seconds, disconnecting.')) {
+                                    --retries;
+                                    if (retries !== 0) {
+                                        agent.disconnect();
+                                        agent = await instance.newAgent();
+                                        await agent.ready();
+                                        continue;
+                                    }
+                                }
+
+                                assert(false, `Error installing app during '${lastStatus} stage: ${err}`);
+                                installSuccess = false;
+                            } finally {
+                                rs.close();
+                            }
+
+                            break;
+                        }
+                    });
+
+                    it('can run an app', async function() {
+                        assert(installSuccess, "This test cannot run because application installation failed");
+                        assert.doesNotReject(() => agent.run('com.corellium.test.app'));
+                    });
+
+                    it('can kill an app', async function() {
+                        assert(installSuccess, "This test cannot run because application installation failed");
+                        assert.doesNotReject(() => agent.kill('com.corellium.test.app'));
+                    });
+
+                    it('can uninstall an app', async function() {
+                        if (!installSuccess)
+                            assert(false, "Install of app failed, this test cannot run, artifically forcing a failure");
+
+                        let lastStatus;
+                        try {
+                            await agent.uninstall('com.corellium.test.app', (_progress, status) => {
+                                lastStatus = status;
+                            });
+                        } catch (err) {
+                            assert(false, `Error uninstalling app during '${lastStatus} stage: ${err}`);
+                        }
+                    });
+                });
+
+                describe(`Network Monitor ${instanceVersion}`, function() {
+                    let netmon;
+
+                    it('can get monitor', async function() {
+                        const instance = instanceMap.get(instanceVersion);
+                        netmon = await instance.newNetworkMonitor();
+                    });
+
+                    let netmonOutput;
+                    it('can start monitor', async function() {
+                        this.slow(15000);
+
+                        const instance = instanceMap.get(instanceVersion);
+
+                        netmon.handleMessage((message) => {
+                            let host = message.request.headers.find(entry => entry.key === 'Host');
+                            netmonOutput = host.value;
+                        });
+
+                        await netmon.start();
+                        // Let monitor to start capturing data
+                        await new Promise(resolve => setTimeout(resolve, 5000));
+                    });
+
+                    it('can monitor data', async function() {
+                        this.slow(15000);
+
+                        await agent.runActivity('com.corellium.test.app', 'com.corellium.test.app/com.corellium.test.app.NetworkActivity');
+                        await new Promise(resolve => setTimeout(resolve, 5000));
+
+                        assert(netmonOutput == 'www.corellium.com');
+                    });
+
+                    it('can stop monitor', async function() {
+                        const instance = instanceMap.get(instanceVersion);
+
+                        await netmon.stop();
+                    });
+
+                    it('can clear log', async function() {
+                        const instance = instanceMap.get(instanceVersion);
+
+                        await netmon.clearLog();
+                    });
+                });
+
+                describe(`Frida ${instanceVersion}`, function() {
+                    let pid = 0;
+                    let name = '';
+
+                    it('can get process list', async function() {
+                        let procList = await agent.runFridaPs();
+                        let lines = procList.output.trim().split('\n');
+                        lines.shift();
+                        lines.shift();
+                        for (const line of lines) {
+                            [pid, name] = line.trim().split(/\s+/);
+                            if (name == 'keystore') {
+                                break;
+                            }
+                        }
+                        assert(pid != 0);
+                    });
+
+                    it('can get console', async function() {
+                        const instance = instanceMap.get(instanceVersion);
+                        const consoleStream = await instance.fridaConsole();
+                        // Wait for the socket to open before killing it,
+                        // otherwise this will throw an error
+                        consoleStream.socket.on('open', function(err) {
+                            consoleStream.socket.close();
+                        });
+                        // When the socket closes, it will be safe to destroy the console duplexify object
+                        consoleStream.socket.on('close', function() {
+                            consoleStream.destroy();
+                        });
+                    });
+
+                    describe('frida attaching and execution', async function() {
+            
+                        it('can attach frida', async function() {
+                            if (name === '') {
+                                name = 'keystore';
+                            }
+                            await agent.runFrida(pid, name);
+                        });
+
+                        it('can get frida scripts', async function() {
+                            let fridaScripts = await agent.stat('/data/corellium/frida/scripts/');
+                            let scriptList = fridaScripts.entries.map(entry  => entry.name);
+                            let s = '';
+                            for(s of scriptList) {
+                                if (s == 'hook_native.js')
+                                    break;
+                            }
+                            assert(s != '');
+                        });
+
+                        it('can execute script', async function() {
+                            const instance = instanceMap.get(instanceVersion);
+                            await instance.executeFridaScript('/data/corellium/frida/scripts/hook_native.js');
+                            await new Promise(resolve => setTimeout(resolve, 5000));
+
+                            let fridaConsole = await instance.fridaConsole();
+                            let fridaOutput = await new Promise(resolve => {
+                                const w = new stream.Writable({
+                                    write(chunk, encoding, callback) {
+                                        fridaConsole.destroy();
+                                        resolve(chunk);
+                                    }
+                                });
+                                fridaConsole.pipe(w);
+                            });
+                            assert(fridaOutput.toString().includes('Hook android_log_write()'));
+                        });
+
+                        it('can detach frida', async function() {
+                            await agent.runFridaKill();
+                        });
+                    });
                 });
             });
 
-            describe('frida', function() {
+            describe(`CoreTrace ${instanceVersion}`, function() {
                 let pid = 0;
-                let name = '';
 
-                it('can get process list', async function() {
-                    let procList = await agent.runFridaPs();
-                    let lines = procList.output.trim().split('\n');
-                    lines.shift();
-                    lines.shift();
-                    for (const line of lines) {
-                        [pid, name] = line.trim().split(/\s+/);
-                        if (name == 'keystore') {
+                it('can get thread list', async function() {
+                    const instance = instanceMap.get(instanceVersion);
+                    let threadList = await instance.getCoreTraceThreadList();
+                    for (let p of threadList) {
+                        if (p.name.includes("bluetooth@")) {
+                            pid = p.pid;
                             break;
                         }
                     }
                     assert(pid != 0);
                 });
 
-                it('can get frida scripts', async function() {
-                    let fridaScripts = await agent.stat('/data/corellium/frida/scripts/');
-                    let scriptList = fridaScripts.entries.map(entry  => entry.name);
-                    let s = '';
-                    for(s of scriptList) {
-                        if (s == 'hook_native.js')
-                            break;
+                it('can set filter', async function() {
+                    const instance = instanceMap.get(instanceVersion);
+                    await instance.setCoreTraceFilter([pid], [], []);
+                });
+
+                it('can start capture', async function() {
+                    const instance = instanceMap.get(instanceVersion);
+                    await instance.startCoreTrace();
+                });
+
+                it('can capture data', async function() {
+                    this.slow(15000);
+
+                    await new Promise(resolve => setTimeout(resolve, 5000));
+
+                    const instance = instanceMap.get(instanceVersion);
+                    const log = await instance.downloadCoreTraceLog();
+                    assert(log !== undefined);
+                    assert(log.toString().includes(':bluetooth@'));
+                });
+
+                it('can stop capture', async function() {
+                    const instance = instanceMap.get(instanceVersion);
+                    await instance.stopCoreTrace();
+                });
+
+                it('can clear filter', async function() {
+                    const instance = instanceMap.get(instanceVersion);
+                    await instance.clearCoreTraceFilter();
+                });
+
+                it('can clear log', async function() {
+                    const instance = instanceMap.get(instanceVersion);
+                    await instance.clearCoreTraceLog();
+                });
+            });
+
+            async function turnOn() {
+                const instance = instanceMap.get(instanceVersion);
+                await instance.start();
+                await instance.waitForState('on');
+                assert.strictEqual(instance.state, 'on');
+            }
+
+            async function turnOff() {
+                const instance = instanceMap.get(instanceVersion);
+                await instance.stop();
+                await instance.waitForState('off');
+                assert.strictEqual(instance.state, 'off');
+            }
+
+            describe(`device lifecycle ${instanceVersion}`, function() {
+                it('can pause', async function() {
+                    const instance = instanceMap.get(instanceVersion);
+                    await instance.waitForState('on');
+                    await instance.pause();
+                    await instance.waitForState('paused');
+                });
+
+                it('can unpause', async function() {
+                    const instance = instanceMap.get(instanceVersion);
+                    if (instance.state !== 'paused') {
+                        await instance.pause();
+                        await instance.waitForState('paused');
                     }
-                    assert(s != '');
+
+                    await instance.unpause();
+                    await instance.waitForState('on');
+                    await instance.update();
                 });
 
-                it('can get console', async function() {
-                    const consoleStream = await testInstance.fridaConsole();
-                    // Wait for the socket to open before killing it,
-                    // otherwise this will throw an error
-                    consoleStream.socket.on('open', function(err) {
-                        consoleStream.socket.close();
-                    });
-                    // When the socket closes, it will be safe to destroy the console duplexify object
-                    consoleStream.socket.on('close', function() {
-                        consoleStream.destroy();
-                    });
-                });
-
-                describe('frida attaching and execution', async function() {
-        
-                    it('can attach frida', async function() {
-                        if (name === '') {
-                            name = 'keystore';
-                        }
-                        await agent.runFrida(pid, name);
-                    });
-
-                    it('can execute script', async function() {
-                        await testInstance.executeFridaScript('/data/corellium/frida/scripts/hook_native.js');
-                        await new Promise(resolve => setTimeout(resolve, 5000));
-
-                        let fridaConsole = await testInstance.fridaConsole();
-                        let fridaOutput = await new Promise(resolve => {
-                            const w = new stream.Writable({
-                                write(chunk, encoding, callback) {
-                                    fridaConsole.destroy();
-                                    resolve(chunk);
-                                }
-                            });
-                            fridaConsole.pipe(w);
-                        });
-                        assert(fridaOutput.toString().includes('Hook android_log_write()'));
-                    });
-
-                    it('can detach frida', async function() {
-                        await agent.runFridaKill();
-                    });
-                });
-            });
-        });
-
-        describe('coretrace', function() {
-            let pid = 0;
-
-            it('can get thread list', async function() {
-                let threadList = await testInstance.getCoreTraceThreadList();
-                for (let p of threadList) {
-                    if (p.name.includes("bluetooth@")) {
-                        pid = p.pid;
-                        break;
+                it('can reboot', async function() {
+                    const instance = instanceMap.get(instanceVersion);
+                    this.slow(20000);
+                    this.timeout(25000);
+                    if (instance.state !== 'on') {
+                        await turnOn(instance);
                     }
-                }
-                assert(pid != 0);
+                    await instance.reboot();
+                });
+
+                it('can stop', async function() {
+                    const instance = instanceMap.get(instanceVersion);
+                    this.slow(15000);
+                    if (instance.state !== 'on') {
+                        await turnOn(instance);
+                    }
+                    await turnOff(instance);
+                });
+
+                it('can start', async function() {
+                    const instance = instanceMap.get(instanceVersion);
+                    this.slow(20000);
+                    this.timeout(25000);
+                    if (instance.state !== 'off') {
+                        await turnOff(instance);
+                    }
+                    await turnOn(instance);
+                });
             });
 
-            it('can set filter', async function() {
-                await testInstance.setCoreTraceFilter([pid], [], []);
-            });
+            describe(`snapshots ${instanceVersion}`, function() {
+                before(async function() {
+                    const instance = instanceMap.get(instanceVersion);
+                    await instance.update();
+                });
 
-            it('can start capture', async function() {
-                await testInstance.startCoreTrace();
-            });
+                it('has a fresh snapshot', async function() {
+                    const instance = instanceMap.get(instanceVersion);
+                    const snapshots = await instance.snapshots();
+                    const fresh = snapshots.find(snap => snap.fresh);
+                    assert(fresh !== undefined);
+                });
 
-            it('can capture data', async function() {
-                this.slow(15000);
-                await new Promise(resolve => setTimeout(resolve, 5000));
-                let log = await testInstance.downloadCoreTraceLog();
-                assert(log !== undefined);
-                assert(log.toString().includes(':bluetooth@'));
-            });
+                it('refuses to take snapshot if instance is on', async function() {
+                    const instance = instanceMap.get(instanceVersion);
+                    if (instance.state !== 'on') {
+                        await turnOn(instance);
+                    }
+                    await assert.rejects(() => instance.takeSnapshot());
+                });
 
-            it('can stop capture', async function() {
-                await testInstance.stopCoreTrace();
-            });
+                let latest_snapshot;
+                it('can take snapshot if instance is off', async function() {
+                    const instance = instanceMap.get(instanceVersion);
+                    if (instance.state !== 'off') {
+                        await turnOff(instance);
+                    }
 
-            it('can clear filter', async function() {
-                await testInstance.clearCoreTraceFilter();
-            });
+                    latest_snapshot = await instance.takeSnapshot();
+                });
 
-            it('can clear log', async function() {
-                await testInstance.clearCoreTraceLog();
-            });
-        });
+                it('can restore a snapshot', async function() {
+                    const instance = instanceMap.get(instanceVersion);
+                    if (instance.state !== 'off') {
+                        await turnOff(instance);
+                    }
 
-        async function turnOn() {
-            await testInstance.start();
-            await testInstance.waitForState('on');
-            assert.strictEqual(testInstance.state, 'on');
-        }
+                    assert.doesNotReject(() => latest_snapshot.restore());
+                });
 
-        async function turnOff() {
-            await testInstance.stop();
-            await testInstance.waitForState('off');
-            assert.strictEqual(testInstance.state, 'off');
-        }
+                it('can delete a snapshot', async function() {
+                    const instance = instanceMap.get(instanceVersion);
+                    if (instance.state !== 'off') {
+                        await turnOff(instance);
+                    }
 
-        describe('device life cycle', function() {
-            it('can pause', async function() {
-                await testInstance.waitForState('on');
-                await testInstance.pause();
-                await testInstance.waitForState('paused');
-            });
-
-            it('can unpause', async function() {
-                if (testInstance.state !== 'paused') {
-                    await testInstance.pause();
-                    await testInstance.waitForState('paused');
-                }
-
-                await testInstance.unpause();
-                await testInstance.waitForState('on');
-                await testInstance.update();
-            });
-
-            it('can reboot', async function() {
-                this.slow(20000);
-                this.timeout(25000);
-                if (testInstance.state !== 'on') {
-                    await turnOn(testInstance);
-                }
-                await testInstance.reboot();
-            });
-
-            it('can stop', async function() {
-                this.slow(15000);
-                if (testInstance.state !== 'on') {
-                    await turnOn(testInstance);
-                }
-                await turnOff(testInstance);
-            });
-
-            it('can start', async function() {
-                this.slow(20000);
-                this.timeout(25000);
-                if (testInstance.state !== 'off') {
-                    await turnOff(testInstance);
-                }
-                await turnOn(testInstance);
-            });
-        });
-
-        describe('snapshots', function() {
-            before(async function() {
-                await testInstance.update();
-            });
-
-            it('has a fresh snapshot', async function() {
-                const snapshots = await testInstance.snapshots();
-                const fresh = snapshots.find(snap => snap.fresh);
-                assert(fresh !== undefined);
-            });
-
-            it('refuses to take snapshot if instance is on', async function() {
-                if (testInstance.state !== 'on') {
-                    await turnOn(testInstance);
-                }
-                await assert.rejects(() => testInstance.takeSnapshot());
-            });
-
-            let latest_snapshot;
-            it('can take snapshot if instance is off', async function() {
-                if (testInstance.state !== 'off') {
-                    await turnOff(testInstance);
-                }
-
-                latest_snapshot = await testInstance.takeSnapshot();
-            });
-
-            it('can restore a snapshot', async function() {
-                if (testInstance.state !== 'off') {
-                    await turnOff(testInstance);
-                }
-
-                assert.doesNotReject(() => latest_snapshot.restore());
-            });
-
-            it('can delete a snapshot', async function() {
-                if (testInstance.state !== 'off') {
-                    await turnOff(testInstance);
-                }
-
-                assert.doesNotReject(() => latest_snapshot.delete());
+                    assert.doesNotReject(() => latest_snapshot.delete());
+                });
             });
         });
     });
