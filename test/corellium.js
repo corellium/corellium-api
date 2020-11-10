@@ -540,7 +540,7 @@ describe('Corellium API', function() {
 
                     it('can execute script', async function() {
                         await testInstance.executeFridaScript('/data/corellium/frida/scripts/hook_native.js');
-                        await new Promise(resolve => setTimeout(resolve,1000));
+                        await new Promise(resolve => setTimeout(resolve, 5000));
 
                         let fridaConsole = await testInstance.fridaConsole();
                         let fridaOutput = await new Promise(resolve => {
