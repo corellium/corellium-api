@@ -30,10 +30,19 @@ async function launch(instance, bundleID) {
 async function main() {
     // Configure the API.
     let corellium = new Corellium({
-        endpoint: 'https://client.corellium.com',
-        username: 'admin',
-        password: 'password'
+        endpoint: "https://vtest.corellium.com",
+        username: "admin",
+        password: "dorswsap",
     });
+    //             endpoint: "https://rtest2.corellium.co",
+    //     username: "admin",
+    //     password: "dorswsap",
+    // });
+        //     "endpoint": "https://app.corellium.com",
+        //     "username": "strazz@gmail.com   ",
+        //     "password": "1P4mYDCCBTZJHJM",
+        // });
+
 
     console.log('Logging in...');
     // Login.
@@ -43,15 +52,24 @@ async function main() {
     // Get the list of projects.
     let projects = await corellium.projects();
 
+    
+    let supported = await corellium.supported();
+    console.log("Supported:", supported);
+
+    let teams, users = await corellium.getTeamsAndUsers();
+    console.log("teams:", teams);
+    console.log("users:", users);
+    
+
     // Find the project called "Default Project".
-    let project = projects.find(project => project.name === "Default Project");
+    let project = projects.find(project => project.name === "Test Project");
 
     // Get the instances in the project.
     console.log('Getting instances...');
     let instances = await project.instances();
 
     // Use an instance named "API Demo"
-    let instance = instances.find(instance => instance.name === 'API Demo');
+    let instance = instances.find(instance => instance.name === 'latest');
 
     // Wait for the agent to respond.
     console.log('Getting agent...');
@@ -62,30 +80,33 @@ async function main() {
     await agent.ready();
     
     console.log('Agent is ready.');
-    
+
+
     // List the apps.
     let appList = await agent.appList();
     let apps = new Map();
-    for (let app of await agent.appList()) {
-        apps.set(app['bundleID'], app);
+    for (let app of appList) {
+        if(app['bundleID'] === ('com.corellium.test.app')) {
+            apps.set(app['bundleID'], app);
+        }
     }
 
     console.log(apps);
 
     // Install the Facebook IPA if it's not already installed.
-    if (!apps.get('com.facebook.Facebook')) {
-        console.log('Installing Facebook...');
+    // if (!apps.get('com.facebook.Facebook')) {
+    //     console.log('Installing Facebook...');
 
-        await agent.installFile(fs.createReadStream('fb.ipa'), (progress, status) => {
-            console.log(progress, status);
-        });
+    //     await agent.installFile(fs.createReadStream('fb.ipa'), (progress, status) => {
+    //         console.log(progress, status);
+    //     });
 
-        console.log('Facebook installed');
-    }
+    //     console.log('Facebook installed');
+    // }
 
     // Unlock the device.
-    console.log('Unlocking device');
-    await agent.unlockDevice();
+    // console.log('Unlocking device');
+    // await agent.unlockDevice();
 
     // Run each app while listening for crashes of that app. Wait 15 seconds and kill the app.
     for (let [, app] of apps) {

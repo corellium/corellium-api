@@ -347,7 +347,7 @@ instances.forEach(instance => {
 
 Returns array of threads in the following format:
 ```
-[ 
+[
 	{ pid, kernelId, name, threads: [ { tid, kernelId }, ... ] },
 	...
 ]
