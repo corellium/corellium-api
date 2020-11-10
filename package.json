@@ -14,6 +14,7 @@
     "fast-stable-stringify": "^1.0.0",
     "form-data": "^3.0.0",
     "hkdf": "0.0.2",
+    "mocha-spec-json-output-reporter": "^1.1.7",
     "p-retry": "^2.0.0",
     "p-timeout": "^3.2.0",
     "uuid": "^3.3.2",

@@ -167,8 +167,8 @@ class Agent {
                 return;
             }
 
-            let err = new Error('Agent did not get a response to pong in 10 seconds, disconnecting.');
-            console.error('Agent did not get a response to pong in 10 seconds, disconnecting.');
+            let err = new Error('Agent did not get a response to ping in 10 seconds, disconnecting.');
+            console.error('Agent did not get a response to ping in 10 seconds, disconnecting.');
 
             this.pending.forEach(handler => {
                 handler(err);
@@ -179,8 +179,9 @@ class Agent {
         }, 10000);
 
         ws.once('pong', async () => {
-            if (ws !== this.ws)
+            if (ws !== this.ws) {
                 return;
+            }
 
             clearTimeout(this._keepAliveTimeout);
             this._keepAliveTimeout = null;
@@ -319,6 +320,15 @@ class Agent {
      */
     async run(bundleID) {
         await this.command('app', 'run', {bundleID});
+    }
+
+    /**
+     * Launches the app with the given bundle ID.
+     * @param {string} bundleID - The bundle ID of the app to launch, for android this is the package name.
+     * @param {string} activity fully qualified activity to launch from bundleID
+     */
+    async runActivity(bundleID, activity) {
+        await this.command('app', 'run', {bundleID, activity});
     }
 
     /**

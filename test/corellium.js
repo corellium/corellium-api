@@ -394,7 +394,7 @@ describe('Corellium API', function() {
 
                     while (true) {
                         let lastStatus;
-                        let rs = fs.createReadStream(path.join(__dirname, 'test.apk'));
+                        let rs = fs.createReadStream(path.join(__dirname, 'api-test.apk'));
                         try {
                             await agent.installFile(rs, (_progress, status) => {
                                 lastStatus = status;
@@ -472,10 +472,10 @@ describe('Corellium API', function() {
 
                 it('can monitor data', async function() {
                     this.slow(15000);
-                    await agent.run('org.chromium.webview_shell');
+                    await agent.runActivity('com.corellium.test.app', 'com.corellium.test.app/com.corellium.test.app.NetworkActivity');
                     await new Promise(resolve => setTimeout(resolve, 5000));
 
-                    assert(netmonOutput == 'clientservices.googleapis.com');
+                    assert(netmonOutput == 'www.corellium.com');
                 });
 
                 it('can stop monitor', async function() {
