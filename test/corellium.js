@@ -613,7 +613,7 @@ describe('Corellium API', function() {
                     const instance = instanceMap.get(instanceVersion);
                     let threadList = await instance.getCoreTraceThreadList();
                     for (let p of threadList) {
-                        if (p.name.includes("bluetooth@")) {
+                        if (p.name.includes("corelliumd")) {
                             pid = p.pid;
                             break;
                         }
@@ -634,12 +634,17 @@ describe('Corellium API', function() {
                 it('can capture data', async function() {
                     this.slow(15000);
 
+                    const instance = instanceMap.get(instanceVersion);
+                    await instance.waitForAgentReady();
+                    agent = await instance.newAgent();
+                    await agent.stat('/data/corellium/frida/scripts/');
+                    agent.disconnect();
+
                     await new Promise(resolve => setTimeout(resolve, 5000));
 
-                    const instance = instanceMap.get(instanceVersion);
                     const log = await instance.downloadCoreTraceLog();
                     assert(log !== undefined);
-                    assert(log.toString().includes(':bluetooth@'));
+                    assert(log.toString().includes(':corelliumd'));
                 });
 
                 it('can stop capture', async function() {
