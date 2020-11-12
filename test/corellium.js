@@ -416,14 +416,10 @@ describe('Corellium API', function() {
                     }
                 });
 
-                describe(`crashes ${instanceVersion}`, async function() {
-                    // TODO : test for crashes
-                })
-
+                let installSuccess;
                 describe(`Applications ${instanceVersion}`, async function() {
                     const instance = instanceMap.get(instanceVersion);
 
-                    let installSuccess;
                     it('can install a signed apk', async function() {
                         this.slow(50000);
                         this.timeout(100000);
@@ -467,19 +463,28 @@ describe('Corellium API', function() {
                         assert(installSuccess, "This test cannot run because application installation failed");
                         assert.doesNotReject(() => agent.kill('com.corellium.test.app'));
                     });
+                });
 
-                    it('can uninstall an app', async function() {
-                        if (!installSuccess)
-                            assert(false, "Install of app failed, this test cannot run, artifically forcing a failure");
+                describe(`crash watcher ${instanceVersion}`, async function() {
+                    it('can catch an expected crash', async function() {
+                        assert(installSuccess, "This test cannot run because application installation failed");
+                        await agent.ready();
+                        let crashed = false;
+                        let crashData = undefined;
 
-                        let lastStatus;
-                        try {
-                            await agent.uninstall('com.corellium.test.app', (_progress, status) => {
-                                lastStatus = status;
-                            });
-                        } catch (err) {
-                            assert(false, `Error uninstalling app during '${lastStatus} stage: ${err}`);
-                        }
+                        agent.crashes('com.corellium.test.app', (err, crashReport) => {
+                            if (err) {
+                                crashed = false;
+                                return;
+                            }
+                            crashed = true;
+                            crashData = crashReport;
+                        });
+                        await agent.runActivity('com.corellium.test.app', 'com.corellium.test.app/com.corellium.test.app.CrashActivity');
+
+                        await new Promise(resolve => setTimeout(resolve, 8000));
+                        assert(crashed);
+                        assert(crashData != undefined && crashData.includes('com.corellium.test.app'));
                     });
                 });
 
@@ -491,7 +496,7 @@ describe('Corellium API', function() {
                         netmon = await instance.newNetworkMonitor();
                     });
 
-                    let netmonOutput;
+                    let netmonOutput = [];
                     it('can start monitor', async function() {
                         this.slow(15000);
 
@@ -499,7 +504,7 @@ describe('Corellium API', function() {
 
                         netmon.handleMessage((message) => {
                             let host = message.request.headers.find(entry => entry.key === 'Host');
-                            netmonOutput = host.value;
+                            netmonOutput.push(host.value);
                         });
 
                         await netmon.start();
@@ -508,12 +513,13 @@ describe('Corellium API', function() {
                     });
 
                     it('can monitor data', async function() {
+                        assert(installSuccess, "This test cannot run because application installation failed");
                         this.slow(15000);
 
                         await agent.runActivity('com.corellium.test.app', 'com.corellium.test.app/com.corellium.test.app.NetworkActivity');
                         await new Promise(resolve => setTimeout(resolve, 5000));
 
-                        assert(netmonOutput == 'www.corellium.com');
+                        assert(netmonOutput.find(host => host === 'corellium.com') === 'corellium.com');
                     });
 
                     it('can stop monitor', async function() {
@@ -602,6 +608,21 @@ describe('Corellium API', function() {
                         it('can detach frida', async function() {
                             await agent.runFridaKill();
                         });
+                    });
+                });
+
+                describe(`app clean up ${instanceVersion}`, function() {
+                    it('can uninstall an app', async function() {
+                        assert(installSuccess, "This test cannot run because application installation failed");
+
+                        let lastStatus;
+                        try {
+                            await agent.uninstall('com.corellium.test.app', (_progress, status) => {
+                                lastStatus = status;
+                            });
+                        } catch (err) {
+                            assert(false, `Error uninstalling app during '${lastStatus} stage: ${err}`);
+                        }
                     });
                 });
             });
