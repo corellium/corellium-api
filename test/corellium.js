@@ -574,6 +574,12 @@ describe('Corellium API', function() {
                                 name = 'keystore';
                             }
                             await agent.runFrida(pid, name);
+                            while (true) {
+                                await new Promise(resolve => setTimeout(resolve, 500));
+                                let procList = await agent.runFridaPs();
+                                if(procList.attached !== undefined && procList.attached.target_name == name)
+                                    break;
+                            }
                         });
 
                         it('can get frida scripts', async function() {
