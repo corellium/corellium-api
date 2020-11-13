@@ -108,7 +108,7 @@ describe('Corellium API', function() {
         });
 
         it('can get roles', async function() {
-            assert.doesNotReject(() => corellium.roles());
+            assert.doesNotReject(async () => await corellium.roles());
         });
 
         // Not visible to cloud users with one project:
@@ -724,6 +724,10 @@ describe('Corellium API', function() {
             }
 
             describe(`device lifecycle ${instanceVersion}`, function() {
+                beforeEach(async function() {
+                    await instance.update();
+                });
+
                 it('can pause', async function() {
                     const instance = instanceMap.get(instanceVersion);
                     await instance.waitForState('on');
@@ -740,7 +744,6 @@ describe('Corellium API', function() {
 
                     await instance.unpause();
                     await instance.waitForState('on');
-                    await instance.update();
                 });
 
                 it('can reboot', async function() {
