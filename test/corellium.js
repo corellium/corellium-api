@@ -725,6 +725,7 @@ describe('Corellium API', function() {
 
             describe(`device lifecycle ${instanceVersion}`, function() {
                 beforeEach(async function() {
+                    const instance = instanceMap.get(instanceVersion);
                     await instance.update();
                 });
 
