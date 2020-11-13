@@ -40,6 +40,7 @@ describe('Corellium API', function() {
 
     INSTANCE_VERSIONS.forEach((instanceVersion) => {
         after(async function() {
+            this.timeout(20000 * 4);
             const instance = instanceMap.get(instanceVersion);
             if (instance !== undefined) {
                 await instance.destroy();
@@ -49,11 +50,21 @@ describe('Corellium API', function() {
     });
 
     const corellium = new Corellium(config);
+    let loggedIn;
     it('logs in successfully', async function() {
         await corellium.login();
+
+        const token = await corellium.token;
+        assert(token, 'Token was never set, login must have silently failed');
+        assert(token.token, 'Token was never set, login must have silently failed');
+        loggedIn = true;
     });
 
     describe('projects', function() {
+        before(function() {
+            assert(loggedIn, "All tests will fail as login failed");
+        });
+
         it('lists projects', async function() {
             project = await corellium.projects().then((projects) => {
                 let foundProject = projects.find(project => project.info.name === config.project)
@@ -68,6 +79,7 @@ describe('Corellium API', function() {
         });
 
         it(`has room for ${INSTANCE_VERSIONS.length} new VMs (get quota / quotasUsed)`, async function() {
+            assert(project, 'Unable to test as no project was returned from previous tests');
             assert(project.quotas !== project.quotasUsed);
             if (project.quotas - project.quotasUsed < 2 * INSTANCE_VERSIONS.length)
                 throw new Error(`no room for an extra device to be made, please free at least ${2 * INSTANCE_VERSIONS.length} cores`);
@@ -75,6 +87,7 @@ describe('Corellium API', function() {
 
         INSTANCE_VERSIONS.forEach((instanceVersion) => {
             it('can start create', async function() {
+                assert(project, 'Unable to test as no project was returned from previous tests');
                 const name = `API Test ${instanceVersion}`;
                 const instance = await project.createInstance({
                     flavor: config.testFlavor,
@@ -108,7 +121,8 @@ describe('Corellium API', function() {
         });
 
         it('can get roles', async function() {
-            assert.doesNotReject(async () => await corellium.roles());
+            const roles = await corellium.roles();
+            assert(roles, 'Roles should not be undefined, even if there have been no roles');
         });
 
         // Not visible to cloud users with one project:
@@ -197,24 +211,31 @@ describe('Corellium API', function() {
 
     INSTANCE_VERSIONS.forEach((instanceVersion) => {
         describe(`panics ${instanceVersion}`, function() {
+            before(function() {
+                assert(instanceMap.get(instanceVersion), 'No instances available for testing, tests will fail');
+            });
+
             it('can request panics', async function() {
                 const instance = instanceMap.get(instanceVersion);
-                assert.doesNotReject(() => instance.panics());
+                const panics = instance.panics();
+                assert(panics, 'Panics should not be undefined, even if there have been no panics');
             });
 
             it('can clear panics', async function() {
                 const instance = instanceMap.get(instanceVersion);
-                assert.doesNotReject(() => instance.clearPanics());
+                instance.clearPanics();
             });
         });
     });
 
     INSTANCE_VERSIONS.forEach((instanceVersion) => {
         describe(`instances ${instanceVersion}`, function() {
+            before(function() {
+                assert(instanceMap.get(instanceVersion), 'No instances available for testing, tests will fail');
+            });
+
             before(async function() {
                 const instance = instanceMap.get(instanceVersion);
-                if (instance === undefined)
-                    throw new Error('Previously created device does not seem to exist');
                 await instance.waitForState('on');
             });
 
@@ -265,7 +286,7 @@ describe('Corellium API', function() {
             it('can send input', async function() {
                 const input = new Input();
                 const instance = instanceMap.get(instanceVersion);
-                assert.doesNotReject(() => instance.sendInput(input.pressRelease('home')));
+                instance.sendInput(input.pressRelease('home'));
             });
 
             describe(`agent ${instanceVersion}`, function() {
@@ -457,16 +478,12 @@ describe('Corellium API', function() {
 
                     it('can run an app', async function() {
                         assert(installSuccess, "This test cannot run because application installation failed");
-                        assert.doesNotReject(async () => {
-                            await agent.run('com.corellium.test.app');
-                        });
+                        await agent.run('com.corellium.test.app');
                     });
 
                     it('can kill an app', async function() {
                         assert(installSuccess, "This test cannot run because application installation failed");
-                        assert.doesNotReject(async () => {
-                            await agent.kill('com.corellium.test.app');
-                        });
+                        await agent.kill('com.corellium.test.app');
                     });
                 });
 
@@ -815,7 +832,7 @@ describe('Corellium API', function() {
                         await turnOff(instance);
                     }
 
-                    assert.doesNotReject(() => latest_snapshot.restore());
+                    await latest_snapshot.restore();
                 });
 
                 it('can delete a snapshot', async function() {
@@ -825,7 +842,7 @@ describe('Corellium API', function() {
                         await turnOff(instance);
                     }
 
-                    assert.doesNotReject(() => latest_snapshot.delete());
+                    await latest_snapshot.delete();
                 });
             });
         });
