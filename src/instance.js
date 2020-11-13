@@ -173,7 +173,7 @@ class Instance extends EventEmitter {
      * @returns {Agent}
      */
     async agent() {
-        if (!this._agent)
+        if (!this._agent || !this._agent.connected)
             this._agent = await this.newAgent();
         return this._agent;
     }
