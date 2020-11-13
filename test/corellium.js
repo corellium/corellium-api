@@ -5,6 +5,8 @@ const assert = require('assert');
 const fs = require('fs');
 const path = require('path');
 const stream = require('stream');
+const { resolve } = require('path');
+const { resolveTxt } = require('dns');
 
 /** @typedef {import('../src/project.js')} Project */
 /** @typedef {import('../src/instance.js')} Instance */
@@ -286,9 +288,8 @@ describe('Corellium API', function() {
                 });
 
                 after(async function() {
-                    if (agent !== undefined && agent.connected) {
+                    if (agent !== undefined && agent.connected)
                         agent.disconnect();
-                    }
                 });
 
                 it('can list device apps', async function() {
@@ -456,35 +457,51 @@ describe('Corellium API', function() {
 
                     it('can run an app', async function() {
                         assert(installSuccess, "This test cannot run because application installation failed");
-                        assert.doesNotReject(() => agent.run('com.corellium.test.app'));
+                        assert.doesNotReject(async () => {
+                            await agent.run('com.corellium.test.app');
+                        });
                     });
 
                     it('can kill an app', async function() {
                         assert(installSuccess, "This test cannot run because application installation failed");
-                        assert.doesNotReject(() => agent.kill('com.corellium.test.app'));
+                        assert.doesNotReject(async () => {
+                            await agent.kill('com.corellium.test.app');
+                        });
                     });
                 });
 
                 describe(`crash watcher ${instanceVersion}`, async function() {
-                    it('can catch an expected crash', async function() {
-                        assert(installSuccess, "This test cannot run because application installation failed");
-                        await agent.ready();
-                        let crashed = false;
-                        let crashData = undefined;
 
-                        agent.crashes('com.corellium.test.app', (err, crashReport) => {
-                            if (err) {
-                                crashed = false;
-                                return;
-                            }
-                            crashed = true;
-                            crashData = crashReport;
+                    let crashListener;
+                    before(async function() {
+                        const instance = instanceMap.get(instanceVersion);
+                        await instance.waitForState('on');
+                        await instance.waitForAgentReady();
+                        crashListener = await instance.newAgent();
+                    });
+
+                    after(async function() {
+                        if (crashListener !== undefined && crashListener.connected)
+                            crashListener.disconnect();
+                    });
+
+                    it('can catch an expected crash', function () {
+                        return new Promise(async (resolve) => {
+                            assert(installSuccess, "This test cannot run because application installation failed");
+                            await crashListener.ready();
+                            crashListener.crashes('com.corellium.test.app', (err, crashReport) => {
+                                assert(!err, err);
+                                assert(crashReport !== undefined, 'The crash report is undefined');
+                                assert(crashReport.includes('com.corellium.test.app'), `The crash reported doesn't include "com.corellium.test.app":\n\n${crashReport}`);
+                                resolve();
+                            }).catch((error) => {
+                                if (error.message && error.message.includes('disconnected')) {
+                                    return;
+                                }
+                                throw error;
+                            });
+                            await agent.runActivity('com.corellium.test.app', 'com.corellium.test.app/com.corellium.test.app.CrashActivity');
                         });
-                        await agent.runActivity('com.corellium.test.app', 'com.corellium.test.app/com.corellium.test.app.CrashActivity');
-
-                        await new Promise(resolve => setTimeout(resolve, 8000));
-                        assert(crashed);
-                        assert(crashData != undefined && crashData.includes('com.corellium.test.app'));
                     });
                 });
 
@@ -501,15 +518,14 @@ describe('Corellium API', function() {
                         this.slow(15000);
 
                         const instance = instanceMap.get(instanceVersion);
-
-                        netmon.handleMessage((message) => {
-                            let host = message.request.headers.find(entry => entry.key === 'Host');
-                            netmonOutput.push(host.value);
+                        return new Promise(async (resolve) => {
+                            netmon.handleMessage((message) => {
+                                let host = message.request.headers.find(entry => entry.key === 'Host');
+                                netmonOutput.push(host.value);
+                            });
+                            await netmon.start();
+                            resolve();
                         });
-
-                        await netmon.start();
-                        // Let monitor to start capturing data
-                        await new Promise(resolve => setTimeout(resolve, 5000));
                     });
 
                     it('can monitor data', async function() {
@@ -599,10 +615,13 @@ describe('Corellium API', function() {
                             await new Promise(resolve => setTimeout(resolve, 5000));
 
                             let fridaConsole = await instance.fridaConsole();
+                            fridaConsole.socket.on('close', function() {
+                                fridaConsole.destroy();
+                            });
                             let fridaOutput = await new Promise(resolve => {
                                 const w = new stream.Writable({
                                     write(chunk, encoding, callback) {
-                                        fridaConsole.destroy();
+                                        fridaConsole.socket.close();
                                         resolve(chunk);
                                     }
                                 });
@@ -631,62 +650,62 @@ describe('Corellium API', function() {
                         }
                     });
                 });
-            });
 
-            describe(`CoreTrace ${instanceVersion}`, function() {
-                let pid = 0;
+                describe(`CoreTrace ${instanceVersion}`, function() {
+                    let pid = 0;
 
-                it('can get thread list', async function() {
-                    const instance = instanceMap.get(instanceVersion);
-                    let threadList = await instance.getCoreTraceThreadList();
-                    for (let p of threadList) {
-                        if (p.name.includes("corelliumd")) {
-                            pid = p.pid;
-                            break;
+                    it('can get thread list', async function() {
+                        const instance = instanceMap.get(instanceVersion);
+                        let threadList = await instance.getCoreTraceThreadList();
+                        for (let p of threadList) {
+                            if (p.name.includes("corelliumd")) {
+                                pid = p.pid;
+                                break;
+                            }
                         }
-                    }
-                    assert(pid != 0);
-                });
+                        assert(pid != 0);
+                    });
 
-                it('can set filter', async function() {
-                    const instance = instanceMap.get(instanceVersion);
-                    await instance.setCoreTraceFilter([pid], [], []);
-                });
+                    it('can set filter', async function() {
+                        const instance = instanceMap.get(instanceVersion);
+                        await instance.setCoreTraceFilter([pid], [], []);
+                    });
 
-                it('can start capture', async function() {
-                    const instance = instanceMap.get(instanceVersion);
-                    await instance.startCoreTrace();
-                });
+                    it('can start capture', async function() {
+                        const instance = instanceMap.get(instanceVersion);
+                        await instance.startCoreTrace();
+                    });
 
-                it('can capture data', async function() {
-                    this.slow(15000);
+                    it('can capture data', async function() {
+                        this.slow(15000);
 
-                    const instance = instanceMap.get(instanceVersion);
-                    await instance.waitForAgentReady();
-                    agent = await instance.newAgent();
-                    await agent.stat('/data/corellium/frida/scripts/');
-                    agent.disconnect();
+                        const instance = instanceMap.get(instanceVersion);
+                        // await instance.waitForAgentReady();
+                        // agent = await instance.newAgent();
+                        await agent.stat('/data/corellium/frida/scripts/');
+                        // agent.disconnect();
 
-                    await new Promise(resolve => setTimeout(resolve, 5000));
+                        await new Promise(resolve => setTimeout(resolve, 5000));
 
-                    const log = await instance.downloadCoreTraceLog();
-                    assert(log !== undefined);
-                    assert(log.toString().includes(':corelliumd'));
-                });
+                        const log = await instance.downloadCoreTraceLog();
+                        assert(log !== undefined);
+                        assert(log.toString().includes(':corelliumd'));
+                    });
 
-                it('can stop capture', async function() {
-                    const instance = instanceMap.get(instanceVersion);
-                    await instance.stopCoreTrace();
-                });
+                    it('can stop capture', async function() {
+                        const instance = instanceMap.get(instanceVersion);
+                        await instance.stopCoreTrace();
+                    });
 
-                it('can clear filter', async function() {
-                    const instance = instanceMap.get(instanceVersion);
-                    await instance.clearCoreTraceFilter();
-                });
+                    it('can clear filter', async function() {
+                        const instance = instanceMap.get(instanceVersion);
+                        await instance.clearCoreTraceFilter();
+                    });
 
-                it('can clear log', async function() {
-                    const instance = instanceMap.get(instanceVersion);
-                    await instance.clearCoreTraceLog();
+                    it('can clear log', async function() {
+                        const instance = instanceMap.get(instanceVersion);
+                        await instance.clearCoreTraceLog();
+                    });
                 });
             });
 
@@ -786,6 +805,7 @@ describe('Corellium API', function() {
                 });
 
                 it('can restore a snapshot', async function() {
+                    assert(latest_snapshot, "This test cannot run because there is no latest_snapshot to utilize");
                     const instance = instanceMap.get(instanceVersion);
                     if (instance.state !== 'off') {
                         await turnOff(instance);
@@ -795,6 +815,7 @@ describe('Corellium API', function() {
                 });
 
                 it('can delete a snapshot', async function() {
+                    assert(latest_snapshot, "This test cannot run because there is no latest_snapshot to utilize");
                     const instance = instanceMap.get(instanceVersion);
                     if (instance.state !== 'off') {
                         await turnOff(instance);
