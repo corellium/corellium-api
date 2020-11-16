@@ -741,6 +741,9 @@ describe('Corellium API', function () {
             }
 
             describe(`device lifecycle ${instanceVersion}`, function () {
+                this.slow(20000);
+                this.timeout(40000);
+
                 beforeEach(async function () {
                     const instance = instanceMap.get(instanceVersion);
                     await instance.update();
@@ -766,8 +769,6 @@ describe('Corellium API', function () {
 
                 it('can reboot', async function () {
                     const instance = instanceMap.get(instanceVersion);
-                    this.slow(20000);
-                    this.timeout(25000);
                     if (instance.state !== 'on') {
                         await turnOn(instance);
                     }
@@ -776,7 +777,6 @@ describe('Corellium API', function () {
 
                 it('can stop', async function () {
                     const instance = instanceMap.get(instanceVersion);
-                    this.slow(15000);
                     if (instance.state !== 'on') {
                         await turnOn(instance);
                     }
@@ -785,8 +785,6 @@ describe('Corellium API', function () {
 
                 it('can start', async function () {
                     const instance = instanceMap.get(instanceVersion);
-                    this.slow(20000);
-                    this.timeout(25000);
                     if (instance.state !== 'off') {
                         await turnOff(instance);
                     }
