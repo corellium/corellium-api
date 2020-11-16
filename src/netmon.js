@@ -59,8 +59,6 @@ class NetworkMonitor {
     }
 
     async _connect() {
-        this.pending = new Map();
-
         const endpoint = await this.instance.netmonEndpoint();
 
         // Detect if a disconnection happened before we were able to get the network monitor endpoint.
@@ -83,12 +81,8 @@ class NetworkMonitor {
                     message = data.slice(8);
                 }
 
-                let handler = this.handler;
-                if (handler) {
-                    Promise.resolve(handler(message)).then(shouldDelete => {
-                        if (shouldDelete)
-                            this.pending.delete(id);
-                    });
+                if (this.handler) {
+                    this.handler(message);
                 }
             } catch (err) {
                 console.error('error in agent message handler', err);
@@ -96,10 +90,6 @@ class NetworkMonitor {
         });
 
         ws.on('close', (code, reason) => {
-            this.pending.forEach(handler => {
-                handler(new Error(`disconnected ${reason}`));
-            });
-            this.pending = new Map();
             this._disconnect();
         });
 
@@ -115,11 +105,6 @@ class NetworkMonitor {
                 }
 
                 ws.on('error', err => {
-                    this.pending.forEach(handler => {
-                        handler(err);
-                    });
-                    this.pending = new Map();
-
                     if (this.ws === ws) {
                         this._disconnect();
                     } else {
@@ -167,13 +152,7 @@ class NetworkMonitor {
                 return;
             }
 
-            let err = new Error('Netmon did not get a response to pong in 10 seconds, disconnecting.');
             console.error('Netmon did not get a response to pong in 10 seconds, disconnecting.');
-
-            this.pending.forEach(handler => {
-                handler(err);
-            });
-            this.pending = new Map();
 
             this._disconnect();
         }, 10000);
