@@ -694,16 +694,9 @@ describe('Corellium API', function () {
                     });
 
                     it('can capture data', async function () {
-                        this.slow(15000);
-
                         const instance = instanceMap.get(instanceVersion);
-                        // await instance.waitForAgentReady();
-                        // agent = await instance.newAgent();
                         await agent.stat('/data/corellium/frida/scripts/');
-                        // agent.disconnect();
-
-                        await new Promise(resolve => setTimeout(resolve, 5000));
-
+                        await new Promise(resolve => setTimeout(resolve, 9000));
                         const log = await instance.downloadCoreTraceLog();
                         assert(log !== undefined);
                         assert(log.toString().includes(':corelliumd'));
