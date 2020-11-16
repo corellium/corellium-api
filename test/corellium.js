@@ -11,7 +11,7 @@ const { resolveTxt } = require('dns');
 /** @typedef {import('../src/project.js')} Project */
 /** @typedef {import('../src/instance.js')} Instance */
 
-describe('Corellium API', function() {
+describe('Corellium API', function () {
     this.slow(10000);
     this.timeout(20000);
 
@@ -27,7 +27,7 @@ describe('Corellium API', function() {
 
     let project = /** @type {Project} */(null);
 
-    before(async function() {
+    before(async function () {
         if (config.endpoint === undefined ||
             config.username === undefined ||
             config.password === undefined ||
@@ -39,7 +39,7 @@ describe('Corellium API', function() {
     })
 
     INSTANCE_VERSIONS.forEach((instanceVersion) => {
-        after(async function() {
+        after(async function () {
             this.timeout(20000 * 4);
             const instance = instanceMap.get(instanceVersion);
             if (instance !== undefined) {
@@ -51,7 +51,7 @@ describe('Corellium API', function() {
 
     const corellium = new Corellium(config);
     let loggedIn;
-    it('logs in successfully', async function() {
+    it('logs in successfully', async function () {
         await corellium.login();
 
         const token = await corellium.token;
@@ -60,12 +60,12 @@ describe('Corellium API', function() {
         loggedIn = true;
     });
 
-    describe('projects', function() {
-        before(function() {
+    describe('projects', function () {
+        before(function () {
             assert(loggedIn, "All tests will fail as login failed");
         });
 
-        it('lists projects', async function() {
+        it('lists projects', async function () {
             project = await corellium.projects().then((projects) => {
                 let foundProject = projects.find(project => project.info.name === config.project)
                 assert(foundProject !== undefined);
@@ -78,7 +78,7 @@ describe('Corellium API', function() {
             });
         });
 
-        it(`has room for ${INSTANCE_VERSIONS.length} new VMs (get quota / quotasUsed)`, async function() {
+        it(`has room for ${INSTANCE_VERSIONS.length} new VMs (get quota / quotasUsed)`, async function () {
             assert(project, 'Unable to test as no project was returned from previous tests');
             assert(project.quotas !== project.quotasUsed);
             if (project.quotas - project.quotasUsed < 2 * INSTANCE_VERSIONS.length)
@@ -86,7 +86,7 @@ describe('Corellium API', function() {
         });
 
         INSTANCE_VERSIONS.forEach((instanceVersion) => {
-            it('can start create', async function() {
+            it('can start create', async function () {
                 assert(project, 'Unable to test as no project was returned from previous tests');
                 const name = `API Test ${instanceVersion}`;
                 const instance = await project.createInstance({
@@ -103,13 +103,13 @@ describe('Corellium API', function() {
             })
         });
 
-        it('can list supported devices', async function() {
+        it('can list supported devices', async function () {
             const supportedDevices = await corellium.supported();
             const firmware = supportedDevices.find(device => device.name === config.testFlavor);
             assert(firmware);
         });
 
-        it('can get teams and users', async function() {
+        it('can get teams and users', async function () {
             let teamsAndUsers = await corellium.getTeamsAndUsers();
             teamsAndUsers.users.forEach((value, key) => {
                 assert.strictEqual(value, corellium._users.get(key))
@@ -120,13 +120,13 @@ describe('Corellium API', function() {
             });
         });
 
-        it('can get roles', async function() {
+        it('can get roles', async function () {
             const roles = await corellium.roles();
             assert(roles, 'Roles should not be undefined, even if there have been no roles');
         });
 
         // Not visible to cloud users with one project:
-        it('can add and remove keys', async function() {
+        it('can add and remove keys', async function () {
             let keyInfo = await project.addKey(
                 'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCqpvRmc/JQoH9P6XVlHnod0wRCg+7iSGfpyoBoe+nWwp2iEqPyM7A2RzW7ZIX2FZmlD5ldR6Oj5Z+LUR/GXfCFQvpQkidL5htzGMoI59SwntpSMvHlFLOcbyS7VmI4MKbdIF+UrelPCcCJjOaZIFOJfNtuLWDx0L14jW/4wflzcj6Fd1rBTVh2SB3mvhsraOuv9an74zr/PMSHtpFnt5m4SYWpE4HLTf0FJksEe/Qda9jQu5i86Mhu6ewSAVccUDLzgz6E4i8hvSqfctcYGT7asqxsubPTpTPfuOkc3WOxlqZYnnAbpGh8NvCu9uC+5gfWRcLoyRBE4J2Y3wcfOueP example-key'
             ).then((projectKey) => {
@@ -147,21 +147,21 @@ describe('Corellium API', function() {
             });
         });
 
-        it('can refresh', async function() {
+        it('can refresh', async function () {
             let tempName = project.info.name;
             await project.refresh();
             assert(tempName === project.info.name);
         });
 
         INSTANCE_VERSIONS.forEach((instanceVersion) => {
-            it('can getInstance', async function() {
+            it('can getInstance', async function () {
                 const instanceFromMap = instanceMap.get(instanceVersion);
                 const instance = await project.getInstance(instanceFromMap.id);
                 assert(instance.id === instanceFromMap.id);
             });
         });
 
-        it('can get openvpn profile', async function() {
+        it('can get openvpn profile', async function () {
             let expected = Buffer.from('client');
 
             await project.vpnConfig('ovpn', undefined)
@@ -179,7 +179,7 @@ describe('Corellium API', function() {
             });
         });
 
-        it('can get tunnelblick profile', async function() {
+        it('can get tunnelblick profile', async function () {
             let expected = Buffer.from("504b0304", "hex");
 
             await project.vpnConfig('tblk', undefined)
@@ -198,7 +198,7 @@ describe('Corellium API', function() {
         });
 
         INSTANCE_VERSIONS.forEach((instanceVersion) => {
-            it('can finish create', async function() {
+            it('can finish create', async function () {
                 this.slow(40000);
                 this.timeout(70000);
 
@@ -210,18 +210,18 @@ describe('Corellium API', function() {
 
 
     INSTANCE_VERSIONS.forEach((instanceVersion) => {
-        describe(`panics ${instanceVersion}`, function() {
-            before(function() {
+        describe(`panics ${instanceVersion}`, function () {
+            before(function () {
                 assert(instanceMap.get(instanceVersion), 'No instances available for testing, tests will fail');
             });
 
-            it('can request panics', async function() {
+            it('can request panics', async function () {
                 const instance = instanceMap.get(instanceVersion);
                 const panics = instance.panics();
                 assert(panics, 'Panics should not be undefined, even if there have been no panics');
             });
 
-            it('can clear panics', async function() {
+            it('can clear panics', async function () {
                 const instance = instanceMap.get(instanceVersion);
                 instance.clearPanics();
             });
@@ -229,17 +229,17 @@ describe('Corellium API', function() {
     });
 
     INSTANCE_VERSIONS.forEach((instanceVersion) => {
-        describe(`instances ${instanceVersion}`, function() {
-            before(function() {
+        describe(`instances ${instanceVersion}`, function () {
+            before(function () {
                 assert(instanceMap.get(instanceVersion), 'No instances available for testing, tests will fail');
             });
 
-            before(async function() {
+            before(async function () {
                 const instance = instanceMap.get(instanceVersion);
                 await instance.waitForState('on');
             });
 
-            it('can take a screenshot', async function() {
+            it('can take a screenshot', async function () {
                 const expected = Buffer.from('89504E470D0A1A0A', 'hex');
                 const instance = instanceMap.get(instanceVersion);
                 await instance.takeScreenshot()
@@ -249,7 +249,7 @@ describe('Corellium API', function() {
                     });
             })
 
-            it('can rename', async function() {
+            it('can rename', async function () {
                 const instance = instanceMap.get(instanceVersion);
                 const instanceName = instance.name;
                 async function rename(name) {
@@ -261,7 +261,7 @@ describe('Corellium API', function() {
                 await rename(instanceName);
             });
 
-            it('has a console log', async function() {
+            it('has a console log', async function () {
                 const instance = instanceMap.get(instanceVersion);
                 const log = await instance.consoleLog();
                 if (log === undefined) {
@@ -269,30 +269,30 @@ describe('Corellium API', function() {
                 }
             })
 
-            it('has a console', async function() {
+            it('has a console', async function () {
                 const instance = instanceMap.get(instanceVersion);
                 const consoleStream = await instance.console();
                 // Wait for the socket to open before killing it,
                 // otherwise this will throw an error
-                consoleStream.socket.on('open', function(err) {
+                consoleStream.socket.on('open', function (err) {
                     consoleStream.socket.close();
                 });
                 // When the socket closes, it will be safe to destroy the console duplexify object
-                consoleStream.socket.on('close', function() {
+                consoleStream.socket.on('close', function () {
                     consoleStream.destroy();
                 });
             });
 
-            it('can send input', async function() {
+            it('can send input', async function () {
                 const input = new Input();
                 const instance = instanceMap.get(instanceVersion);
                 instance.sendInput(input.pressRelease('home'));
             });
 
-            describe(`agent ${instanceVersion}`, function() {
+            describe(`agent ${instanceVersion}`, function () {
                 let agent;
 
-                before(async function() {
+                before(async function () {
                     this.timeout(100000);
 
                     const instance = instanceMap.get(instanceVersion);
@@ -300,7 +300,7 @@ describe('Corellium API', function() {
                     await instance.waitForAgentReady();
                 });
 
-                beforeEach(async function() {
+                beforeEach(async function () {
                     const instance = instanceMap.get(instanceVersion);
                     if (agent === undefined || !agent.connected) {
                         agent = await instance.newAgent();
@@ -308,24 +308,24 @@ describe('Corellium API', function() {
                     }
                 });
 
-                after(async function() {
+                after(async function () {
                     if (agent !== undefined && agent.connected)
                         agent.disconnect();
                 });
 
-                it('can list device apps', async function() {
+                it('can list device apps', async function () {
                     let appList = await agent.appList();
                     assert(appList !== undefined && appList.length > 0);
                 });
 
-                describe(`Files ${instanceVersion}`, async function() {
+                describe(`Files ${instanceVersion}`, async function () {
                     let expectedData = Buffer.from('D1FF', 'hex');
                     let testPath;
-                    it('can get temp file', async function() {
+                    it('can get temp file', async function () {
                         testPath = await agent.tempFile();
                     });
 
-                    it('can upload a file', async function() {
+                    it('can upload a file', async function () {
                         let rs = stream.Readable.from(expectedData);
 
                         let lastStatus;
@@ -338,18 +338,18 @@ describe('Corellium API', function() {
                         }
                     });
 
-                    it('can stat a file', async function() {
+                    it('can stat a file', async function () {
                         let stat = await agent.stat(testPath);
                         assert.strictEqual(stat.name, testPath);
                     });
 
-                    it('can change a files attributes', async function() {
+                    it('can change a files attributes', async function () {
                         await agent.changeFileAttributes(testPath, {mode: 511});
                         let stat = await agent.stat(testPath);
                         assert.strictEqual(stat.mode, 33279);
                     });
 
-                    it('can download files', async function() {
+                    it('can download files', async function () {
                         try {
                             let downloaded = await new Promise(resolve => {
                                 const rs = agent.download(testPath)
@@ -357,7 +357,7 @@ describe('Corellium API', function() {
                                 rs.on('data', function (chunk) {
                                     bufs.push(chunk);
                                 });
-                                rs.on('end', function() {
+                                rs.on('end', function () {
                                     resolve(Buffer.concat(bufs));
                                 });
                             });
@@ -368,7 +368,7 @@ describe('Corellium API', function() {
                         }
                     });
 
-                    it('can delete files', async function() {
+                    it('can delete files', async function () {
                         await agent.deleteFile(testPath)
                         .then((path) => {
                             assert(path === undefined);
@@ -383,66 +383,66 @@ describe('Corellium API', function() {
                     });
                 });
 
-                describe(`profiles ${instanceVersion}`, async function() {
+                describe(`profiles ${instanceVersion}`, async function () {
                     if(config.testFlavor === 'ranchu') {
                         // These are unimplemented on ranchu devices
-                        it('cannot use profile/list', async function() {
+                        it('cannot use profile/list', async function () {
                             assert.rejects(() => agent.profileList());
                         });
 
-                        it('cannot use profile/install', async function() {
+                        it('cannot use profile/install', async function () {
                             assert.rejects(() => agent.installProfile('test'));
                         });
 
-                        it('cannot use profile/remove', async function() {
+                        it('cannot use profile/remove', async function () {
                             assert.rejects(() => agent.removeProfile('test'));
                         });
 
-                        it('cannot use profile/get', async function() {
+                        it('cannot use profile/get', async function () {
                             assert.rejects(() => agent.getProfile('test'));
                         });
                     }
                 });
 
-                describe(`locks ${instanceVersion}`, async function() {
+                describe(`locks ${instanceVersion}`, async function () {
                     if(config.testFlavor === 'ranchu') {
                         // These are unimplemented on ranchu devices
-                        it('cannot use lock', async function() {
+                        it('cannot use lock', async function () {
                             assert.rejects(() => agent.lockDevice());
                         });
 
-                        it('cannot use unlock', async function() {
+                        it('cannot use unlock', async function () {
                             assert.rejects(() => agent.unlockDevice());
                         });
 
-                        it('cannot use acquireDisableAutolockAssertion', async function() {
+                        it('cannot use acquireDisableAutolockAssertion', async function () {
                             assert.rejects(() => agent.acquireDisableAutolockAssertion());
                         });
 
-                        it('cannot use releaseDisableAutolockAssertion', async function() {
+                        it('cannot use releaseDisableAutolockAssertion', async function () {
                             assert.rejects(() => agent.releaseDisableAutolockAssertion());
                         });
                     }
                 });
 
-                describe(`WiFi ${instanceVersion}`, async function() {
+                describe(`WiFi ${instanceVersion}`, async function () {
                     if(config.testFlavor === 'ranchu') {
                         // These are unimplemented on ranchu devices
-                        it('cannot use connectToWifi', async function() {
+                        it('cannot use connectToWifi', async function () {
                             assert.rejects(() => agent.connectToWifi());
                         });
 
-                        it('cannot use disconnectFromWifi', async function() {
+                        it('cannot use disconnectFromWifi', async function () {
                             assert.rejects(() => agent.disconnectFromWifi());
                         });
                     }
                 });
 
                 let installSuccess;
-                describe(`Applications ${instanceVersion}`, async function() {
+                describe(`Applications ${instanceVersion}`, async function () {
                     const instance = instanceMap.get(instanceVersion);
 
-                    it('can install a signed apk', async function() {
+                    it('can install a signed apk', async function () {
                         this.slow(50000);
                         this.timeout(100000);
                         let retries = 3;
@@ -476,28 +476,28 @@ describe('Corellium API', function() {
                         }
                     });
 
-                    it('can run an app', async function() {
+                    it('can run an app', async function () {
                         assert(installSuccess, "This test cannot run because application installation failed");
                         await agent.run('com.corellium.test.app');
                     });
 
-                    it('can kill an app', async function() {
+                    it('can kill an app', async function () {
                         assert(installSuccess, "This test cannot run because application installation failed");
                         await agent.kill('com.corellium.test.app');
                     });
                 });
 
-                describe(`crash watcher ${instanceVersion}`, async function() {
+                describe(`crash watcher ${instanceVersion}`, async function () {
 
                     let crashListener;
-                    before(async function() {
+                    before(async function () {
                         const instance = instanceMap.get(instanceVersion);
                         await instance.waitForState('on');
                         await instance.waitForAgentReady();
                         crashListener = await instance.newAgent();
                     });
 
-                    after(async function() {
+                    after(async function () {
                         if (crashListener !== undefined && crashListener.connected)
                             crashListener.disconnect();
                     });
@@ -522,16 +522,16 @@ describe('Corellium API', function() {
                     });
                 });
 
-                describe(`Network Monitor ${instanceVersion}`, function() {
+                describe(`Network Monitor ${instanceVersion}`, function () {
                     let netmon;
 
-                    it('can get monitor', async function() {
+                    it('can get monitor', async function () {
                         const instance = instanceMap.get(instanceVersion);
                         netmon = await instance.newNetworkMonitor();
                     });
 
                     let netmonOutput = [];
-                    it('can start monitor', async function() {
+                    it('can start monitor', async function () {
                         this.slow(15000);
 
                         const instance = instanceMap.get(instanceVersion);
@@ -545,7 +545,7 @@ describe('Corellium API', function() {
                         });
                     });
 
-                    it('can monitor data', async function() {
+                    it('can monitor data', async function () {
                         assert(installSuccess, "This test cannot run because application installation failed");
                         this.slow(15000);
 
@@ -555,24 +555,24 @@ describe('Corellium API', function() {
                         assert(netmonOutput.find(host => host === 'corellium.com') === 'corellium.com');
                     });
 
-                    it('can stop monitor', async function() {
+                    it('can stop monitor', async function () {
                         const instance = instanceMap.get(instanceVersion);
 
                         await netmon.stop();
                     });
 
-                    it('can clear log', async function() {
+                    it('can clear log', async function () {
                         const instance = instanceMap.get(instanceVersion);
 
                         await netmon.clearLog();
                     });
                 });
 
-                describe(`Frida ${instanceVersion}`, function() {
+                describe(`Frida ${instanceVersion}`, function () {
                     let pid = 0;
                     let name = '';
 
-                    it('can get process list', async function() {
+                    it('can get process list', async function () {
                         let procList = await agent.runFridaPs();
                         let lines = procList.output.trim().split('\n');
                         lines.shift();
@@ -586,23 +586,23 @@ describe('Corellium API', function() {
                         assert(pid != 0);
                     });
 
-                    it('can get console', async function() {
+                    it('can get console', async function () {
                         const instance = instanceMap.get(instanceVersion);
                         const consoleStream = await instance.fridaConsole();
                         // Wait for the socket to open before killing it,
                         // otherwise this will throw an error
-                        consoleStream.socket.on('open', function(err) {
+                        consoleStream.socket.on('open', function (err) {
                             consoleStream.socket.close();
                         });
                         // When the socket closes, it will be safe to destroy the console duplexify object
-                        consoleStream.socket.on('close', function() {
+                        consoleStream.socket.on('close', function () {
                             consoleStream.destroy();
                         });
                     });
 
-                    describe('frida attaching and execution', async function() {
+                    describe('frida attaching and execution', async function () {
             
-                        it('can attach frida', async function() {
+                        it('can attach frida', async function () {
                             if (name === '') {
                                 name = 'keystore';
                             }
@@ -615,9 +615,9 @@ describe('Corellium API', function() {
                             }
                         });
 
-                        it('can get frida scripts', async function() {
+                        it('can get frida scripts', async function () {
                             let fridaScripts = await agent.stat('/data/corellium/frida/scripts/');
-                            let scriptList = fridaScripts.entries.map(entry  => entry.name);
+                            let scriptList = fridaScripts.entries.map(entry => entry.name);
                             let s = '';
                             for(s of scriptList) {
                                 if (s == 'hook_native.js')
@@ -626,13 +626,13 @@ describe('Corellium API', function() {
                             assert(s != '');
                         });
 
-                        it('can execute script', async function() {
+                        it('can execute script', async function () {
                             const instance = instanceMap.get(instanceVersion);
                             await instance.executeFridaScript('/data/corellium/frida/scripts/hook_native.js');
                             await new Promise(resolve => setTimeout(resolve, 5000));
 
                             let fridaConsole = await instance.fridaConsole();
-                            fridaConsole.socket.on('close', function() {
+                            fridaConsole.socket.on('close', function () {
                                 fridaConsole.destroy();
                             });
                             let fridaOutput = await new Promise(resolve => {
@@ -647,14 +647,14 @@ describe('Corellium API', function() {
                             assert(fridaOutput.toString().includes('Hook android_log_write()'));
                         });
 
-                        it('can detach frida', async function() {
+                        it('can detach frida', async function () {
                             await agent.runFridaKill();
                         });
                     });
                 });
 
-                describe(`app clean up ${instanceVersion}`, function() {
-                    it('can uninstall an app', async function() {
+                describe(`app clean up ${instanceVersion}`, function () {
+                    it('can uninstall an app', async function () {
                         assert(installSuccess, "This test cannot run because application installation failed");
 
                         let lastStatus;
@@ -668,10 +668,10 @@ describe('Corellium API', function() {
                     });
                 });
 
-                describe(`CoreTrace ${instanceVersion}`, function() {
+                describe(`CoreTrace ${instanceVersion}`, function () {
                     let pid = 0;
 
-                    it('can get thread list', async function() {
+                    it('can get thread list', async function () {
                         const instance = instanceMap.get(instanceVersion);
                         let threadList = await instance.getCoreTraceThreadList();
                         for (let p of threadList) {
@@ -683,17 +683,17 @@ describe('Corellium API', function() {
                         assert(pid != 0);
                     });
 
-                    it('can set filter', async function() {
+                    it('can set filter', async function () {
                         const instance = instanceMap.get(instanceVersion);
                         await instance.setCoreTraceFilter([pid], [], []);
                     });
 
-                    it('can start capture', async function() {
+                    it('can start capture', async function () {
                         const instance = instanceMap.get(instanceVersion);
                         await instance.startCoreTrace();
                     });
 
-                    it('can capture data', async function() {
+                    it('can capture data', async function () {
                         this.slow(15000);
 
                         const instance = instanceMap.get(instanceVersion);
@@ -709,17 +709,17 @@ describe('Corellium API', function() {
                         assert(log.toString().includes(':corelliumd'));
                     });
 
-                    it('can stop capture', async function() {
+                    it('can stop capture', async function () {
                         const instance = instanceMap.get(instanceVersion);
                         await instance.stopCoreTrace();
                     });
 
-                    it('can clear filter', async function() {
+                    it('can clear filter', async function () {
                         const instance = instanceMap.get(instanceVersion);
                         await instance.clearCoreTraceFilter();
                     });
 
-                    it('can clear log', async function() {
+                    it('can clear log', async function () {
                         const instance = instanceMap.get(instanceVersion);
                         await instance.clearCoreTraceLog();
                     });
@@ -740,20 +740,20 @@ describe('Corellium API', function() {
                 assert.strictEqual(instance.state, 'off');
             }
 
-            describe(`device lifecycle ${instanceVersion}`, function() {
-                beforeEach(async function() {
+            describe(`device lifecycle ${instanceVersion}`, function () {
+                beforeEach(async function () {
                     const instance = instanceMap.get(instanceVersion);
                     await instance.update();
                 });
 
-                it('can pause', async function() {
+                it('can pause', async function () {
                     const instance = instanceMap.get(instanceVersion);
                     await instance.waitForState('on');
                     await instance.pause();
                     await instance.waitForState('paused');
                 });
 
-                it('can unpause', async function() {
+                it('can unpause', async function () {
                     const instance = instanceMap.get(instanceVersion);
                     if (instance.state !== 'paused') {
                         await instance.pause();
@@ -764,7 +764,7 @@ describe('Corellium API', function() {
                     await instance.waitForState('on');
                 });
 
-                it('can reboot', async function() {
+                it('can reboot', async function () {
                     const instance = instanceMap.get(instanceVersion);
                     this.slow(20000);
                     this.timeout(25000);
@@ -774,7 +774,7 @@ describe('Corellium API', function() {
                     await instance.reboot();
                 });
 
-                it('can stop', async function() {
+                it('can stop', async function () {
                     const instance = instanceMap.get(instanceVersion);
                     this.slow(15000);
                     if (instance.state !== 'on') {
@@ -783,7 +783,7 @@ describe('Corellium API', function() {
                     await turnOff(instance);
                 });
 
-                it('can start', async function() {
+                it('can start', async function () {
                     const instance = instanceMap.get(instanceVersion);
                     this.slow(20000);
                     this.timeout(25000);
@@ -794,20 +794,20 @@ describe('Corellium API', function() {
                 });
             });
 
-            describe(`snapshots ${instanceVersion}`, function() {
-                before(async function() {
+            describe(`snapshots ${instanceVersion}`, function () {
+                before(async function () {
                     const instance = instanceMap.get(instanceVersion);
                     await instance.update();
                 });
 
-                it('has a fresh snapshot', async function() {
+                it('has a fresh snapshot', async function () {
                     const instance = instanceMap.get(instanceVersion);
                     const snapshots = await instance.snapshots();
                     const fresh = snapshots.find(snap => snap.fresh);
                     assert(fresh !== undefined);
                 });
 
-                it('refuses to take snapshot if instance is on', async function() {
+                it('refuses to take snapshot if instance is on', async function () {
                     const instance = instanceMap.get(instanceVersion);
                     if (instance.state !== 'on') {
                         await turnOn(instance);
@@ -816,7 +816,7 @@ describe('Corellium API', function() {
                 });
 
                 let latest_snapshot;
-                it('can take snapshot if instance is off', async function() {
+                it('can take snapshot if instance is off', async function () {
                     const instance = instanceMap.get(instanceVersion);
                     if (instance.state !== 'off') {
                         await turnOff(instance);
@@ -825,7 +825,7 @@ describe('Corellium API', function() {
                     latest_snapshot = await instance.takeSnapshot();
                 });
 
-                it('can restore a snapshot', async function() {
+                it('can restore a snapshot', async function () {
                     assert(latest_snapshot, "This test cannot run because there is no latest_snapshot to utilize");
                     const instance = instanceMap.get(instanceVersion);
                     if (instance.state !== 'off') {
@@ -835,7 +835,7 @@ describe('Corellium API', function() {
                     await latest_snapshot.restore();
                 });
 
-                it('can delete a snapshot', async function() {
+                it('can delete a snapshot', async function () {
                     assert(latest_snapshot, "This test cannot run because there is no latest_snapshot to utilize");
                     const instance = instanceMap.get(instanceVersion);
                     if (instance.state !== 'off') {
