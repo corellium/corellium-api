@@ -575,7 +575,7 @@ describe('Corellium API', function () {
                         lines.shift();
                         for (const line of lines) {
                             [pid, name] = line.trim().split(/\s+/);
-                            if (name == 'keystore') {
+                            if (name === 'keystore') {
                                 break;
                             }
                         }
@@ -616,7 +616,7 @@ describe('Corellium API', function () {
                             let scriptList = fridaScripts.entries.map(entry => entry.name);
                             let s = '';
                             for(s of scriptList) {
-                                if (s == 'hook_native.js')
+                                if (s === 'hook_native.js')
                                     break;
                             }
                             assert(s != '');
