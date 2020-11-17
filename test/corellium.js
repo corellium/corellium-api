@@ -67,14 +67,10 @@ describe('Corellium API', function () {
 
         it('lists projects', async function () {
             project = await corellium.projects().then((projects) => {
-                let foundProject = projects.find(project => project.info.name === config.project)
-                assert(foundProject !== undefined);
-                if (foundProject === undefined)
-                    new Error(`Your test config specifies a project named "${config.project}", ` +
-                            `but no such project was found on ${config.endpoint}`);
+                const foundProject = projects.find(project => project.info.name === config.project);
+                assert(foundProject !== undefined,
+                    new Error(`Your test config specifies a project named "${config.project}", but no such project was found on ${config.endpoint}`));
                 return foundProject;
-            }).catch((error) => {
-                throw error;
             });
         });
 
