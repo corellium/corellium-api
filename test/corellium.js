@@ -526,41 +526,41 @@ describe('Corellium API', function () {
                         netmon = await instance.newNetworkMonitor();
                     });
 
-                    let netmonOutput = [];
-                    it('can start monitor', async function () {
-                        this.slow(15000);
+                    it('can start monitor', function () {
+                        return netmon.start();
+                    });
 
-                        const instance = instanceMap.get(instanceVersion);
-                        return new Promise(async (resolve) => {
+                    it('can monitor data', function () {
+                        assert(installSuccess, `This test can't run because application installation failed.`);
+
+                        return new Promise((resolve, reject) => {
                             netmon.handleMessage((message) => {
-                                let host = message.request.headers.find(entry => entry.key === 'Host');
-                                netmonOutput.push(host.value);
+                                const hostHeader = message.request.headers.find((header) => header.key === 'Host');
+                                if (hostHeader.value === 'corellium.com') {
+                                    netmon.handleMessage(null);
+                                    resolve();
+                                }
                             });
-                            await netmon.start();
-                            resolve();
+
+                            // The test application gets ECONNREFUSEDs if it's run too soon after
+                            // Network Monitor starts.
+                            return new Promise((resolve) => setTimeout(resolve, 1000 * 5)).then(() => {
+                                return agent.runActivity('com.corellium.test.app',
+                                    'com.corellium.test.app/com.corellium.test.app.NetworkActivity');
+                            });
                         });
                     });
 
-                    it('can monitor data', async function () {
-                        assert(installSuccess, "This test cannot run because application installation failed");
-                        this.slow(15000);
-
-                        await agent.runActivity('com.corellium.test.app', 'com.corellium.test.app/com.corellium.test.app.NetworkActivity');
-                        await new Promise(resolve => setTimeout(resolve, 5000));
-
-                        assert(netmonOutput.find(host => host === 'corellium.com') === 'corellium.com');
+                    it('can stop monitor', function () {
+                        return netmon.stop();
                     });
 
-                    it('can stop monitor', async function () {
-                        const instance = instanceMap.get(instanceVersion);
-
-                        await netmon.stop();
+                    it('can clear log', function () {
+                        return netmon.clearLog();
                     });
 
-                    it('can clear log', async function () {
-                        const instance = instanceMap.get(instanceVersion);
-
-                        await netmon.clearLog();
+                    after('disconnect network monitor', function () {
+                        netmon.disconnect();
                     });
                 });
 
