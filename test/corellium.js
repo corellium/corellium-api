@@ -534,6 +534,9 @@ describe('Corellium API', function () {
                         assert(installSuccess, `This test can't run because application installation failed.`);
 
                         return new Promise((resolve, reject) => {
+                            this.slow(20000);
+                            this.timeout(30000);
+
                             netmon.handleMessage((message) => {
                                 const hostHeader = message.request.headers.find((header) => header.key === 'Host');
                                 if (hostHeader.value === 'corellium.com') {
