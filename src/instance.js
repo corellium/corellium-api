@@ -369,8 +369,7 @@ class Instance extends EventEmitter {
         const {url} = await this._fetch('/console?type=frida');
         let frida_wc = new ws(url);
         await frida_wc.once('open', () => {
-            frida_wc.send('%load ' + filePath + '\n');
-            frida_wc.close();
+            frida_wc.send('%load ' + filePath + '\n', null, () => frida_wc.close());
         });
     }
 
