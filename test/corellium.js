@@ -279,7 +279,7 @@ describe('Corellium API', function () {
                 });
             });
 
-            it('can send input', async function () {
+            it.skip('can send input', async function () {
                 const input = new Input();
                 const instance = instanceMap.get(instanceVersion);
                 instance.sendInput(input.pressRelease('home'));
