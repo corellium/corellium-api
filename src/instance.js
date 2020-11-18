@@ -371,7 +371,7 @@ class Instance extends EventEmitter {
         while (frida_wc.readyState != ws.OPEN) {
             await new Promise(resolve => setTimeout(resolve, 100));
         };
-        frida_wc.send('%load ' + filePath + '\n', null, () => frida_wc.close());
+        await frida_wc.send('%load ' + filePath + '\n', null, () => frida_wc.close());
     }
 
     /**
