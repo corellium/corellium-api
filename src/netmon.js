@@ -228,6 +228,11 @@ class NetworkMonitor {
         await this.disconnect();
     }
 
+    async isEnabled() {
+        let info = await fetchApi(this.instance.project, `/instances/${this.instance.id}`);
+        return info.netmon.enabled;
+    }
+
     async _fetch(endpoint = '', options = {}) {
         return await fetchApi(this.instance.project, `/instances/${this.instance.id}${endpoint}`, options);
     }
