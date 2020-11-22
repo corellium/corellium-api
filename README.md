@@ -753,6 +753,20 @@ let netmon = await instance.newNetworkMonitor();
 netmon.stop();
 ```
 
+### async isEnabled()
+
+Check if Network Monitor is enabled
+
+Example:
+```javascript=
+let enabled = await netmon.isEnabled();
+if (enabled) {
+    console.log("enabled");
+} else {
+    console.log("disabled");
+}
+```
+
 ### async cleanLog()
 
 Clears captured Network Monitor data
