@@ -202,6 +202,7 @@ class NetworkMonitor {
     async start() {
         await this.connect();
         await this._fetch('/sslsplit/enable', {method: 'POST'});
+        while(!await this.isEnabled());
     }
 
     /** Set message handler */
