@@ -395,6 +395,21 @@ class Instance extends EventEmitter {
             return await res.blob(); // browser
     }
 
+    /**
+     * Enable exposing a port for connecting to VM.
+     * For iOS, this would mean ssh, for Android, adb access.
+     */
+    async enableExposedPort() {
+        await this._fetch('/exposeport/enable', {method: 'POST'});
+    }
+
+    /**
+     * Disable exposing a port for connecting to VM.
+     * For iOS, this would mean ssh, for Android, adb access.
+     */    async disableExposedPort() {
+        await this._fetch('/exposeport/disable', {method: 'POST'});
+    }
+
     async update() {
         this.receiveUpdate(await this._fetch(''));
     }
