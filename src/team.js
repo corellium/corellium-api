@@ -9,12 +9,16 @@ class Team {
         this.info = info;
     }
 
-    /** The ID of the team */
+    /** The ID of the team 
+     * @return {string}
+    */
     get id() {
         return this.info.id;
     }
 
-    /** The users belonging to the team */
+    /** The users belonging to the team 
+     * @return {User[]}
+    */
     get users() {
         return this.info.users.map(user => this.client.getUser(user.id));
     }

@@ -2,6 +2,52 @@ const WebSocket = require('ws');
 const stream = require('stream');
 
 /**
+ * @typedef {object} CommandResult
+ * @property {integer} id - ID
+ * @property {boolean} success - command result
+ */
+
+ /**
+ * @typedef {object} FridaPsResult
+ * @property {integer} id - ID
+ * @property {integer} exit-status - 
+ * @property {string} output - frida-ps output
+ * @property {boolean} success - command result
+ */
+
+/**
+ * @typedef {object} AppListEntry
+ * @property {string} applicationType
+ * @property {string} bundleID
+ * @property {integer} date
+ * @property {integer} diskUsage
+ * @property {boolean} isLaunchable
+ * @property {string} name
+ * @property {boolean} running
+ */
+
+/**
+ * @typedef {object} StatEntry
+ * @property {integer} atime
+ * @property {integer} ctime
+ * @property {object[]} entries
+ * @property {integer} entries[].atime
+ * @property {integer} entries[].stime
+ * @property {integer} entries[].gid
+ * @property {integer} entries[].mode
+ * @property {integer} entries[].mtime
+ * @property {string} entries[].name
+ * @property {integer} entries[].size
+ * @property {integer} entries[].uid
+ * @property {integer} gid
+ * @property {integer} mode
+ * @property {integer} mtime
+ * @property {string} name
+ * @property {integer} size
+ * @property {integer} uid
+ */
+
+/**
  * A connection to the agent running on an instance.
  *
  * Instances of this class
@@ -204,6 +250,8 @@ class Agent {
      * agent connection has been created and is no longer needed, for example
      * if the `crashListener` in the example at {@link Agent#crashes} is not
      * needed anymore.
+     * @example
+     * agent.disconnect();
      */
     disconnect() {
         this.pendingConnect = false;
@@ -295,6 +343,9 @@ class Agent {
 
     /**
      * Wait for the instance to be ready to use. On iOS, this will wait until Springboard has launched.
+     * @example
+     * let agent = await instance.agent();
+     * await agent.ready();
      */
     async ready() {
         await this.command('app', 'ready');
@@ -304,6 +355,10 @@ class Agent {
      * Uninstalls the app with the given bundle ID.
      * @param {string} bundleID - The bundle ID of the app to uninstall.
      * @param {Agent~progressCallback} progress - The progress callback.
+     * @example
+     * await agent.uninstall('com.corellium.demoapp', (progress, status) => {
+     *     console.log(progress, status);
+     * });
      */
     async uninstall(bundleID, progress) {
         await this.command('app', 'uninstall', {bundleID}, (message) => {
@@ -317,6 +372,8 @@ class Agent {
     /**
      * Launches the app with the given bundle ID.
      * @param {string} bundleID - The bundle ID of the app to launch.
+     * @example
+     * await agent.run("com.corellium.demoapp");
      */
     async run(bundleID) {
         await this.command('app', 'run', {bundleID});
@@ -326,6 +383,8 @@ class Agent {
      * Launches the app with the given bundle ID.
      * @param {string} bundleID - The bundle ID of the app to launch, for android this is the package name.
      * @param {string} activity fully qualified activity to launch from bundleID
+     * @example
+     * await agent.runActivity('com.corellium.test.app', 'com.corellium.test.app/com.corellium.test.app.CrashActivity');
      */
     async runActivity(bundleID, activity) {
         await this.command('app', 'run', {bundleID, activity});
@@ -334,6 +393,8 @@ class Agent {
     /**
      * Kill the app with the given bundle ID, if it is running.
      * @param {string} bundleID - The bundle ID of the app to kill.
+     * @example
+     * await agent.kill("com.corellium.demoapp");
      */
     async kill(bundleID) {
         await this.command('app', 'kill', {bundleID});
@@ -341,6 +402,12 @@ class Agent {
 
     /**
      * Returns an array of installed apps.
+     * @return {Promise<AppListEntry[]>}
+     * @example
+     * let appList = await agent.appList();
+     * for (app of appList) {
+     *     console.log('Found installed app ' + app['bundleID']);
+     * }
      */
     async appList() {
         const {apps} = await this.command('app', 'list');
@@ -350,6 +417,9 @@ class Agent {
     /**
      * Gets information about the file at the specified path. Fields are atime, mtime, ctime (in seconds after the epoch), size, mode (see mode_t in man 2 stat), uid, gid. If the path specified is a directory, an entries field will be present with
      * the same structure (and an additional name field) for each immediate child of the directory.
+     * @return {Promise<StatEntry>}
+     * @example
+     * let scripts = await agent.stat('/data/corellium/frida/scripts/');
      */
     async stat(path) {
         const response = await this.command('file', 'stat', {path});
@@ -417,6 +487,7 @@ class Agent {
     /**
      * Returns a temporary random filename on the VMs filesystem that by the
      * time of invocation of this method is guaranteed to be unique.
+     * @return {Promise<string>}
      * @see example at {@link Agent#upload}
      */
     async tempFile() {
@@ -452,6 +523,7 @@ class Agent {
     /**
      * Downloads the file at the given path from the VM's filesystem. Returns a node ReadableStream.
      * @param {string} path - The path of the file to download.
+     * @return {Promise<Readable>}
      * @example
      * const dl = agent.download('/var/tmp/test.log');
      * dl.pipe(fs.createWriteStream('test.log'));
@@ -497,6 +569,8 @@ class Agent {
     /**
      * Delete the file at the specified path on the VM's filesystem.
      * @param {string} path - The path of the file on the VM's filesystem to delete.
+     * @example
+     * await agent.deleteFile('/var/tmp/test.log');
      */
     async deleteFile(path) {
         const response = await this.command('file', 'delete', {path});
@@ -507,6 +581,9 @@ class Agent {
      * Change file attributes of the file at the specified path on the VM's filesystem.
      * @param {string} path - The path of the file on the VM's filesystem to delete.
      * @param {Object} attributes - An object whose members and values are the file attributes to change and what to change them to respectively. File attributes path, mode, uid and gid are supported.
+     * @return {Promise<CommandResult>}
+     * @example
+     * await agent.changeFileAttributes(filePath, {mode: 511});
      */
     async changeFileAttributes(path, attributes) {
         const response = await this.command('file', 'modify', {path, attributes});
@@ -555,17 +632,26 @@ class Agent {
         });
     }
 
-    /** Locks the device software-wise. */
+    /** Locks the device software-wise. 
+     * @example
+     * agent.lockDevice();
+    */
     async lockDevice() {
         await this.command('system', 'lock');
     }
 
-    /** Unlocks the device software-wise. */
+    /** Unlocks the device software-wise. 
+     * @example
+     * agent.unlockDevice();
+    */
     async unlockDevice() {
         await this.command('system', 'unlock');
     }
 
-    /** Shuts down the device. */
+    /** Shuts down the device. 
+     * @example
+     * agent.shutdown();
+    */
     async shutdown() {
         await this.command('system', 'shutdown');
     }
@@ -578,28 +664,43 @@ class Agent {
         await this.command('system', 'releaseDisableAutolockAssertion');
     }
 
+    /** Connect device to WiFi. 
+     * @example
+     * agent.shutconnectToWifidown();
+    */
     async connectToWifi() {
         await this.command('wifi', 'connect');
     }
 
+    /** Disconnect device from WiFi. 
+     * @example
+     * await agent.disconnectFromWifi();
+    */
     async disconnectFromWifi() {
         await this.command('wifi', 'disconnect');
     }
 
-    async shutdown() {
-        await this.command('system', 'shutdown');
-    }
-
+    /** Get device property. */
     async getProp(property) {
-        await this.command('system', 'getprop', {property});
+        return await this.command('system', 'getprop', {property});
     }
 
+    /** Get device network infor 
+     * @example
+     * let info = await agent.network();
+     * console.log(info);
+    */
     async network() {
         await this.command('system', 'network');
     }
 
     /**
      * Run frida on the device.
+     * @param {integer} pid
+     * @param {string} name
+     * @return {Promise<CommandResult>}
+     * @example
+     * await agent.runFrida(449, 'keystore');
      */
     async runFrida(pid, name) {
         return await this.command('frida', 'run-frida', {
@@ -610,6 +711,16 @@ class Agent {
 
     /**
      * Run frida-ps on the device and return the command's output.
+     * @return {Promise<FridaPsResult>}
+     * @example
+     * let procList = await agent.runFridaPs();
+     * let lines = procList.output.trim().split('\n');
+     * lines.shift();
+     * lines.shift();
+     * for (const line of lines) {
+     *     const [pid, name] = line.trim().split(/\s+/);
+     *     console.log(pid, name);
+     * }
      */
     async runFridaPs() {
         return await this.command('frida', 'run-frida-ps');
@@ -617,6 +728,9 @@ class Agent {
 
     /**
      * Run frida-kill on the device.
+     * @return {Promise<CommandResult>}
+     * @example
+     * await agent.runFridaKill();
      */
     async runFridaKill() {
         return await this.command('frida', 'run-frida-kill');

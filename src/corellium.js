@@ -6,11 +6,38 @@ const Role = require('./role');
 const {I} = require('./input');
 
 /**
+ * @typedef {object} SupportedDevice
+ * @property {string} type
+ * @property {string} name
+ * @property {string} flavor
+ * @property {string} description
+ * @property {string} model
+ * @property {Object} firmwares
+ * @property {string} firmwares.version
+ * @property {string} firmwares.buildid
+ * @property {string} firmwares.sha256sum
+ * @property {string} firmwares.sha1sum
+ * @property {string} firmwares.md5sum
+ * @property {integer} firmwares.size
+ * @property {string} firmwares.uniqueid
+ * @property {string} firmwares.metadata
+ * @property {string} firmwares.releasedate - ISO datetime string
+ * @property {string} firmwares.uploaddate - ISO datetime string
+ * @property {string} firmwares.url
+ * @property {string} firmwares.orig_url
+ * @property {string} firmwares.filename
+ * @property {Object} quotas
+ * @property {integer} quotas.cores
+ * @property {integer} quotas.cpus
+ */
+
+/**
  * The Corellium API client.
  */
 class Corellium {
     /**
      * Create a new Corellium client.
+     * @constructor
      * @param {Object} options
      * @param {string} options.endpoint - Endpoint URL
      * @param {string} options.username - Login username
@@ -30,6 +57,12 @@ class Corellium {
         this._teams = null;
     }
 
+    /**
+     * Returns refreshed authentication token
+     * @return {string} token
+     * @example
+     * let token = await corellium.getToken()
+     */
     async getToken() {
         const token = await this.token;
 
@@ -59,6 +92,8 @@ class Corellium {
      *
      * Calling this method is not required, as calling any other method that
      * needs an authentication token will do the same thing.
+     * @example
+     * await corellium.login();
      */
     async login() {
         await this.getToken();
@@ -68,6 +103,9 @@ class Corellium {
      * Returns an array of {@link Project}s that this client is allowed to
      * access.
      * @returns {Project[]}
+     * @example
+     * let projects = await corellium.projects();
+     * let project = projects.find(project => project.name === "Demo Project");
      */
     async projects() {
         const projects = await fetchApi(this, '/projects?ids_only=1');
@@ -80,6 +118,8 @@ class Corellium {
      * This function is only available to administrators.
      *
      * @returns {Promise<{ teams: Map<string, Team>, users: Map<string, User>}>}
+     * @example
+     * let teamsAndUsers = await corellium.getTeamsAndUsers();
      */
     async getTeamsAndUsers() {
         const teams = this._teams = new Map();
@@ -99,6 +139,9 @@ class Corellium {
      * Returns {@link Role}s belonging to the domain.
      *
      * This function is only available to domain and project administrators.
+     * @return {Promise<Map<string, Role[]>>}
+     * @example
+     * let roles = await corellium.roles();
      */
     async roles() {
         const roles = this._roles = new Map();
@@ -119,6 +162,9 @@ class Corellium {
      * Returns {@link Team}s belonging to the domain.
      *
      * This function is only available to domain and project administrators.
+     * @return {Promise<Map<string, Team>>}
+     * @example
+     * let teams = await corellium.teams();
      */
     async teams() {
         return (await this.getTeamsAndUsers()).teams;
@@ -128,6 +174,9 @@ class Corellium {
      * Returns {@link User}s belonging to the domain.
      *
      * This function is only available to domain and project administrators.
+     * @return {Promise<Map<string, User>>}
+     * @example
+     * let users = await corellium.users();
      */
     async users() {
         return (await this.getTeamsAndUsers()).users;
@@ -137,8 +186,9 @@ class Corellium {
      * Given a user id, returns the {@link User}.
      *
      * This function is only available to domain and project administrators.
-     *
      * @returns {Promise<User>}
+     * @example
+     * let user = await instance.getUser('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa');
      */
     getUser(id) {
         return this._users.get(id);
@@ -148,6 +198,9 @@ class Corellium {
      * Given a team id, returns the {@link Team}.
      *
      * This function is only available to domain and project administrators.
+     * @returns {Promise<Team>}
+     * @example
+     * let team = await instance.getTeam('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa');
      */
     getTeam(id) {
         return this._teams.get(id);
@@ -157,6 +210,9 @@ class Corellium {
      * Creates a new user in the domain.
      *
      * This function is only available to domain administrators.
+     * @returns {Promise<User>}
+     * @example
+     * let user = await instance.createUser("login", "User Name", "user@email.com", "password");
      */
     async createUser(login, name, email, password) {
         const response = await fetchApi(this, '/users', {
@@ -177,6 +233,9 @@ class Corellium {
      * Destroys a user in the domain.
      *
      * This function is only available to domain administrators.
+     * @param {string} id - user ID
+     * @example
+     * instance.destroyUser('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa');
      */
     async destroyUser(id) {
         await fetchApi(this, `/users/${id}`, {
@@ -185,7 +244,12 @@ class Corellium {
     }
 
     /**
-     * Creates a {@link Role} for a {@link Project} and a @{link Team} or @{link User}.
+     * Creates a {@link Role} for a {@link Project} and a {@link Team} or {@link User}.
+     * @param {string} project - project ID
+     * @param {User|Team} grantee - must be an instance of {@link User} or {@link Team}
+     * @param {string} type - user ID
+     * @example
+     * instance.createRole(project.id, grantee, 'user');
      */
     async createRole(project, grantee, type = 'user') {
         let usersOrTeams = grantee instanceof User && 'users';
@@ -201,6 +265,9 @@ class Corellium {
 
     /**
      * Destroys a {@link Role}
+     * @param {Role} role - role object
+     * @example
+     * instance.destroyRole(role);
      */
     async destroyRole(role) {
         let usersOrTeams = role.isUser ? 'users' : 'teams';
@@ -211,7 +278,10 @@ class Corellium {
 
     /**
      * Returns the {@link Project} with the given ID.
+     * @param {string} projectId - project ID
      * @returns {Promise<Project>}
+     * @example
+     * let project = await corellium.getProject('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa');
      */
     async getProject(projectId) {
         const project = new Project(this, projectId);
@@ -221,7 +291,14 @@ class Corellium {
 
     /**
      * Creates a {@link Project} with the given name {@link Color} and {@link ProjectSettings}.
+     * @param {string} name - project name
+     * @param {integer} color - color
+     * @param {Object} [settings] - project settings
+     * @param {integer} settings.version
+     * @param {boolean} settings.internet-access
      * @returns {Promise<Project>}
+     * @example
+     * corellium.createProject("TestProject");
      */
     async createProject(name, color = 1, settings = {version: 1, 'internet-access': true}) {
         const response = await fetchApi(this, '/projects', {
@@ -239,25 +316,50 @@ class Corellium {
     /**
      * Returns the {@link Project} with the given name. If the project doesn't
      * exist, returns undefined.
+     * @param {string} name - project name to match
      * @returns {Promise<Project>}
+     * @example
+     * let project = await corellium.projectNamed('Default Project');
      */
     async projectNamed(name) {
         const projects = await this.projects();
         return projects.find(project => project.name === name);
     }
 
-    /** @todo document this */
+    /** Returns supported device list
+     * @return {SupportedDevice[]}
+     * @example
+     * let supported = await corellium.supported();
+     */
     async supported() {
         if (!this.supportedDevices)
             this.supportedDevices = await fetchApi(this, '/supported');
         return this.supportedDevices;
     }
 
+    /** Returns all keys for the project 
+     * @param {string} project - project ID
+     * @return {ProjectKey[]}
+     * @example
+     * let keys = instance.projectKeys(project.id);
+     * for(let key of keys)
+     *   console.log(key);
+    */
     async projectKeys(project) {
         return await fetchApi(this, `/projects/${project}/keys`);
     }
 
-    async addProjectKey(project, key, kind='ssh', label=null) {
+    /** Adds key to the project 
+     * @param {string} project - project ID
+     * @param {string} key - public key
+     * @param {string} kind - key type ('ssh'/'abd')
+     * @param {string} [label] - key label
+     * @return {string} key ID
+     * @example
+     * let project = insatnce.getProjectNamed('TestProject');
+     * instance.addProjectKey(project.id, key, 'ssh', 'SSH Key');
+    */
+   async addProjectKey(project, key, kind='ssh', label=null) {
         return await fetchApi(this, `/projects/${project}/keys`, {
             method: 'POST',
             json: {
@@ -266,6 +368,13 @@ class Corellium {
         });
     }
 
+    /** Adds key to the project 
+     * @param {string} project - project ID
+     * @param {string} keyId - key ID
+     * @example
+     * let project = insatnce.getProjectNamed('TestProject');
+     * instance.deleteProjectKey(project.id, 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa');
+     */
     async deleteProjectKey(project, keyId) {
         return await fetchApi(this, `/projects/${project}/keys/${keyId}`, {
             method: 'DELETE'

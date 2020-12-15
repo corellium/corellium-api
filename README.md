@@ -49,8 +49,7 @@ Returns the `Project` with the identifier `projectId` or *undefined* if it does 
 
 Example:
 ```javascript=
-let project = await corellium.getProject('b5ef6be5-71a9-4a26-a320-9be182217ac8
-');
+let project = await corellium.getProject('b5ef6be5-71a9-4a26-a320-9be182217ac8');
 ```
 
 ### async projectNamed(name)
@@ -767,7 +766,7 @@ if (enabled) {
 }
 ```
 
-### async cleanLog()
+### async clearLog()
 
 Clears captured Network Monitor data
 

@@ -54,11 +54,19 @@ class Project {
     /**
      * Reload the project info. This currently consists of name and quotas, but
      * will likely include more in the future.
+     * @example
+     * project.refresh();
      */
     async refresh() {
         this.info = await fetchApi(this, `/projects/${this.id}`);
     }
 
+    /**
+     * Returns refreshed authentication token
+     * @return {string} token
+     * @example
+     * let token = await project.getToken()
+     */
     async getToken() {
         return await this.client.getToken();
     }
@@ -79,6 +87,8 @@ class Project {
      * Returns the {@link Instance} with the given ID.
      * @param {string} id
      * @returns {Promise<Instance>}
+     * @example
+     * await project.getInstance('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa');
      */
     async getInstance(id) {
         const info = await fetchApi(this, `/instances/${id}`);
@@ -125,6 +135,8 @@ class Project {
      * @param {string} clientUUID - An arbitrary UUID to uniquely associate this VPN configuration with so it can be later identified
      *                              in a list of connected clients. Optional.
      * @returns {Promise<Buffer>}
+     * @example
+     * await project.vpnConfig('ovpn', undefined)
      */
     async vpnConfig(type = 'ovpn', clientUUID) {
         if (!clientUUID)
@@ -134,7 +146,10 @@ class Project {
         return await response.buffer();
     }
 
-    /** Destroy this project. */
+    /** Destroy this project. 
+     * @example
+     * project.destroy();
+     */
     async destroy() {
         return await fetchApi(this, `/projects/${this.id}`, {
             method: 'DELETE'
@@ -144,6 +159,20 @@ class Project {
     /**
      * The project quotas.
      * @returns {ProjectQuotas}
+     * @example
+     * // Create map of supported devices.
+     * let supported = {};
+     * (await corellium.supported()).forEach(modelInfo => {
+     *     supported[modelInfo.name] = modelInfo;
+     * });
+     * 
+     * // Get how many CPUs we're currently using.
+     * let cpusUsed = 0;
+     * instances.forEach(instance => {
+     *     cpusUsed += supported[instance.flavor].quotas.cpus;
+     * });
+     * 
+     * console.log('Used: ' + cpusUsed + '/' + project.quotas.cpus);
      */
     get quotas() {
         return this.info.quotas;
@@ -173,12 +202,17 @@ class Project {
     /**
      * How much of the project's quotas are currently used. To ensure this information is up to date, call {@link Project#refresh()} first.
      * @property {number} cores - Number of used CPU cores
+     * @example
+     * project.quotasUsed();
      */
     get quotasUsed() {
         return this.info.quotasUsed;
     }
 
-    /** The project's name. */
+    /** The project's name. 
+     * @example
+     * project.name();
+    */
     get name() {
         return this.info.name;
     }
@@ -187,6 +221,9 @@ class Project {
      * Returns a list of {@link Role}s associated with this project, showing who has permissions over this project.
      *
      * This function is only available to domain and project administrators.
+     * @return {Role[]}
+     * @example
+     * await project.roles();
      */
     async roles() {
         const roles = await this.client.roles();
@@ -197,6 +234,10 @@ class Project {
      * Give permissions to this project for a {@link Team} or a {@link User} (adds a {@link Role}).
      *
      * This function is only available to domain and project administrators.
+     * @param {User|Team} grantee - must be an instance of {@link User} or {@link Team}
+     * @param {string} type - user ID
+     * @example
+     * project.createRole(grantee, 'user');
      */
     async createRole(grantee, type = 'user') {
         await this.client.createRole(this.id, grantee, type);
@@ -209,6 +250,10 @@ class Project {
      * removing keys from the project will have no effect on existing instances.
      *
      * @returns {Promise<ProjectKey[]>}
+     * @example
+     * let keys = project.keys();
+     * for(let key of keys)
+     *   console.log(key);
      */
     async keys() {
         return await this.client.projectKeys(this.id);
@@ -222,13 +267,18 @@ class Project {
      * @param {string} [label] - defaults to the public key comment, if present
      *
      * @returns {Promise<ProjectKey>}
+     * @example
+     * project.addKey(key, 'ssh', 'SSH Key');
      */
     async addKey(key, kind='ssh', label=null) {
         return await this.client.addProjectKey(this.id, key, kind, label);
     }
 
     /**
+     * Delete public key from the project
      * @param {string} keyId
+     * @example
+     * project.deleteKey('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa');
      */
     async deleteKey(keyId) {
         return await this.client.deleteProjectKey(this.id, keyId);

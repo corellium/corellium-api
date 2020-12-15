@@ -8,6 +8,16 @@ const pTimeout = require('p-timeout')
 const NetworkMonitor = require('./netmon');
 
 /**
+ * @typedef {object} ThreadInfo
+ * @property {string} pid - process PID
+ * @property {string} kernelId - proces ID in kernel
+ * @property {string} name - process name
+ * @property {object[]} threads - process threads
+ * @property {string} threads[].tid - thread ID
+ * @property {string} threads[].kernelId - thread ID in kernel
+ */
+
+/**
  * Instances of this class are returned from {@link Project#instances}, {@link
  * Project#getInstance}, and {@link Project#createInstance}. They should not be
  * created using the constructor.
@@ -130,6 +140,10 @@ class Instance extends EventEmitter {
     /**
      * Return an array of this instance's {@link Snapshot}s.
      * @returns {Snapshot[]} This instance's snapshots
+     * @example
+     * const instances = await project.instances();
+     * const instance = instances.find(instance => instance.name == 'foo');
+     * await instance.snapshots();
      */
     async snapshots() {
         const snapshots = await this._fetch('/snapshots');
@@ -140,6 +154,10 @@ class Instance extends EventEmitter {
      * Take a new snapshot of this instance.
      * @param {string} name - The name for the new snapshot.
      * @returns {Snapshot} The new snapshot
+     * @example
+     * const instances = await project.instances();
+     * const instance = instances.find(instance => instance.name == 'foo');
+     * await instance.takeSnapshot("TestSnapshot");
      */
     async takeSnapshot(name) {
         const snapshot = await this._fetch('/snapshots', {
@@ -151,18 +169,34 @@ class Instance extends EventEmitter {
 
     /**
      * Returns a dump of this instance's serial port log.
+     * @return {string}
+     * @example
+     * const instances = await project.instances();
+     * const instance = instances.find(instance => instance.name == 'foo');
+     * console.log(await instance.consoleLog());
      */
     async consoleLog() {
         const response = await this._fetch('/consoleLog', {response: 'raw'});
         return await response.text();
     }
 
-    /** Return an array of recorded kernel panics. */
+    /** Return an array of recorded kernel panics. 
+     * @return {object}
+     * @example
+     * const instances = await project.instances();
+     * const instance = instances.find(instance => instance.name == 'foo');
+     * console.log(await instance.panics());
+    */
     async panics() {
         return await this._fetch('/panics');
     }
 
-    /** Clear the recorded kernel panics of this instance. */
+    /** Clear the recorded kernel panics of this instance. 
+     * @example
+     * const instances = await project.instances();
+     * const instance = instances.find(instance => instance.name == 'foo');
+     * await instance.clearPanics();
+    */
     async clearPanics() {
         await this._fetch('/panics', {method: 'DELETE'});
     }
@@ -171,6 +205,9 @@ class Instance extends EventEmitter {
      * Return an {@link Agent} connected to this instance. Calling this
      * method multiple times will reuse the same agent connection.
      * @returns {Agent}
+     * @example
+     * let agent = await instance.agent();
+     * await agent.ready();
      */
     async agent() {
         if (!this._agent || !this._agent.connected)
@@ -222,6 +259,15 @@ class Instance extends EventEmitter {
      * useful for agent tasks that don't finish and thus consume the
      * connection, such as {@link Agent#crashes}.
      * @returns {Agent}
+     * @example
+     * let crashListener = await instance.newAgent();
+     * crashListener.crashes('com.corellium.demoapp', (err, crashReport) => {
+     *     if (err) {
+     *         console.error(err);
+     *         return;
+     *     }
+     *     console.log(crashReport);
+     * });
      */
     async newAgent() {
         return new Agent(this);
@@ -254,7 +300,7 @@ class Instance extends EventEmitter {
 
     /**
      * Create a new {@link NetworkMonitor} connection to this instance.
-     * @returns {Agent}
+     * @returns {NetworkMonitor}
      */
     async newNetworkMonitor() {
         return new NetworkMonitor(this);
@@ -262,6 +308,7 @@ class Instance extends EventEmitter {
 
     /**
      * Returns a bidirectional node stream for this instance's serial console.
+     * @return {WebSocket}
      * @example
      * const consoleStream = await instance.console();
      * consoleStream.pipe(process.stdout);
@@ -282,42 +329,79 @@ class Instance extends EventEmitter {
         await this._fetch('/input', {method: 'POST', json: input.points});
     }
 
-    /** Start this instance. */
+    /** Start this instance. 
+     * @example
+     * await instance.start();
+    */
     async start() {
         await this._fetch('/start', {method: 'POST'});
     }
 
-    /** Stop this instance. */
+    /** Stop this instance. 
+     * @example
+     * await instance.stop();
+    */
     async stop() {
         await this._fetch('/stop', {method: 'POST'});
     }
 
-    /** Pause this instance */
+    /** Pause this instance 
+     * @example
+     * await instance.pause();
+    */
     async pause() {
         await this._fetch('/pause', {method: 'POST'});
     }
 
-    /** Unpause this instance */
+    /** Unpause this instance 
+     * @example
+     * await instance.unpause();
+    */
     async unpause() {
         await this._fetch('/unpause', {method: 'POST'});
     }
 
-    /** Reboot this instance. */
+    /** Reboot this instance. 
+     * @example
+     * await instance.reboot();
+    */
     async reboot() {
         await this._fetch('/reboot', {method: 'POST'});
     }
 
-    /** Destroy this instance. */
+    /** Destroy this instance. 
+     * @example <caption>delete all instances of the project</caption>
+     * let instances = await project.instances();
+     * instances.forEach(instance => {
+     *     instance.destroy();
+     * });
+    */
     async destroy() {
         await this._fetch('', {method: 'DELETE'});
     }
 
-    /** Get CoreTrace Thread List */
+    /** Get CoreTrace Thread List 
+     * @return {Promise<ThreadInfo[]>}
+     * @example
+     * let procList = await instance.getCoreTraceThreadList();
+     * for (let p of procList) {
+     *     console.log(p.pid, p.kernelId, p.name);
+     *     for (let t of p.threads) {
+     *         console.log(t.tid, t.kernelId);
+     *     }
+     * }
+    */
     async getCoreTraceThreadList() {
         return await this._fetch('/strace/thread-list', {method: 'GET'});
     }
 
-    /** Add List of PIDs/Names/TIDs to CoreTrace filter */
+    /** Add List of PIDs/Names/TIDs to CoreTrace filter 
+     * @param {integer[]} pids - array of process IDs to filter
+     * @param {string[]} names - array of process names to filter
+     * @param {integer[]} tids - array of thread IDs to filter
+     * @example
+     * await instance.setCoreTraceFilter([111, 222], ["proc_name"], [333]);
+    */
     async setCoreTraceFilter(pids, names, tids) {
         let filter = [];
         if (pids.length)  filter = filter.concat(pids.map (pid  => {return {trait: "pid",  value: pid.toString()}}));
@@ -326,37 +410,54 @@ class Instance extends EventEmitter {
         await this._fetch('', {method: 'PATCH', json: { straceFilter: filter}});
     }
 
-    /** Clear CoreTrace filter */
+    /** Clear CoreTrace filter 
+     * @example
+     * await instance.clearCoreTraceFilter();
+    */
     async clearCoreTraceFilter() {
         await this._fetch('', {method: 'PATCH', json: {straceFilter: []}});
     }
 
-    /** Start CoreTrace */
+    /** Start CoreTrace 
+     * @example
+     * await instance.startCoreTrace();
+    */
     async startCoreTrace() {
         await this._fetch('/strace/enable', {method: 'POST'});
     }
 
-    /** Stop CoreTrace */
+    /** Stop CoreTrace 
+     * @example
+     * await instance.stopCoreTrace();
+    */
     async stopCoreTrace() {
         await this._fetch('/strace/disable', {method: 'POST'});
     }
 
-    /** Download CoreTrace Log */
+    /** Download CoreTrace Log 
+     * @example
+     * let trace = await instance.downloadCoreTraceLog();
+     * console.log(trace.toString());
+    */
     async downloadCoreTraceLog() {
         const token = await this._fetch('/strace-authorize', {method: 'GET'});
         const response = await fetchApi(this.project, `/preauthed/` + token.token + `/coretrace.log`, {response: 'raw'});
         return await response.buffer();
     }
 
-    /** Clean CoreTrace log */
+    /** Clean CoreTrace log 
+     * @example
+     * await instance.clearCoreTraceLog();
+    */
     async clearCoreTraceLog() {
         await this._fetch('/strace', {method: 'DELETE'});
     }
 
     /**
      * Returns a bidirectional node stream for this instance's frida console.
+     * @return {WebSocket}
      * @example
-     * const consoleStream = await instance.console();
+     * const consoleStream = await instance.fridaConsole();
      * consoleStream.pipe(process.stdout);
      */
     async fridaConsole() {
@@ -364,7 +465,11 @@ class Instance extends EventEmitter {
         return websocket(url, ['binary']);
     }
 
-    /** Execute FRIDA script by name */
+    /** Execute FRIDA script by name 
+     * @param {string} filePath - path to FRIDA script
+     * @example
+     * await instance.executeFridaScript("/data/corellium/frida/scripts/script.js");
+    */
     async executeFridaScript(filePath) {
         const {url} = await this._fetch('/console?type=frida');
         let frida_wc = new ws(url);
@@ -406,7 +511,8 @@ class Instance extends EventEmitter {
     /**
      * Disable exposing a port for connecting to VM.
      * For iOS, this would mean ssh, for Android, adb access.
-     */    async disableExposedPort() {
+     */    
+    async disableExposedPort() {
         await this._fetch('/exposeport/disable', {method: 'POST'});
     }
 
@@ -473,12 +579,19 @@ class Instance extends EventEmitter {
         });
     }
 
-    /** Wait for the instance to finish restoring and start its first boot. */
+    /** Wait for the instance to finish restoring and start its first boot. 
+     * @example <caption>Wait for VM to finish restore</caption>
+     * instance.finishRestore();
+    */
     async finishRestore() {
         await this._waitFor(() => this.state !== 'creating');
     }
 
-    /** Wait for the instance to enter the given state. */
+    /** Wait for the instance to enter the given state. 
+     * @param {string} state - state to wait
+     * @example <caption>Wait for VM to be ON</caption>
+     * instance.waitForState('on');
+    */
     async waitForState(state) {
         await this._waitFor(() => this.state === state);
     }

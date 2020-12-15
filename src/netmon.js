@@ -2,6 +2,14 @@ const WebSocket = require('ws');
 const {fetchApi} = require('./util/fetch');
 
 /**
+ * @typedef {object} NetmonEntry
+ * @property {Object} request
+ * @property {Object} response
+ * @property {integer} startedDateTime
+ * @property {integer} duration
+ */
+
+/**
  * A connection to the network monitor running on an instance.
  *
  * Instances of this class
@@ -20,6 +28,18 @@ class NetworkMonitor {
         this._lastPong = null;
         this._lastPing = null;
     }
+
+    /**
+     * A callback for file upload progress messages. Can be passed to {@link NetworkMonitor#handleMessage}
+     * @callback NetworkMonitor~newEntryCallback
+     * @param {NetmonEntry} entry - {@link NetmonEntry} object.
+     * @example
+     * let netmon = await instance.newNetworkMonitor();
+     * netmon.handleMessage((message) => {
+     *     let host = message.request.headers.find(entry => entry.key === 'Host');
+     *     console.log(message.response.status, message.request.method, message.response.body.size, host.value);
+     * });
+     */
 
     /**
      * Ensure the network monitor is connected.
@@ -180,6 +200,8 @@ class NetworkMonitor {
     /**
      * Disconnect an network monitor connection. This is usually only required if a new
      * network monitor connection has been created and is no longer needed
+     * @example
+     * netmon.disconnect();
      */
     disconnect() {
         this.pendingConnect = false;
@@ -198,19 +220,35 @@ class NetworkMonitor {
         }
     }
 
-    /** Start Network Monitor */
+    /** Start Network Monitor 
+     * @example
+     * let netmon = await instance.newNetworkMonitor();
+     * netmon.start();
+    */
     async start() {
         await this.connect();
         await this._fetch('/sslsplit/enable', {method: 'POST'});
         while(!await this.isEnabled());
     }
 
-    /** Set message handler */
+    /** Set message handler 
+     * @param {NetworkMonitor~newEntryCallback} handler - the callback for captured entry
+     * @example
+     * let netmon = await instance.newNetworkMonitor();
+     * netmon.handleMessage((message) => {
+     *     let host = message.request.headers.find(entry => entry.key === 'Host');
+     *     console.log(message.response.status, message.request.method, message.response.body.size, host.value);
+     * });
+     */
     async handleMessage(handler) {
         this.handler = handler;
     }
 
-    /** Clear NetworkMonitor log*/
+    /** Clear captured Network Monitor data 
+     * @example
+     * let netmon = await instance.newNetworkMonitor();
+     * netmon.clearLog();
+     */
     async clearLog() {
         let disconnectAfter = false;
         if (!this.connected) {
@@ -223,12 +261,26 @@ class NetworkMonitor {
         }
     }
 
-    /** Stop Network Monitor */
+    /** Stop Network Monitor 
+     * @example
+     * let netmon = await instance.newNetworkMonitor();
+     * netmon.stop();
+     */
     async stop() {
         await this._fetch('/sslsplit/disable', {method: 'POST'});
         await this.disconnect();
     }
 
+    /** Check if Network Monitor is enabled 
+     * @returns {boolean}
+     * @example
+     * let enabled = await netmon.isEnabled();
+     * if (enabled) {
+     *     console.log("enabled");
+     * } else {
+     *     console.log("disabled");
+     * }
+     */
     async isEnabled() {
         let info = await fetchApi(this.instance.project, `/instances/${this.instance.id}`);
         return info.netmon.enabled;
