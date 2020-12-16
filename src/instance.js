@@ -66,6 +66,7 @@ class Instance extends EventEmitter {
      * `off`|The instance is powered off.
      * `creating`|The instance is in the process of creating.
      * `deleting`|The instance is in the process of deleting.
+     * `deleted`|The instance is deleted, instance will set to undefined.
      * `paused`|The instance is paused.
      *
      * A full list of possible values is available in the API documentation.
@@ -232,24 +233,24 @@ class Instance extends EventEmitter {
     async waitForAgentReady() {
         while (true) {
             try {
-                await this.agentEndpoint()
+                await this.agentEndpoint();
 
                 const agentObtained = await pTimeout((async () => {
-                    const agent = await this.newAgent()
+                    const agent = await this.newAgent();
                     try {
-                        await agent.ready()
-                        return true
+                        await agent.ready();
+                        return true;
                     } finally {
-                        agent.disconnect()
+                        agent.disconnect();
                     }
                 })(), 20000, () => {
-                    return false
+                    return false;
                 })
 
                 if (agentObtained)
-                    break
+                    break;
             } catch (e) {
-                console.log(e)
+                console.log(e);
             }
         }
     }
@@ -462,7 +463,15 @@ class Instance extends EventEmitter {
      */
     async fridaConsole() {
         const {url} = await this._fetch('/console?type=frida');
-        return websocket(url, ['binary']);
+        var fridaConsole = websocket(url, ['binary']);
+
+        await new Promise(resolve => {
+            fridaConsole.socket.on('open', (err) => {
+              resolve();
+            });
+        });
+
+        return fridaConsole;
     }
 
     /** Execute FRIDA script by name 
@@ -471,12 +480,14 @@ class Instance extends EventEmitter {
      * await instance.executeFridaScript("/data/corellium/frida/scripts/script.js");
     */
     async executeFridaScript(filePath) {
-        const {url} = await this._fetch('/console?type=frida');
-        let frida_wc = new ws(url);
-        while (frida_wc.readyState != ws.OPEN) {
-            await new Promise(resolve => setTimeout(resolve, 100));
-        };
-        await frida_wc.send('%load ' + filePath + '\n', null, () => frida_wc.close());
+        const fridaConsoleStream = await this.fridaConsole();
+        fridaConsoleStream.socket.on('close', function () {
+            fridaConsoleStream.destroy();
+        });
+
+        fridaConsoleStream.socket.send('%load ' + filePath + '\n', null, () => fridaConsoleStream.socket.close());
+
+        fridaConsoleStream.socket.close();
     }
 
     /**

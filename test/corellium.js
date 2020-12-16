@@ -44,7 +44,7 @@ describe('Corellium API', function () {
             const instance = instanceMap.get(instanceVersion);
             if (instance !== undefined) {
                 await instance.destroy();
-                await instance.waitForState('deleting');
+                await instance.waitForState('deleted');
             }
         });
     });
@@ -82,7 +82,7 @@ describe('Corellium API', function () {
         });
 
         INSTANCE_VERSIONS.forEach((instanceVersion) => {
-            it('can start create', async function () {
+            it(`can start create ${instanceVersion}`, async function () {
                 assert(project, 'Unable to test as no project was returned from previous tests');
                 const name = `API Test ${instanceVersion}`;
                 const instance = await project.createInstance({
@@ -150,7 +150,7 @@ describe('Corellium API', function () {
         });
 
         INSTANCE_VERSIONS.forEach((instanceVersion) => {
-            it('can getInstance', async function () {
+            it(`can getInstance ${instanceVersion}`, async function () {
                 const instanceFromMap = instanceMap.get(instanceVersion);
                 const instance = await project.getInstance(instanceFromMap.id);
                 assert(instance.id === instanceFromMap.id);
@@ -194,7 +194,7 @@ describe('Corellium API', function () {
         });
 
         INSTANCE_VERSIONS.forEach((instanceVersion) => {
-            it('can finish create', async function () {
+            it(`can finish create ${instanceVersion}`, async function () {
                 this.slow(40000);
                 this.timeout(70000);
 
@@ -588,15 +588,11 @@ describe('Corellium API', function () {
                     it('can get console', async function () {
                         const instance = instanceMap.get(instanceVersion);
                         const consoleStream = await instance.fridaConsole();
-                        // Wait for the socket to open before killing it,
-                        // otherwise this will throw an error
-                        consoleStream.socket.on('open', function (err) {
-                            consoleStream.socket.close();
-                        });
-                        // When the socket closes, it will be safe to destroy the console duplexify object
+
                         consoleStream.socket.on('close', function () {
                             consoleStream.destroy();
                         });
+                        consoleStream.socket.close();
                     });
 
                     describe('frida attaching and execution', async function () {
@@ -631,9 +627,6 @@ describe('Corellium API', function () {
                             await new Promise(resolve => setTimeout(resolve, 5000));
 
                             let fridaConsole = await instance.fridaConsole();
-                            fridaConsole.socket.on('close', function () {
-                                fridaConsole.destroy();
-                            });
                             let fridaOutput = await new Promise(resolve => {
                                 const w = new stream.Writable({
                                     write(chunk, encoding, callback) {
