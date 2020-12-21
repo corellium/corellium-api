@@ -18,6 +18,15 @@ const NetworkMonitor = require('./netmon');
  */
 
 /**
+ * @typedef {object} PanicInfo
+ * @property {integer} flags
+ * @property {string} panic
+ * @property {string} stackshot
+ * @property {string} other
+ * @property {integer} ts
+ */
+
+/**
  * Instances of this class are returned from {@link Project#instances}, {@link
  * Project#getInstance}, and {@link Project#createInstance}. They should not be
  * created using the constructor.
@@ -182,7 +191,7 @@ class Instance extends EventEmitter {
     }
 
     /** Return an array of recorded kernel panics. 
-     * @return {object}
+     * @return {Promise<PanicInfo[]>}
      * @example
      * const instances = await project.instances();
      * const instance = instances.find(instance => instance.name == 'foo');
