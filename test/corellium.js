@@ -621,7 +621,7 @@ describe('Corellium API', function () {
                             assert(s != '');
                         });
 
-                        it('can execute script', async function () {
+                        it.skip('can execute script', async function () {
                             const instance = instanceMap.get(instanceVersion);
                             await instance.executeFridaScript('/data/corellium/frida/scripts/hook_native.js');
                             await new Promise(resolve => setTimeout(resolve, 5000));
