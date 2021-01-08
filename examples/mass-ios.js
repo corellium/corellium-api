@@ -1,6 +1,4 @@
-"use strict";
-
-const { Corellium, I } = require("./src/corellium");
+const { Corellium, I } = require("../src/corellium");
 
 function versionParse(version) {
     let parts = version.split(".");

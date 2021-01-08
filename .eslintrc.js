@@ -13,6 +13,7 @@ module.exports = {
     rules: {
         "no-constant-condition": "off",
         "no-empty": "off",
+        "no-async-promise-executor": "off",
         "no-unused-vars": [
             2,
             { vars: "all", args: "all", argsIgnorePattern: "^_", ignoreRestSiblings: false },

@@ -1,5 +1,3 @@
-"use strict";
-
 const { Corellium } = require("./src/corellium");
 
 async function main() {
@@ -11,31 +9,34 @@ async function main() {
     });
 
     console.log("Logging in...");
-    // Login.
     await corellium.login();
 
     console.log("Getting projects list...");
-    // Get the list of projects.
     let projects = await corellium.projects();
 
-    // Find the project called "Default Project".
-    let project = projects.find((project) => project.name === "Testing");
+    // Individual accounts have a default project
+    let project = projects.find((project) => project.name === "Test Project");
 
-    // Get the instances in the project.
     console.log("Getting instances...");
     let instances = await project.instances();
 
-    let instance = instances.find(
-        (instance) => instance.id === "fc5926e8-a41a-43b6-98f2-4d0d8e3de0fa",
-    );
+    // Assuming you used that name for your Android device; if you left it alone, it's 'Android'
+    let instance = instances.find((instance) => instance.name === "latest");
 
-    console.log("Got instance");
+    console.log("Creating agent...");
     let agent = await instance.newAgent();
-    console.log("Got agent");
-    await agent.ready();
-    console.log("Agent ready");
 
-    await agent.disconnect();
+    console.log("Waiting until agent is ready...");
+    await agent.ready();
+
+    console.log("Listening for crashes...");
+    agent.crashes("com.corellium.test.app", (err, crashReport) => {
+        if (err) {
+            console.error(err);
+            return;
+        }
+        console.log(crashReport);
+    });
 
     return;
 }

@@ -1,7 +1,6 @@
-"use strict";
-
 const { Corellium } = require("./src/corellium");
 const { I } = require("./src/input");
+const { fs } = require("fs");
 
 async function launch(instance, bundleID) {
     let agent = await instance.agent();
@@ -45,23 +44,15 @@ async function main() {
     // Get the list of projects.
     let projects = await corellium.projects();
 
-    let supported = await corellium.supported();
-    console.log("Supported:", supported);
-
-    let teams,
-        users = await corellium.getTeamsAndUsers();
-    console.log("teams:", teams);
-    console.log("users:", users);
-
     // Find the project called "Default Project".
-    let project = projects.find((project) => project.name === "Test Project");
+    let project = projects.find((project) => project.name === "Default Project");
 
     // Get the instances in the project.
     console.log("Getting instances...");
     let instances = await project.instances();
 
     // Use an instance named "API Demo"
-    let instance = instances.find((instance) => instance.name === "latest");
+    let instance = instances.find((instance) => instance.name === "API Demo");
 
     // Wait for the agent to respond.
     console.log("Getting agent...");
@@ -77,27 +68,25 @@ async function main() {
     let appList = await agent.appList();
     let apps = new Map();
     for (let app of appList) {
-        if (app["bundleID"] === "com.corellium.test.app") {
-            apps.set(app["bundleID"], app);
-        }
+        apps.set(app["bundleID"], app);
     }
 
     console.log(apps);
 
     // Install the Facebook IPA if it's not already installed.
-    // if (!apps.get('com.facebook.Facebook')) {
-    //     console.log('Installing Facebook...');
+    if (!apps.get("com.facebook.Facebook")) {
+        console.log("Installing Facebook...");
 
-    //     await agent.installFile(fs.createReadStream('fb.ipa'), (progress, status) => {
-    //         console.log(progress, status);
-    //     });
+        await agent.installFile(fs.createReadStream("fb.ipa"), (progress, status) => {
+            console.log(progress, status);
+        });
 
-    //     console.log('Facebook installed');
-    // }
+        console.log("Facebook installed");
+    }
 
     // Unlock the device.
-    // console.log('Unlocking device');
-    // await agent.unlockDevice();
+    console.log("Unlocking device");
+    await agent.unlockDevice();
 
     // Run each app while listening for crashes of that app. Wait 15 seconds and kill the app.
     for (let [, app] of apps) {
