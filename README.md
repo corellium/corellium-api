@@ -15,6 +15,7 @@ Sets up a new Corellium endpoint to use. Accepted options are:
 - `options.password`: password for given username
 
 Example:
+
 ```javascript=
 let corellium = new Corellium({
     endpoint: 'https://client.corellium.com',
@@ -28,6 +29,7 @@ let corellium = new Corellium({
 Performs the login on the endpoint using the credentials passed through the constructor.
 
 Example:
+
 ```javascript=
 await corellium.login();
 ```
@@ -37,26 +39,30 @@ await corellium.login();
 Returns all projects from the connected endpoint as an `Array`.
 
 Example:
+
 ```javascript=
 let projects = await corellium.projects();
 let project = projects.find(project => project.name === "Demo Project");
 ```
+
 Line 2 shows how to pick a specific project from the returned map.
 
 ### async getProject(projectId)
 
-Returns the `Project` with the identifier `projectId` or *undefined* if it does not exist.
+Returns the `Project` with the identifier `projectId` or _undefined_ if it does not exist.
 
 Example:
+
 ```javascript=
 let project = await corellium.getProject('b5ef6be5-71a9-4a26-a320-9be182217ac8');
 ```
 
 ### async projectNamed(name)
 
-Returns the `Project` with the name `name` or *undefined* if it does not exist.
+Returns the `Project` with the name `name` or _undefined_ if it does not exist.
 
 Example:
+
 ```javascript=
 let project = await corellium.projectNamed('Default Project');
 ```
@@ -66,6 +72,7 @@ let project = await corellium.projectNamed('Default Project');
 Returns an `Array` with all devices that are supported by the endpoint, with their supported firmwares.
 
 Example:
+
 ```javascript=
 let supported = await corellium.supported();
 ```
@@ -79,15 +86,17 @@ let supported = await corellium.supported();
 Returns the name of the project.
 
 Example:
+
 ```javascript=
 let name = project.name;
 ```
 
 ### Property: quotas
 
-Returns the quotas of the project. Currently, `quotas`' only element is `cpus`. 
+Returns the quotas of the project. Currently, `quotas`' only element is `cpus`.
 
 Example:
+
 ```javascript=
 // Create map of supported devices.
 let supported = {};
@@ -109,10 +118,12 @@ console.log('Used: ' + cpusUsed + '/' + project.quotas.cpus);
 Returns an `Array` of `Instance` objects of all virtual machine instances.
 
 Example:
+
 ```javascript=
 let instances = await project.instances();
 let instance = instances.find(instance => instance.name === 'Test-Device');
 ```
+
 Line 2 shows how to select a specific instance by name from the returned instances.
 
 ### async getInstance(id)
@@ -120,6 +131,7 @@ Line 2 shows how to select a specific instance by name from the returned instanc
 Returns the instance identified by `id`.
 
 Example:
+
 ```javascript=
 let instance = project.getInstance('a9212122-40b0-1387-7feb-7a721916580d');
 ```
@@ -127,27 +139,29 @@ let instance = project.getInstance('a9212122-40b0-1387-7feb-7a721916580d');
 ### async createInstance(options)
 
 Creates a new instance with the given options. The following options are supported:
+
 - `options.name`: The name of the new Instance.
 - `options.flavor`: The flavor of the `Instance` that is being created. Currently, the following flavors are supported:
-   - `ranchu` for Android devices
-   - `iphone6`
-   - `iphone6plus`
-   - `iphone6s`
-   - `iphone6splus`
-   - `iphone7`
-   - `iphone7plus`
-   - `iphonese`
-   - `iphone8`
-   - `iphone8plus`
-   - `iphonex`
-   - `ipodtouch6`
-   - `ipadmini4wifi`
+  - `ranchu` for Android devices
+  - `iphone6`
+  - `iphone6plus`
+  - `iphone6s`
+  - `iphone6splus`
+  - `iphone7`
+  - `iphone7plus`
+  - `iphonese`
+  - `iphone8`
+  - `iphone8plus`
+  - `iphonex`
+  - `ipodtouch6`
+  - `ipadmini4wifi`
 - `options.os`: The software version, e.g. `11.3.1` for iOS, or `11.0.0` for Android
 - `options.patches`: The following values are supported:
-   - `jailbroken` The instance should be jailbroken (default).
-   - `nonjailbroken` The instance should not be jailbroken.
+  - `jailbroken` The instance should be jailbroken (default).
+  - `nonjailbroken` The instance should not be jailbroken.
 
 Example:
+
 ```javascript=
 // create instance
 let instance = await project.createInstance({
@@ -168,6 +182,7 @@ await instance.finishRestore();
 The name of the instance.
 
 Example:
+
 ```javascript=
 let instances = await project.instances();
 let instance = instances[0];
@@ -179,12 +194,14 @@ console.log("Using " + instance.name);
 Returns the state of the `Instance`.
 
 Valid states are:
+
 - `on`: The `Instance` is running.
 - `off`: The `Instance` is not running.
 - `creating`: The `Instance` is being created.
 - `deleting`: The `Instance` is being deleted.
 
 Example:
+
 ```javascript=
 await instance.start();
 await instance.waitForState('on');
@@ -198,6 +215,7 @@ See also: `Instance.waitForState()`
 Returns the flavor of the `Instance`.
 
 Example:
+
 ```javascript=
 let instances = await project.instances();
 instances.forEach(instance => {
@@ -210,6 +228,7 @@ instances.forEach(instance => {
 Renames an `Instance` to `name`.
 
 Example:
+
 ```javascript=
 let instances = await project.instances();
 let instance = instances.find(instance => instance.name === 'Test-Device');
@@ -221,6 +240,7 @@ await instance.rename('Demo-Device');
 Returns an `Array` of `Snapshot` objects with the snapshots for the current `Instance`.
 
 Example:
+
 ```javascript=
 let snapshots = instance.snapshots();
 snapshots.forEach(snapshot => {
@@ -233,6 +253,7 @@ snapshots.forEach(snapshot => {
 Creates a snapshot named `name` of an `Instance`. Returns an instance of `Snapshot`.
 
 Example:
+
 ```javascript=
 await instance.takeSnapshot('before-test');
 ```
@@ -242,6 +263,7 @@ await instance.takeSnapshot('before-test');
 Returns the current console log of an `Instance`.
 
 Example:
+
 ```javascript=
 console.log(await instance.consoleLog());
 ```
@@ -251,9 +273,11 @@ console.log(await instance.consoleLog());
 Returns recorded panics of an `Instance`.
 
 Example:
+
 ```javascript=
 console.log(await instance.panics());
 ```
+
 See also: `Event: panic`
 
 ### async clearPanics()
@@ -261,9 +285,11 @@ See also: `Event: panic`
 Clears recorded panics of an `Instance`.
 
 Example:
+
 ```javascript=
 await instance.clearPanics();
 ```
+
 See also: `Event: panic`
 
 ### async agent()
@@ -271,6 +297,7 @@ See also: `Event: panic`
 Returns an `Agent` instance for the `Instance`.
 
 Example:
+
 ```javascript=
 let agent = await instance.agent();
 await agent.ready();
@@ -281,6 +308,7 @@ await agent.ready();
 Creates an additional `Agent` connection to the `Instance`. This is required for agent tasks that do not actually finish, like `Agent#crashes()`.
 
 Example:
+
 ```javascript=
 let crashListener = await instance.newAgent();
 crashListener.crashes('com.corellium.demoapp', (err, crashReport) => {
@@ -297,6 +325,7 @@ crashListener.crashes('com.corellium.demoapp', (err, crashReport) => {
 Returns a node stream for the `Instance`'s console.
 
 Example:
+
 ```javascript=
 let consoleStream = await instance.console();
 consoleStream.pipe(process.stdout);
@@ -307,6 +336,7 @@ consoleStream.pipe(process.stdout);
 Starts an `Instance`.
 
 Example:
+
 ```javascript=
 await instance.start();
 ```
@@ -316,6 +346,7 @@ await instance.start();
 Stops an `Instance`.
 
 Example:
+
 ```javascript=
 await instance.stop();
 ```
@@ -325,6 +356,7 @@ await instance.stop();
 Reboots an `Instance`.
 
 Example:
+
 ```javascript=
 await instance.reboot();
 ```
@@ -334,6 +366,7 @@ await instance.reboot();
 Destroys an `Instance`.
 
 Example:
+
 ```javascript=
 // delete all instances of the project
 let instances = await project.instances();
@@ -345,6 +378,7 @@ instances.forEach(instance => {
 ### async getCoreTraceThreadList()
 
 Returns array of threads in the following format:
+
 ```
 [
 	{ pid, kernelId, name, threads: [ { tid, kernelId }, ... ] },
@@ -353,6 +387,7 @@ Returns array of threads in the following format:
 ```
 
 Example:
+
 ```javascript=
 let procList = await instance.getCoreTraceThreadList();
 for (let p of procList) {
@@ -368,6 +403,7 @@ for (let p of procList) {
 Creates CoreTrace filter from array of PIDs, TIDs and process names.
 
 Example:
+
 ```javascript=
 await instance.setCoreTraceFilter([111, 222], ["proc_name"], [333]);
 ```
@@ -377,6 +413,7 @@ await instance.setCoreTraceFilter([111, 222], ["proc_name"], [333]);
 Clears CoreTrace filter.
 
 Example:
+
 ```javascript=
 await instance.clearCoreTraceFilter();
 ```
@@ -386,6 +423,7 @@ await instance.clearCoreTraceFilter();
 Starts CoreTrace capture.
 
 Example:
+
 ```javascript=
 await instance.startCoreTrace();
 ```
@@ -395,6 +433,7 @@ await instance.startCoreTrace();
 Stops CoreTrace capture.
 
 Example:
+
 ```javascript=
 await instance.stopCoreTrace();
 ```
@@ -404,6 +443,7 @@ await instance.stopCoreTrace();
 Returns captured CoreTrace data.
 
 Example:
+
 ```javascript=
 let trace = await instance.downloadCoreTraceLog();
 console.log(trace.toString());
@@ -414,6 +454,7 @@ console.log(trace.toString());
 Clears captured CoreTrace data.
 
 Example:
+
 ```javascript=
 await instance.clearCoreTraceLog();
 ```
@@ -423,6 +464,7 @@ await instance.clearCoreTraceLog();
 Returns a node stream for the `Instance`'s FRIDA console.
 
 Example:
+
 ```javascript=
 let consoleStream = await instance.fridaConsole();
 consoleStream.pipe(process.stdout);
@@ -433,6 +475,7 @@ consoleStream.pipe(process.stdout);
 Execute installed FRIDA script with path.
 
 Example:
+
 ```javascript=
 await instance.executeFridaScript("/data/corellium/frida/scripts/script.js");
 ```
@@ -442,6 +485,7 @@ await instance.executeFridaScript("/data/corellium/frida/scripts/script.js");
 Instructions the `Instance` to create a screenshot of the device screen. Returns a `Buffer` with PNG data.
 
 Example:
+
 ```javascript=
 let screenshot = instance.takeScreenshot();
 fs.writeFileSync('screenshot.png', screenshot);
@@ -452,6 +496,7 @@ fs.writeFileSync('screenshot.png', screenshot);
 Waits for a device to finish restoring.
 
 Example:
+
 ```javascript=
 await instance.finishRestore();
 ```
@@ -463,6 +508,7 @@ See also the example at `Project#createInstance()`
 Waits for the `Instance` to switch to a specific state. For valid states, see `Property: state`.
 
 Example:
+
 ```javascript=
 await instance.waitForState('on');
 ```
@@ -472,6 +518,7 @@ await instance.waitForState('on');
 `Instance` emits a `change` event when its info changes, e.g. when the instance is renamed or its state changes.
 
 Example:
+
 ```javascript=
 instance.on('change', async () => {
     console.log(instance.id, instance.name, instance.state);
@@ -483,6 +530,7 @@ instance.on('change', async () => {
 `Instance` emits a `panic` event when a panic occurred.
 
 Example:
+
 ```javascript=
 instance.on('panic', async () => {
     console.log('Panic detected!');
@@ -510,6 +558,7 @@ instance.on('panic', async () => {
 Waits for the agent to be ready to use. This essentially means that it will wait until Springboard has launched.
 
 Example:
+
 ```javascript=
 let agent = await instance.agent();
 await agent.ready();
@@ -520,6 +569,7 @@ await agent.ready();
 Returns an `Array` of installed apps.
 
 Example:
+
 ```javascript=
 let appList = await agent.appList();
 for (app of appList) {
@@ -532,6 +582,7 @@ for (app of appList) {
 Launches the app with the given `bundleID`.
 
 Example:
+
 ```javascript=
 await agent.run("com.corellium.demoapp");
 ```
@@ -541,6 +592,7 @@ await agent.run("com.corellium.demoapp");
 Kills the underlying process of the app identified by `bundleID`.
 
 Example:
+
 ```javascript=
 await agent.kill("com.corellium.demoapp");
 ```
@@ -554,6 +606,7 @@ To upload a file to the VM's filesystem, see `Agent#upload()`.
 See also `Agent#installFile()` which will handle the file upload on its own.
 
 Example:
+
 ```javascript=
 await agent.install('/var/tmp/temp.ipa', (progress, status) => {
     console.log(progress, status);
@@ -565,6 +618,7 @@ await agent.install('/var/tmp/temp.ipa', (progress, status) => {
 Uploads the packaged app provided through the node stream object `stream` and installs it on the VM. The optional `progress` parameter expects a callback function with signature `(progress, status)`, where `progress` is the percentage as float, and `status` a string with the current status of the installation progress.
 
 Example:
+
 ```javascript=
 await agent.installFile(fs.createReadStream('test.ipa'), (progress, status) => {
     console.log(progress, status);
@@ -576,6 +630,7 @@ await agent.installFile(fs.createReadStream('test.ipa'), (progress, status) => {
 Uninstalls the app identified by `bundleID`. The optional `progress` parameter expects a callback function with signature `(progress, status)`, where `progress` is the percentage as float, and `status` a string with the current status of the uninstallation progress.
 
 Example:
+
 ```javascript=
 await agent.uninstall('com.corellium.demoapp', (progress, status) => {
     console.log(progress, status);
@@ -591,6 +646,7 @@ See example at `Agent#upload()`.
 ### async upload(path, stream)
 
 Example:
+
 ```javascript=
 let tmpName = await agent.tempFile();
 await agent.upload(tmpName, fs.createReadStream('test.ipa'));
@@ -601,6 +657,7 @@ await agent.upload(tmpName, fs.createReadStream('test.ipa'));
 Downloads the file at `path` from the VM's filesystem. Returns a node stream object.
 
 Example:
+
 ```javascript=
 let dl = agent.download('/var/tmp/test.log');
 dl.pipe(fs.createWriteStream('test.log'));
@@ -611,6 +668,7 @@ dl.pipe(fs.createWriteStream('test.log'));
 Deletes the file at `path` on the VM's filesystem.
 
 Example:
+
 ```javascript=
 await agent.deleteFile('/var/tmp/test.log');
 ```
@@ -624,6 +682,7 @@ Currently this is only available on iOS virtual devices.
 **Note:** Since this method blocks the communication channel of the agent to wait for crash reports, a new `Agent` connection should be created with `Instance#newAgent()`.
 
 Example:
+
 ```javascript=
 let crashListener = await instance.newAgent();
 crashListener.crashes("com.corellium.demoapp", (err, crashReport) => {
@@ -640,6 +699,7 @@ crashListener.crashes("com.corellium.demoapp", (err, crashReport) => {
 Locks the device software-wise.
 
 Example:
+
 ```javascript=
 await agent.lockDevice();
 ```
@@ -649,6 +709,7 @@ await agent.lockDevice();
 Unlocks the device software-wise.
 
 Example:
+
 ```javascript=
 await agent.unlockDevice();
 ```
@@ -658,6 +719,7 @@ await agent.unlockDevice();
 Disconnects an `Agent` connection. This is usually only required if a new agent connection has been created and is no longer needed, for example if the `crashListener` demonstrated in the example at `Agent#crashes()` is not required anymore.
 
 Example:
+
 ```javascript=
 // subscribe for crash logs
 let crashListener = await instance.newAgent();
@@ -685,6 +747,7 @@ crashListener.disconnect();
 Returns processes avialable for FRIDA to attach.
 
 Example:
+
 ```javascript=
 let procList = await agent.runFridaPs();
 let lines = procList.output.trim().split('\n');
@@ -702,6 +765,7 @@ for (const line of lines) {
 Attaches FRIDA to the process with PID.
 
 Example:
+
 ```javascript=
 await agent.runFrida(111);
 ```
@@ -711,6 +775,7 @@ await agent.runFrida(111);
 Detaches FRIDA from current process.
 
 Example:
+
 ```javascript=
 await agent.runFridaKill();
 ```
@@ -724,6 +789,7 @@ await agent.runFridaKill();
 Install handler for captured Network Monitor data
 
 Example:
+
 ```javascript=
 let netmon = await instance.newNetworkMonitor();
 netmon.handleMessage((message) => {
@@ -737,6 +803,7 @@ netmon.handleMessage((message) => {
 Starts capturing Network Monitor data
 
 Example:
+
 ```javascript=
 let netmon = await instance.newNetworkMonitor();
 netmon.start();
@@ -747,6 +814,7 @@ netmon.start();
 Stops capturing Network Monitor data
 
 Example:
+
 ```javascript=
 let netmon = await instance.newNetworkMonitor();
 netmon.stop();
@@ -757,6 +825,7 @@ netmon.stop();
 Check if Network Monitor is enabled
 
 Example:
+
 ```javascript=
 let enabled = await netmon.isEnabled();
 if (enabled) {
@@ -771,6 +840,7 @@ if (enabled) {
 Clears captured Network Monitor data
 
 Example:
+
 ```javascript=
 let netmon = await instance.newNetworkMonitor();
 netmon.clearLog();
@@ -795,6 +865,7 @@ Tells wether a snapshot is fresh or not.
 A snapshot will be automatically created after the initial restore of an `Instance` in which case it is considered fresh.
 
 Example:
+
 ```javascript=
 let snapshots = await instance.snapshots();
 let freshSnapshot = snapshots.find(snapshot => snapshot.fresh);
@@ -806,6 +877,7 @@ await freshSnapshot.restore();
 Renames a snapshot to `name`.
 
 Example:
+
 ```javascript=
 let snapshots = await instance.snapshots();
 let snapshot = snapshots.find(snapshot => snapshot.name === 'Test 1');
@@ -819,6 +891,7 @@ if (snapshot) {
 Restores a snapshot.
 
 Example:
+
 ```javascript=
 let snapshots = await instance.snapshots();
 let snapshot = snapshots.find(snapshot => snapshot.name === 'Pre-Test 1');
@@ -832,6 +905,7 @@ if (snapshot) {
 Deletes a snapshot.
 
 Example:
+
 ```javascript=
 let snapshots = await instance.snapshots();
 snapshots.forEach(snapshot => {
@@ -839,4 +913,3 @@ snapshots.forEach(snapshot => {
     snapshot.delete();
 });
 ```
-
