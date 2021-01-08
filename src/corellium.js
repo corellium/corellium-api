@@ -46,8 +46,8 @@ class Corellium {
      * @param {string} options.password - Login password
      * @example
      * const corellium = new Corellium({
-     *     endpoint: 'https://demo.corellium.com',
-     *     username: 'admin',
+     *     endpoint: 'https://app.corellium.com',
+     *     username: 'username',
      *     password: 'password',
      * });
      */

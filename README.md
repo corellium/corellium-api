@@ -18,8 +18,8 @@ Example:
 
 ```javascript=
 let corellium = new Corellium({
-    endpoint: 'https://client.corellium.com',
-    username: 'admin',
+    endpoint: 'https://app.corellium.com',
+    username: 'username',
     password: 'password'
 });
 ```
