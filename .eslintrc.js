@@ -19,6 +19,6 @@ module.exports = {
             { vars: "all", args: "all", argsIgnorePattern: "^_", ignoreRestSiblings: false },
         ],
     },
-    ignorePatterns: ["resumable.js"],
+    ignorePatterns: ["resumable.js", "docs/**/*"],
     plugins: ["mocha"],
 };
