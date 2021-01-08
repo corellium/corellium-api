@@ -1,5 +1,6 @@
 *.json
 *.log
 .nyc_output
+docs/
 node_modules/
 test/config.json
