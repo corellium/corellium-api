@@ -247,14 +247,11 @@ describe("Corellium API", function () {
 
     INSTANCE_VERSIONS.forEach((instanceVersion) => {
         describe(`instances ${instanceVersion}`, function () {
-            before(function () {
+            before(async function () {
                 assert(
                     instanceMap.get(instanceVersion),
                     "No instances available for testing, tests will fail",
                 );
-            });
-
-            before(async function () {
                 const instance = instanceMap.get(instanceVersion);
                 await instance.waitForState("on");
             });
@@ -336,7 +333,7 @@ describe("Corellium API", function () {
                     assert(appList !== undefined && appList.length > 0);
                 });
 
-                describe(`Files ${instanceVersion}`, async function () {
+                describe(`Files ${instanceVersion}`, function () {
                     let expectedData = Buffer.from("D1FF", "hex");
                     let testPath;
                     it("can get temp file", async function () {
@@ -403,7 +400,7 @@ describe("Corellium API", function () {
                     });
                 });
 
-                describe(`profiles ${instanceVersion}`, async function () {
+                describe(`profiles ${instanceVersion}`, function () {
                     if (config.testFlavor === "ranchu") {
                         // These are unimplemented on ranchu devices
                         it("cannot use profile/list", async function () {
@@ -424,7 +421,7 @@ describe("Corellium API", function () {
                     }
                 });
 
-                describe(`locks ${instanceVersion}`, async function () {
+                describe(`locks ${instanceVersion}`, function () {
                     if (config.testFlavor === "ranchu") {
                         // These are unimplemented on ranchu devices
                         it("cannot use lock", async function () {
@@ -445,7 +442,7 @@ describe("Corellium API", function () {
                     }
                 });
 
-                describe(`WiFi ${instanceVersion}`, async function () {
+                describe(`WiFi ${instanceVersion}`, function () {
                     if (config.testFlavor === "ranchu") {
                         // These are unimplemented on ranchu devices
                         it("cannot use connectToWifi", async function () {
@@ -459,7 +456,7 @@ describe("Corellium API", function () {
                 });
 
                 let installSuccess;
-                describe(`Applications ${instanceVersion}`, async function () {
+                describe(`Applications ${instanceVersion}`, function () {
                     const instance = instanceMap.get(instanceVersion);
 
                     it("can install a signed apk", async function () {
@@ -522,7 +519,7 @@ describe("Corellium API", function () {
                     });
                 });
 
-                describe(`crash watcher ${instanceVersion}`, async function () {
+                describe(`crash watcher ${instanceVersion}`, function () {
                     let crashListener;
                     before(async function () {
                         const instance = instanceMap.get(instanceVersion);
@@ -656,7 +653,7 @@ describe("Corellium API", function () {
                         consoleStream.socket.close();
                     });
 
-                    describe("frida attaching and execution", async function () {
+                    describe("frida attaching and execution", function () {
                         it("can attach frida", async function () {
                             if (name === "") {
                                 name = "keystore";

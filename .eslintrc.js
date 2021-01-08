@@ -18,6 +18,7 @@ module.exports = {
             2,
             { vars: "all", args: "all", argsIgnorePattern: "^_", ignoreRestSiblings: false },
         ],
+        "mocha/no-setup-in-describe": "off",
     },
     ignorePatterns: ["resumable.js", "docs/**/*"],
     plugins: ["mocha"],
