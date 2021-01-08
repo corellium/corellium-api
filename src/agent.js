@@ -651,7 +651,7 @@ class Agent {
 
     /** Connect device to WiFi.
      * @example
-     * agent.shutconnectToWifidown();
+     * await agent.connectToWifi();
      */
     async connectToWifi() {
         await this.command("wifi", "connect");
