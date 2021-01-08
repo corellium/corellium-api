@@ -10,13 +10,9 @@
   "author": "",
   "dependencies": {
     "cross-fetch": "^3.0.6",
-    "docdash": "^1.2.0",
-    "eslint": "^7.12.1",
     "fast-stable-stringify": "^1.0.0",
     "form-data": "^3.0.0",
     "hkdf": "0.0.2",
-    "jsdoc": "^3.6.6",
-    "mocha-spec-json-output-reporter": "^1.1.7",
     "p-retry": "^2.0.0",
     "p-timeout": "^3.2.0",
     "uuid": "^3.3.2",
@@ -24,8 +20,12 @@
     "xhr2": "^0.2.0"
   },
   "devDependencies": {
+    "docdash": "^1.2.0",
+    "eslint": "^7.17.0",
     "eslint-plugin-mocha": "^8.0.0",
+    "jsdoc": "^3.6.6",
     "mocha": "^8.2.0",
+    "mocha-spec-json-output-reporter": "^1.1.7",
     "nyc": "^15.1.0",
     "prettier": "2.2.1"
   }
