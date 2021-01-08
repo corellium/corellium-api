@@ -1,3 +1,5 @@
+"use strict";
+
 const { Corellium } = require("./src/corellium");
 const fs = require("fs");
 

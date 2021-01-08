@@ -1,3 +1,5 @@
+"use strict";
+
 const { fetchApi } = require("./util/fetch");
 const Instance = require("./instance");
 const InstanceUpdater = require("./instance-updater");

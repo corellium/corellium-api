@@ -1,3 +1,5 @@
+"use strict";
+
 const BUTTONS = {
   home: 4,
   power: 8,

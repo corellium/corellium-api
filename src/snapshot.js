@@ -1,3 +1,5 @@
+"use strict";
+
 /**
  * An instance snapshot.
  *

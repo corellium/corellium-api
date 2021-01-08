@@ -1,3 +1,5 @@
+"use strict";
+
 /**
  * Instances of this class are returned from {@link Corellium#users), and
  * {@link Team#users}. They should not be created using the constructor.

@@ -1,3 +1,5 @@
+"use strict";
+
 const { Corellium } = require("./src/corellium");
 
 async function main() {

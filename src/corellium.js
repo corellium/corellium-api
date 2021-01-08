@@ -1,3 +1,5 @@
+"use strict";
+
 const { fetch, fetchApi, CorelliumError } = require("./util/fetch");
 const Project = require("./project");
 const Team = require("./team");

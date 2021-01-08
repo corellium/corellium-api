@@ -1,3 +1,5 @@
+"use strict";
+
 // Wrapper around fetch that adds a few goodies:
 //  - token option that sets Authorization header
 //  - json option that automatically does JSON.stringify and sets Content-Type: application/json

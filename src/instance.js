@@ -1,3 +1,5 @@
+"use strict";
+
 const { fetchApi } = require("./util/fetch");
 const EventEmitter = require("events");
 const wsstream = require("websocket-stream");

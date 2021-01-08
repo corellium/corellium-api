@@ -1,3 +1,5 @@
+"use strict";
+
 module.exports = {
   source: { include: ["src"] },
   opts: {
