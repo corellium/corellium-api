@@ -1,13 +1,14 @@
+"use strict";
+
 const BUTTONS = {
-    'home': 4,
-    'power': 8,
-    'volume-up': 16,
-    'volume-down': 32,
-    'ringer': 64,
+    home: 4,
+    power: 8,
+    "volume-up": 16,
+    "volume-down": 32,
+    ringer: 64,
 };
 function buttonId(button) {
-    if (!(button in BUTTONS))
-        throw new Error(`invalid button ${button}`);
+    if (!(button in BUTTONS)) throw new Error(`invalid button ${button}`);
     return BUTTONS[button];
 }
 const TOUCH = 1;
@@ -52,8 +53,7 @@ class Input {
     }
     _addPoint(point = {}) {
         point.buttons = this.pressed;
-        if (this._delay != 0)
-            point.delay = this._delay;
+        if (this._delay != 0) point.delay = this._delay;
         this.points.push(point);
         this._delay = 0;
         return this;
@@ -65,7 +65,7 @@ class Input {
      * @returns this
      */
     press(...buttonNames) {
-        buttonNames.forEach(button => {
+        buttonNames.forEach((button) => {
             this.pressed |= buttonId(button);
         });
         return this._addPoint();
@@ -77,7 +77,7 @@ class Input {
      * @returns this
      */
     release(...buttonNames) {
-        buttonNames.forEach(button => {
+        buttonNames.forEach((button) => {
             this.pressed &= ~buttonId(button);
         });
         return this._addPoint();
@@ -100,7 +100,7 @@ class Input {
      * @param {number} [delay=100] The number of milliseconds to hold down the button.
      * @returns this
      */
-    pressRelease(button, delay=100) {
+    pressRelease(button, delay = 100) {
         return this.press(button).delay(delay).release(button);
     }
 
@@ -112,7 +112,7 @@ class Input {
      */
     touch(x, y) {
         this.pressed |= TOUCH;
-        return this._addPoint({pos: [x, y]});
+        return this._addPoint({ pos: [x, y] });
     }
 
     /**
@@ -136,9 +136,8 @@ class Input {
      * coordinate.
      */
     swipeTo(x, y, curve) {
-        if (!(this.pressed & TOUCH))
-            throw new Error('touch must be down to swipe');
-        return this._addPoint({pos: [x, y], curve});
+        if (!(this.pressed & TOUCH)) throw new Error("touch must be down to swipe");
+        return this._addPoint({ pos: [x, y], curve });
     }
 
     /**
@@ -148,7 +147,7 @@ class Input {
      * @param {number} y - The y coordinate.
      * @param {number} [delay=100] The number of milliseconds to hold down the touch.
      */
-    tap(x, y, delay=100) {
+    tap(x, y, delay = 100) {
         return this.touch(x, y).delay(delay).touchUp();
     }
 }
@@ -162,12 +161,15 @@ class Input {
  * I.press('home').delay(250).release('home')
  * I.touch(100, 100).delay(250).swipeTo(200, 200).touchUp()
  */
-const I = new Proxy({}, {
-    get(target, prop) {
-        return function(...args) {
-            return new Input()[prop](...args);
-        };
-    }
-});
+const I = new Proxy(
+    {},
+    {
+        get(_target, prop) {
+            return function (...args) {
+                return new Input()[prop](...args);
+            };
+        },
+    },
+);
 
-module.exports = {Input, I};
+module.exports = { Input, I };

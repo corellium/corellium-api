@@ -1,5 +1,53 @@
-const WebSocket = require('ws');
-const stream = require('stream');
+"use strict";
+
+const WebSocket = require("ws");
+const stream = require("stream");
+
+/**
+ * @typedef {object} CommandResult
+ * @property {integer} id - ID
+ * @property {boolean} success - command result
+ */
+
+/**
+ * @typedef {object} FridaPsResult
+ * @property {integer} id - ID
+ * @property {integer} exit-status -
+ * @property {string} output - frida-ps output
+ * @property {boolean} success - command result
+ */
+
+/**
+ * @typedef {object} AppListEntry
+ * @property {string} applicationType
+ * @property {string} bundleID
+ * @property {integer} date
+ * @property {integer} diskUsage
+ * @property {boolean} isLaunchable
+ * @property {string} name
+ * @property {boolean} running
+ */
+
+/**
+ * @typedef {object} StatEntry
+ * @property {integer} atime
+ * @property {integer} ctime
+ * @property {object[]} entries
+ * @property {integer} entries[].atime
+ * @property {integer} entries[].stime
+ * @property {integer} entries[].gid
+ * @property {integer} entries[].mode
+ * @property {integer} entries[].mtime
+ * @property {string} entries[].name
+ * @property {integer} entries[].size
+ * @property {integer} entries[].uid
+ * @property {integer} gid
+ * @property {integer} mode
+ * @property {integer} mtime
+ * @property {string} name
+ * @property {integer} size
+ * @property {integer} uid
+ */
 
 /**
  * A connection to the agent running on an instance.
@@ -26,8 +74,7 @@ class Agent {
      */
     async connect() {
         this.pendingConnect = true;
-        if (!this.connected)
-            await this.reconnect();
+        if (!this.connected) await this.reconnect();
     }
 
     /**
@@ -35,11 +82,9 @@ class Agent {
      * @private
      */
     async reconnect() {
-        if (this.connected)
-            this.disconnect();
+        if (this.connected) this.disconnect();
 
-        if (this.connectPromise)
-            return this.connectPromise;
+        if (this.connectPromise) return this.connectPromise;
 
         this.connectPromise = (async () => {
             while (this.pendingConnect) {
@@ -47,7 +92,7 @@ class Agent {
                     await this._connect();
                     break;
                 } catch (e) {
-                    await new Promise(resolve => setTimeout(resolve, 1000));
+                    await new Promise((resolve) => setTimeout(resolve, 1000));
                 }
             }
 
@@ -61,22 +106,21 @@ class Agent {
         this.pending = new Map();
 
         const endpoint = await this.instance.agentEndpoint();
-        
+
         // Detect if a disconnection happened before we were able to get the agent endpoint.
-        if (!this.pendingConnect)
-            throw new Error('connection cancelled');
+        if (!this.pendingConnect) throw new Error("connection cancelled");
 
         let ws = new WebSocket(endpoint);
 
         this.ws = ws;
 
-        ws.on('message', data => {
+        ws.on("message", (data) => {
             try {
                 let message;
                 let id;
-                if (typeof data === 'string') {
+                if (typeof data === "string") {
                     message = JSON.parse(data);
-                    id = message['id'];
+                    id = message["id"];
                 } else if (data.length >= 8) {
                     id = data.readUInt32LE(0);
                     message = data.slice(8);
@@ -85,18 +129,17 @@ class Agent {
                 let handler = this.pending.get(id);
                 if (handler) {
                     // will work regardless of whether handler returns a promise
-                    Promise.resolve(handler(null, message)).then(shouldDelete => {
-                        if (shouldDelete)
-                            this.pending.delete(id);
+                    Promise.resolve(handler(null, message)).then((shouldDelete) => {
+                        if (shouldDelete) this.pending.delete(id);
                     });
                 }
             } catch (err) {
-                console.error('error in agent message handler', err);
+                console.error("error in agent message handler", err);
             }
         });
 
-        ws.on('close', (code, reason) => {
-            this.pending.forEach(handler => {
+        ws.on("close", (_code, reason) => {
+            this.pending.forEach((handler) => {
                 handler(new Error(`disconnected ${reason}`));
             });
             this.pending = new Map();
@@ -104,18 +147,18 @@ class Agent {
         });
 
         await new Promise((resolve, reject) => {
-            ws.once('open', () => {
+            ws.once("open", () => {
                 if (this.ws !== ws) {
                     try {
-                        ws.close()
+                        ws.close();
                     } catch (e) {}
 
-                    reject(new Error('connection cancelled'));
+                    reject(new Error("connection cancelled"));
                     return;
                 }
 
-                ws.on('error', err => {
-                    this.pending.forEach(handler => {
+                ws.on("error", (err) => {
+                    this.pending.forEach((handler) => {
                         handler(err);
                     });
                     this.pending = new Map();
@@ -124,22 +167,22 @@ class Agent {
                         this._disconnect();
                     } else {
                         try {
-                            ws.close()
+                            ws.close();
                         } catch (e) {}
                     }
 
-                    console.error('error in agent socket', err);
+                    console.error("error in agent socket", err);
                 });
 
                 resolve();
             });
 
-            ws.once('error', err => {
+            ws.once("error", (err) => {
                 if (this.ws === ws) {
                     this._disconnect();
                 } else {
                     try {
-                        ws.close()
+                        ws.close();
                     } catch (e) {}
                 }
 
@@ -152,25 +195,26 @@ class Agent {
     }
 
     _startKeepAlive() {
-        if (!this.connected)
-            return;
+        if (!this.connected) return;
 
         let ws = this.ws;
 
         ws.ping();
-        
+
         this._keepAliveTimeout = setTimeout(() => {
             if (this.ws !== ws) {
                 try {
-                    ws.close()
+                    ws.close();
                 } catch (e) {}
                 return;
             }
 
-            let err = new Error('Agent did not get a response to pong in 10 seconds, disconnecting.');
-            console.error('Agent did not get a response to pong in 10 seconds, disconnecting.');
+            let err = new Error(
+                "Agent did not get a response to ping in 10 seconds, disconnecting.",
+            );
+            console.error("Agent did not get a response to ping in 10 seconds, disconnecting.");
 
-            this.pending.forEach(handler => {
+            this.pending.forEach((handler) => {
                 handler(err);
             });
             this.pending = new Map();
@@ -178,14 +222,15 @@ class Agent {
             this._disconnect();
         }, 10000);
 
-        ws.once('pong', async () => {
-            if (ws !== this.ws)
+        ws.once("pong", async () => {
+            if (ws !== this.ws) {
                 return;
+            }
 
             clearTimeout(this._keepAliveTimeout);
             this._keepAliveTimeout = null;
 
-            await new Promise(resolve => setTimeout(resolve, 10000));
+            await new Promise((resolve) => setTimeout(resolve, 10000));
 
             this._startKeepAlive();
         });
@@ -203,6 +248,8 @@ class Agent {
      * agent connection has been created and is no longer needed, for example
      * if the `crashListener` in the example at {@link Agent#crashes} is not
      * needed anymore.
+     * @example
+     * agent.disconnect();
      */
     disconnect() {
         this.pendingConnect = false;
@@ -243,17 +290,15 @@ class Agent {
      * @private
      */
     async command(type, op, params, handler, uploadHandler) {
-        if (handler === undefined)
-            handler = (response) => response;
+        if (handler === undefined) handler = (response) => response;
 
         const id = this.id;
         this.id++;
-        const message = Object.assign({type, op, id}, params);
+        const message = Object.assign({ type, op, id }, params);
 
         await this.connect();
         this.ws.send(JSON.stringify(message)); // TODO handle errors from ws.send
-        if (uploadHandler)
-            uploadHandler(id);
+        if (uploadHandler) uploadHandler(id);
 
         return await new Promise((resolve, reject) => {
             this.pending.set(id, async (err, response) => {
@@ -261,6 +306,7 @@ class Agent {
                     reject(err);
                     return;
                 }
+
                 if (response.error) {
                     reject(Object.assign(new Error(), response.error));
                     return;
@@ -285,63 +331,90 @@ class Agent {
     sendBinaryData(id, data) {
         let idBuffer = Buffer.alloc(8, 0);
         idBuffer.writeUInt32LE(id, 0);
-        if (data)
-            this.ws.send(Buffer.concat([idBuffer, data]));
-        else
-            this.ws.send(idBuffer);
+        if (data) this.ws.send(Buffer.concat([idBuffer, data]));
+        else this.ws.send(idBuffer);
     }
 
     /**
      * Wait for the instance to be ready to use. On iOS, this will wait until Springboard has launched.
+     * @example
+     * let agent = await instance.agent();
+     * await agent.ready();
      */
     async ready() {
-        await this.command('app', 'ready');
+        await this.command("app", "ready");
     }
 
     /**
      * Uninstalls the app with the given bundle ID.
      * @param {string} bundleID - The bundle ID of the app to uninstall.
      * @param {Agent~progressCallback} progress - The progress callback.
+     * @example
+     * await agent.uninstall('com.corellium.demoapp', (progress, status) => {
+     *     console.log(progress, status);
+     * });
      */
     async uninstall(bundleID, progress) {
-        await this.command('app', 'uninstall', {bundleID}, (message) => {
-            if (message.success)
-                return message;
-            if (progress && message.progress)
-                progress(message.progress, message.status);
+        await this.command("app", "uninstall", { bundleID }, (message) => {
+            if (message.success) return message;
+            if (progress && message.progress) progress(message.progress, message.status);
         });
     }
 
     /**
      * Launches the app with the given bundle ID.
      * @param {string} bundleID - The bundle ID of the app to launch.
+     * @example
+     * await agent.run("com.corellium.demoapp");
      */
     async run(bundleID) {
-        await this.command('app', 'run', {bundleID});
+        await this.command("app", "run", { bundleID });
+    }
+
+    /**
+     * Launches the app with the given bundle ID.
+     * @param {string} bundleID - The bundle ID of the app to launch, for android this is the package name.
+     * @param {string} activity fully qualified activity to launch from bundleID
+     * @example
+     * await agent.runActivity('com.corellium.test.app', 'com.corellium.test.app/com.corellium.test.app.CrashActivity');
+     */
+    async runActivity(bundleID, activity) {
+        await this.command("app", "run", { bundleID, activity });
     }
 
     /**
      * Kill the app with the given bundle ID, if it is running.
      * @param {string} bundleID - The bundle ID of the app to kill.
+     * @example
+     * await agent.kill("com.corellium.demoapp");
      */
     async kill(bundleID) {
-        await this.command('app', 'kill', {bundleID});
+        await this.command("app", "kill", { bundleID });
     }
 
     /**
      * Returns an array of installed apps.
+     * @return {Promise<AppListEntry[]>}
+     * @example
+     * let appList = await agent.appList();
+     * for (app of appList) {
+     *     console.log('Found installed app ' + app['bundleID']);
+     * }
      */
     async appList() {
-        const {apps} = await this.command('app', 'list');
+        const { apps } = await this.command("app", "list");
         return apps;
     }
 
     /**
      * Gets information about the file at the specified path. Fields are atime, mtime, ctime (in seconds after the epoch), size, mode (see mode_t in man 2 stat), uid, gid. If the path specified is a directory, an entries field will be present with
      * the same structure (and an additional name field) for each immediate child of the directory.
+     * @return {Promise<StatEntry>}
+     * @example
+     * let scripts = await agent.stat('/data/corellium/frida/scripts/');
      */
     async stat(path) {
-        const response = await this.command('file', 'stat', {path});
+        const response = await this.command("file", "stat", { path });
         return response.stat;
     }
 
@@ -375,41 +448,41 @@ class Agent {
      * });
      */
     async install(path, progress) {
-        await this.command('app', 'install', {path}, (message) => {
-            if (message.success)
-                return message;
-            if (progress && message.progress)
-                progress(message.progress, message.status);
+        await this.command("app", "install", { path }, (message) => {
+            if (message.success) return message;
+            if (progress && message.progress) progress(message.progress, message.status);
         });
     }
 
     async profileList() {
-        const {profiles} = await this.command('profile', 'list');
+        const { profiles } = await this.command("profile", "list");
         return profiles;
     }
 
     async installProfile(profile) {
-        await this.command('profile', 'install', {profile: Buffer.from(profile).toString('base64')});
+        await this.command("profile", "install", {
+            profile: Buffer.from(profile).toString("base64"),
+        });
     }
 
     async removeProfile(profileID) {
-        await this.command('profile', 'remove', {profileID});
+        await this.command("profile", "remove", { profileID });
     }
 
     async getProfile(profileID) {
-        const {profile} = await this.command('profile', 'get', {profileID});
-        if (!profile)
-            return null;
-        return new Buffer(profile, 'base64');
+        const { profile } = await this.command("profile", "get", { profileID });
+        if (!profile) return null;
+        return new Buffer(profile, "base64");
     }
 
     /**
      * Returns a temporary random filename on the VMs filesystem that by the
      * time of invocation of this method is guaranteed to be unique.
+     * @return {Promise<string>}
      * @see example at {@link Agent#upload}
      */
     async tempFile() {
-        const {path} = await this.command('file', 'temp');
+        const { path } = await this.command("file", "temp");
         return path;
     }
 
@@ -423,16 +496,15 @@ class Agent {
      * await agent.upload(tmpName, fs.createReadStream('test.ipa'));
      */
     async upload(path, stream, progress) {
-        await this.command('file', 'upload', {path}, undefined, (id) => {
+        await this.command("file", "upload", { path }, undefined, (id) => {
             let total = 0;
 
-            stream.on('data', data => {
+            stream.on("data", (data) => {
                 this.sendBinaryData(id, data);
                 total += data.length;
-                if (progress)
-                    progress(total);
+                if (progress) progress(total);
             });
-            stream.on('end', () => {
+            stream.on("end", () => {
                 this.sendBinaryData(id);
             });
         });
@@ -441,6 +513,7 @@ class Agent {
     /**
      * Downloads the file at the given path from the VM's filesystem. Returns a node ReadableStream.
      * @param {string} path - The path of the file to download.
+     * @return {Promise<Readable>}
      * @example
      * const dl = agent.download('/var/tmp/test.log');
      * dl.pipe(fs.createWriteStream('test.log'));
@@ -450,19 +523,14 @@ class Agent {
         const agent = this;
         return new stream.Readable({
             read() {
-                if (command)
-                    return;
-                command = agent.command('file', 'download', {path}, (message) => {
-                    if (!Buffer.isBuffer(message))
-                        return;
-                    if (message.length === 0)
-                        return true;
+                if (command) return;
+                command = agent.command("file", "download", { path }, (message) => {
+                    if (!Buffer.isBuffer(message)) return;
+                    if (message.length === 0) return true;
                     this.push(message);
                 });
-                command
-                    .then(() => this.push(null))
-                    .catch(err => this.emit('error', err));
-            }
+                command.then(() => this.push(null)).catch((err) => this.emit("error", err));
+            },
         });
     }
 
@@ -486,9 +554,11 @@ class Agent {
     /**
      * Delete the file at the specified path on the VM's filesystem.
      * @param {string} path - The path of the file on the VM's filesystem to delete.
+     * @example
+     * await agent.deleteFile('/var/tmp/test.log');
      */
     async deleteFile(path) {
-        const response = await this.command('file', 'delete', {path});
+        const response = await this.command("file", "delete", { path });
         return response.path;
     }
 
@@ -496,9 +566,12 @@ class Agent {
      * Change file attributes of the file at the specified path on the VM's filesystem.
      * @param {string} path - The path of the file on the VM's filesystem to delete.
      * @param {Object} attributes - An object whose members and values are the file attributes to change and what to change them to respectively. File attributes path, mode, uid and gid are supported.
+     * @return {Promise<CommandResult>}
+     * @example
+     * await agent.changeFileAttributes(filePath, {mode: 511});
      */
     async changeFileAttributes(path, attributes) {
-        const response = await this.command('file', 'modify', {path, attributes});
+        const response = await this.command("file", "modify", { path, attributes });
         return response;
     }
 
@@ -526,48 +599,126 @@ class Agent {
      * });
      */
     async crashes(bundleID, callback) {
-        await this.command('crash', 'subscribe', {bundleID}, async (message) => {
+        await this.command("crash", "subscribe", { bundleID }, async (message) => {
             const path = message.file;
-            const crashReport = await new Promise(resolve => {
+            const crashReport = await new Promise((resolve) => {
                 const stream = this.download(path);
                 const buffers = [];
-                stream.on('data', data => {
+                stream.on("data", (data) => {
                     buffers.push(data);
                 });
-                stream.on('end', () => {
+                stream.on("end", () => {
                     resolve(Buffer.concat(buffers));
                 });
             });
 
             await this.deleteFile(path);
-            callback(null, crashReport.toString('utf8'));
+            callback(null, crashReport.toString("utf8"));
         });
     }
 
-    /** Locks the device software-wise. */
+    /** Locks the device software-wise.
+     * @example
+     * agent.lockDevice();
+     */
     async lockDevice() {
-        await this.command('system', 'lock');
+        await this.command("system", "lock");
     }
 
-    /** Unlocks the device software-wise. */
+    /** Unlocks the device software-wise.
+     * @example
+     * agent.unlockDevice();
+     */
     async unlockDevice() {
-        await this.command('system', 'unlock');
+        await this.command("system", "unlock");
+    }
+
+    /** Shuts down the device.
+     * @example
+     * agent.shutdown();
+     */
+    async shutdown() {
+        await this.command("system", "shutdown");
     }
 
     async acquireDisableAutolockAssertion() {
-        await this.command('system', 'acquireDisableAutolockAssertion');
+        await this.command("system", "acquireDisableAutolockAssertion");
     }
 
     async releaseDisableAutolockAssertion() {
-        await this.command('system', 'releaseDisableAutolockAssertion');
+        await this.command("system", "releaseDisableAutolockAssertion");
     }
 
+    /** Connect device to WiFi.
+     * @example
+     * await agent.connectToWifi();
+     */
     async connectToWifi() {
-        await this.command('wifi', 'connect');
+        await this.command("wifi", "connect");
     }
 
+    /** Disconnect device from WiFi.
+     * @example
+     * await agent.disconnectFromWifi();
+     */
     async disconnectFromWifi() {
-        await this.command('wifi', 'disconnect');
+        await this.command("wifi", "disconnect");
+    }
+
+    /** Get device property. */
+    async getProp(property) {
+        return await this.command("system", "getprop", { property });
+    }
+
+    /** Get device network infor
+     * @example
+     * let info = await agent.network();
+     * console.log(info);
+     */
+    async network() {
+        await this.command("system", "network");
+    }
+
+    /**
+     * Run frida on the device.
+     * @param {integer} pid
+     * @param {string} name
+     * @return {Promise<CommandResult>}
+     * @example
+     * await agent.runFrida(449, 'keystore');
+     */
+    async runFrida(pid, name) {
+        return await this.command("frida", "run-frida", {
+            target_pid: pid.toString(),
+            target_name: name.toString(),
+        });
+    }
+
+    /**
+     * Run frida-ps on the device and return the command's output.
+     * @return {Promise<FridaPsResult>}
+     * @example
+     * let procList = await agent.runFridaPs();
+     * let lines = procList.output.trim().split('\n');
+     * lines.shift();
+     * lines.shift();
+     * for (const line of lines) {
+     *     const [pid, name] = line.trim().split(/\s+/);
+     *     console.log(pid, name);
+     * }
+     */
+    async runFridaPs() {
+        return await this.command("frida", "run-frida-ps");
+    }
+
+    /**
+     * Run frida-kill on the device.
+     * @return {Promise<CommandResult>}
+     * @example
+     * await agent.runFridaKill();
+     */
+    async runFridaKill() {
+        return await this.command("frida", "run-frida-kill");
     }
 }
 

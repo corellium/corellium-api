@@ -1,0 +1,4 @@
+# Ignore artifacts:
+node_modules
+.nyc_output
+resumeable.js

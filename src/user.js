@@ -1,3 +1,5 @@
+"use strict";
+
 /**
  * Instances of this class are returned from {@link Corellium#users), and
  * {@link Team#users}. They should not be created using the constructor.
@@ -9,22 +11,30 @@ class User {
         this.info = info;
     }
 
-    /** The ID of the user */
+    /** The ID of the user
+     * @return {string}
+     */
     get id() {
         return this.info.id;
     }
 
-    /** The username of the user */
+    /** The username of the user
+     * @return {string}
+     */
     get login() {
         return this.info.name;
     }
 
-    /** The full name of the user */
+    /** The full name of the user
+     * @return {string}
+     */
     get name() {
         return this.info.label;
     }
 
-    /** The email the user */
+    /** The email the user
+     * @return {string}
+     */
     get email() {
         return this.info.email;
     }

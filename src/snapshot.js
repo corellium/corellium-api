@@ -1,3 +1,5 @@
+"use strict";
+
 /**
  * An instance snapshot.
  *
@@ -12,7 +14,7 @@ class Snapshot {
     }
 
     async update() {
-        this.receiveUpdate(await this._fetch(''));
+        this.receiveUpdate(await this._fetch(""));
     }
 
     receiveUpdate(snap) {
@@ -34,7 +36,7 @@ class Snapshot {
      * }
      */
     async rename(name) {
-        await this._fetch('', {method: 'PATCH', json: {name}});
+        await this._fetch("", { method: "PATCH", json: { name } });
     }
 
     /**
@@ -47,20 +49,20 @@ class Snapshot {
      * }
      */
     async restore() {
-        await this._fetch(`/restore`, {method: 'POST'});
+        await this._fetch(`/restore`, { method: "POST" });
     }
 
     /**
-    * Delete this snapshot.
-    * @example
-    * const snapshots = await instance.snapshots();
-    * snapshots.forEach(snapshot => {
-    *     console.log("Deleting snapshot " + snapshot.name)
-    *     snapshot.delete();
-    * });
-    */
+     * Delete this snapshot.
+     * @example
+     * const snapshots = await instance.snapshots();
+     * snapshots.forEach(snapshot => {
+     *     console.log("Deleting snapshot " + snapshot.name)
+     *     snapshot.delete();
+     * });
+     */
     async delete() {
-        await this._fetch('', {method: 'DELETE'});
+        await this._fetch("", { method: "DELETE" });
     }
 
     async _fetch(endpoint, options) {

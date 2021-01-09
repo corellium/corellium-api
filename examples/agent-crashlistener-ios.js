@@ -1,24 +1,25 @@
-const {Corellium} = require('./src/corellium');
-const fs = require('fs');
+const { Corellium } = require("./src/corellium");
+const { I } = require("./src/input");
+const { fs } = require("fs");
 
 async function launch(instance, bundleID) {
     let agent = await instance.agent();
     let retries = 10;
-    
+
     // Try ten times to launch the app. If the screen is locked, push the home button (which wakes or unlocks the phone).
     while (true) {
         try {
             await agent.run(bundleID);
             break;
         } catch (e) {
-            if (e.name === 'DeviceLocked') {
-                await instance.sendInput(I.pressRelease('home'));
+            if (e.name === "DeviceLocked") {
+                await instance.sendInput(I.pressRelease("home"));
                 continue;
             }
 
             --retries;
             if (retries !== 0) {
-                await new Promise(resolve => setTimeout(resolve, 1000));
+                await new Promise((resolve) => setTimeout(resolve, 1000));
                 continue;
             }
 
@@ -30,73 +31,73 @@ async function launch(instance, bundleID) {
 async function main() {
     // Configure the API.
     let corellium = new Corellium({
-        endpoint: 'https://client.corellium.com',
-        username: 'admin',
-        password: 'password'
+        endpoint: "https://app.corellium.com",
+        username: "user@name.foo",
+        password: "<password>",
     });
 
-    console.log('Logging in...');
+    console.log("Logging in...");
     // Login.
     await corellium.login();
 
-    console.log('Getting projects list...');
+    console.log("Getting projects list...");
     // Get the list of projects.
     let projects = await corellium.projects();
 
     // Find the project called "Default Project".
-    let project = projects.find(project => project.name === "Default Project");
+    let project = projects.find((project) => project.name === "Default Project");
 
     // Get the instances in the project.
-    console.log('Getting instances...');
+    console.log("Getting instances...");
     let instances = await project.instances();
 
     // Use an instance named "API Demo"
-    let instance = instances.find(instance => instance.name === 'API Demo');
+    let instance = instances.find((instance) => instance.name === "API Demo");
 
     // Wait for the agent to respond.
-    console.log('Getting agent...');
+    console.log("Getting agent...");
     let agent = await instance.agent();
 
     // Wait for SpringBoard to finish loading.
-    console.log('Waiting until agent is ready...');
+    console.log("Waiting until agent is ready...");
     await agent.ready();
-    
-    console.log('Agent is ready.');
-    
+
+    console.log("Agent is ready.");
+
     // List the apps.
     let appList = await agent.appList();
     let apps = new Map();
-    for (let app of await agent.appList()) {
-        apps.set(app['bundleID'], app);
+    for (let app of appList) {
+        apps.set(app["bundleID"], app);
     }
 
     console.log(apps);
 
     // Install the Facebook IPA if it's not already installed.
-    if (!apps.get('com.facebook.Facebook')) {
-        console.log('Installing Facebook...');
+    if (!apps.get("com.facebook.Facebook")) {
+        console.log("Installing Facebook...");
 
-        await agent.installFile(fs.createReadStream('fb.ipa'), (progress, status) => {
+        await agent.installFile(fs.createReadStream("fb.ipa"), (progress, status) => {
             console.log(progress, status);
         });
 
-        console.log('Facebook installed');
+        console.log("Facebook installed");
     }
 
     // Unlock the device.
-    console.log('Unlocking device');
+    console.log("Unlocking device");
     await agent.unlockDevice();
 
     // Run each app while listening for crashes of that app. Wait 15 seconds and kill the app.
     for (let [, app] of apps) {
         // Create a crash listenr.
         let crashListener = await instance.newAgent();
-        console.log('Running ' + app['bundleID']);
+        console.log("Running " + app["bundleID"]);
         let timeout = null;
         let timeoutComplete = null;
         let crashed = false;
 
-        crashListener.crashes(app['bundleID'], (err, crashReport) => {
+        crashListener.crashes(app["bundleID"], (err, crashReport) => {
             if (err) {
                 console.error(err);
                 return;
@@ -113,10 +114,10 @@ async function main() {
         });
 
         // Run the app.
-        await launch(instance, app['bundleID']);
+        await launch(instance, app["bundleID"]);
 
         // Wait 15 seconds, while letting the crash listener interrupt it if necessary.
-        await new Promise(resolve => {
+        await new Promise((resolve) => {
             timeoutComplete = resolve;
             timeout = setTimeout(timeoutComplete, 15000);
         });
@@ -125,10 +126,10 @@ async function main() {
 
         // If there were no crashes, kill the app.
         if (!crashed) {
-            console.log('Killing ' + app['bundleID']);
+            console.log("Killing " + app["bundleID"]);
 
             try {
-                await agent.kill(app['bundleID']);
+                await agent.kill(app["bundleID"]);
             } catch (e) {
                 console.error(e);
             }
@@ -141,6 +142,6 @@ async function main() {
     return;
 }
 
-main().catch(err => {
+main().catch((err) => {
     console.error(err);
 });

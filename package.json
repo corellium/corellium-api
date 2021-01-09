@@ -1,25 +1,39 @@
 {
-  "name": "corellium-api",
-  "version": "1.0.0",
-  "description": "",
-  "main": "src/corellium.js",
-  "scripts": {
-    "test": "nyc mocha",
-    "docs": "jsdoc -c .jsdocrc.js"
-  },
-  "author": "",
-  "dependencies": {
-    "cross-fetch": "^3.0.6",
-    "fast-stable-stringify": "^1.0.0",
-    "form-data": "^3.0.0",
-    "hkdf": "0.0.2",
-    "p-retry": "^2.0.0",
-    "uuid": "^3.3.2",
-    "websocket-stream": "^5.1.1",
-    "xhr2": "^0.2.0"
-  },
-  "devDependencies": {
-    "mocha": "^8.2.0",
-    "nyc": "^15.1.0"
-  }
+    "name": "corellium-api",
+    "version": "1.0.0",
+    "description": "",
+    "main": "src/corellium.js",
+    "husky": {
+        "hooks": {
+            "pre-commit": "lint-staged && npm run docs"
+        }
+    },
+    "scripts": {
+        "test": "nyc mocha",
+        "docs": "jsdoc -c .jsdocrc.js -d docs"
+    },
+    "author": "",
+    "dependencies": {
+        "cross-fetch": "^3.0.6",
+        "fast-stable-stringify": "^1.0.0",
+        "form-data": "^3.0.0",
+        "hkdf": "0.0.2",
+        "p-retry": "^2.0.0",
+        "p-timeout": "^3.2.0",
+        "uuid": "^3.3.2",
+        "websocket-stream": "^5.1.1",
+        "xhr2": "^0.2.0"
+    },
+    "devDependencies": {
+        "docdash": "^1.2.0",
+        "eslint": "^7.17.0",
+        "eslint-plugin-mocha": "^8.0.0",
+        "husky": "^4.3.7",
+        "jsdoc": "^3.6.6",
+        "lint-staged": "^10.5.3",
+        "mocha": "^8.2.0",
+        "mocha-spec-json-output-reporter": "^1.1.7",
+        "nyc": "^15.1.0",
+        "prettier": "2.2.1"
+    }
 }
