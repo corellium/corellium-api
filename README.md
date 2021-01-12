@@ -145,17 +145,29 @@ Creates a new instance with the given options. The following options are support
   - `ranchu` for Android devices
   - `iphone6`
   - `iphone6plus`
+  - `ipodtouch6`
+  - `ipadmini4wifi`
   - `iphone6s`
   - `iphone6splus`
+  - `iphonese`
   - `iphone7`
   - `iphone7plus`
-  - `iphonese`
   - `iphone8`
   - `iphone8plus`
   - `iphonex`
-  - `ipodtouch6`
-  - `ipadmini4wifi`
-- `options.os`: The software version, e.g. `11.3.1` for iOS, or `11.0.0` for Android
+  - `iphonexs`
+  - `iphonexsmax`
+  - `iphonexsmaxww`
+  - `iphonexr`
+  - `iphone11`
+  - `iphone11pro`
+  - `iphone11promax`
+  - `iphonese2`
+  - `iphone12m`
+  - `iphone12`
+  - `iphone12p`
+  - `iphone12pm`
+- `options.os`: The software version, e.g. `14.3` for iOS, or `11.0.0` for Android
 - `options.patches`: The following values are supported:
   - `jailbroken` The instance should be jailbroken (default).
   - `nonjailbroken` The instance should not be jailbroken.
