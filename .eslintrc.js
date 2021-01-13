@@ -14,6 +14,7 @@ module.exports = {
     plugins: ["mocha"],
     rules: {
         "mocha/no-setup-in-describe": "off",
+        "mocha/no-sibling-hooks": "off",
         "no-unused-vars": [
             2,
             { vars: "all", args: "all", argsIgnorePattern: "^_", ignoreRestSiblings: false },

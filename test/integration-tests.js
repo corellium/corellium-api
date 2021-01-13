@@ -1,13 +1,28 @@
-const Corellium = require("../src/corellium").Corellium;
-const { Input } = require("../src/input");
-const config = require("./config.json");
+"use strict";
+
 const assert = require("assert");
 const fs = require("fs");
 const path = require("path");
 const stream = require("stream");
 
-/** @typedef {import('../src/project.js')} Project */
+const Corellium = require("../src/corellium").Corellium;
+const { Input } = require("../src/input");
+
+const CONFIGURATION = require("./config.json");
+
 /** @typedef {import('../src/instance.js')} Instance */
+/** @typedef {import('../src/project.js')} Project */
+
+global.hookOrTestFailed = false;
+
+function setFlagIfHookFailedDecorator(fn) {
+    return function () {
+        return Promise.resolve(fn.apply(this, arguments)).catch((error) => {
+            global.hookOrTestFailed = true;
+            throw error;
+        });
+    };
+}
 
 describe("Corellium API", function () {
     this.slow(10000);
@@ -16,60 +31,76 @@ describe("Corellium API", function () {
     const INSTANCE_VERSIONS = ["7.1.2", "8.1.0", "9.0.0", "10.0.0", "11.0.0"];
 
     const instanceMap = new Map();
+    let corellium = null;
+    let loggedIn = false;
 
-    let project = /** @type {Project} */ (null);
+    before(
+        "should have a configuration",
+        setFlagIfHookFailedDecorator(function () {
+            if (
+                CONFIGURATION.endpoint === undefined ||
+                CONFIGURATION.password === undefined ||
+                CONFIGURATION.project === undefined ||
+                CONFIGURATION.testFlavor === undefined ||
+                CONFIGURATION.username === undefined
+            ) {
+                throw new Error(
+                    "The configuration must include endpoint, username, password, project and testFlavor properties.",
+                );
+            }
+        }),
+    );
 
-    before(async function () {
-        if (
-            config.endpoint === undefined ||
-            config.username === undefined ||
-            config.password === undefined ||
-            config.project === undefined ||
-            config.testFlavor === undefined
-        ) {
-            new Error(
-                `Bad configuration for testing provided, requires endpoint,` +
-                    `username, password, project and testFlavor defined to work`,
-            );
-        }
-    });
+    before(
+        "should log in",
+        setFlagIfHookFailedDecorator(async function () {
+            corellium = new Corellium(CONFIGURATION);
+            await corellium.login();
+
+            const token = await corellium.token;
+            assert(token && token.token, "Token was never set, login must have silently failed");
+
+            loggedIn = true;
+        }),
+    );
 
     INSTANCE_VERSIONS.forEach((instanceVersion) => {
-        after(async function () {
-            this.timeout(20000 * 4);
-            const instance = instanceMap.get(instanceVersion);
-            if (instance !== undefined) {
-                await instance.destroy();
-                await instance.waitForState("deleted");
-            }
-        });
-    });
+        after(
+            setFlagIfHookFailedDecorator(async function () {
+                this.timeout(80000);
 
-    const corellium = new Corellium(config);
-    let loggedIn;
-    it("logs in successfully", async function () {
-        await corellium.login();
+                if (global.hookOrTestFailed) {
+                    return;
+                }
 
-        const token = await corellium.token;
-        assert(token, "Token was never set, login must have silently failed");
-        assert(token.token, "Token was never set, login must have silently failed");
-        loggedIn = true;
+                const instance = instanceMap.get(instanceVersion);
+                if (instance !== undefined) {
+                    await instance.destroy();
+                    await instance.waitForState("deleted");
+                }
+            }),
+        );
     });
 
     describe("projects", function () {
-        before(function () {
-            assert(loggedIn, "All tests will fail as login failed");
-        });
+        let project = /** @type {Project} */ (null);
+
+        before(
+            "should be logged in",
+            setFlagIfHookFailedDecorator(function () {
+                assert(loggedIn, "All tests will fail as login failed");
+            }),
+        );
 
         it("lists projects", async function () {
             project = await corellium.projects().then((projects) => {
                 const foundProject = projects.find(
-                    (project) => project.info.name === config.project,
+                    (project) => project.info.name === CONFIGURATION.project,
                 );
                 assert(
                     foundProject !== undefined,
                     new Error(
-                        `Your test config specifies a project named "${config.project}", but no such project was found on ${config.endpoint}`,
+                        `Your test configuration specifies a project named "${CONFIGURATION.project}", but no such project was found on ${CONFIGURATION.endpoint}`,
                     ),
                 );
                 return foundProject;
@@ -92,7 +123,7 @@ describe("Corellium API", function () {
                 assert(project, "Unable to test as no project was returned from previous tests");
                 const name = `API Test ${instanceVersion}`;
                 const instance = await project.createInstance({
-                    flavor: config.testFlavor,
+                    flavor: CONFIGURATION.testFlavor,
                     name: name,
                     os: instanceVersion,
                 });
@@ -100,14 +131,16 @@ describe("Corellium API", function () {
                 instanceMap.set(instanceVersion, instance);
 
                 await instance.waitForState("creating");
-                assert.strictEqual(instance.flavor, config.testFlavor);
+                assert.strictEqual(instance.flavor, CONFIGURATION.testFlavor);
                 assert.strictEqual(instance.name, name);
             });
         });
 
         it("can list supported devices", async function () {
             const supportedDevices = await corellium.supported();
-            const firmware = supportedDevices.find((device) => device.name === config.testFlavor);
+            const firmware = supportedDevices.find(
+                (device) => device.name === CONFIGURATION.testFlavor,
+            );
             assert(firmware);
         });
 
@@ -225,12 +258,15 @@ describe("Corellium API", function () {
 
     INSTANCE_VERSIONS.forEach((instanceVersion) => {
         describe(`panics ${instanceVersion}`, function () {
-            before(function () {
-                assert(
-                    instanceMap.get(instanceVersion),
-                    "No instances available for testing, tests will fail",
-                );
-            });
+            before(
+                "should have an instance",
+                setFlagIfHookFailedDecorator(function () {
+                    assert(
+                        instanceMap.get(instanceVersion),
+                        "No instances available for testing, tests will fail",
+                    );
+                }),
+            );
 
             it("can request panics", async function () {
                 const instance = instanceMap.get(instanceVersion);
@@ -247,14 +283,17 @@ describe("Corellium API", function () {
 
     INSTANCE_VERSIONS.forEach((instanceVersion) => {
         describe(`instances ${instanceVersion}`, function () {
-            before(async function () {
-                assert(
-                    instanceMap.get(instanceVersion),
-                    "No instances available for testing, tests will fail",
-                );
-                const instance = instanceMap.get(instanceVersion);
-                await instance.waitForState("on");
-            });
+            before(
+                "should have an instance",
+                setFlagIfHookFailedDecorator(async function () {
+                    assert(
+                        instanceMap.get(instanceVersion),
+                        "No instances available for testing, tests will fail",
+                    );
+                    const instance = instanceMap.get(instanceVersion);
+                    await instance.waitForState("on");
+                }),
+            );
 
             it("can take a screenshot", async function () {
                 const expected = Buffer.from("89504E470D0A1A0A", "hex");
@@ -309,13 +348,15 @@ describe("Corellium API", function () {
                 let agent;
                 let installSuccess = false;
 
-                before(async function () {
-                    this.timeout(100000);
+                before(
+                    setFlagIfHookFailedDecorator(async function () {
+                        this.timeout(100000);
 
-                    const instance = instanceMap.get(instanceVersion);
-                    await instance.waitForState("on");
-                    await instance.waitForAgentReady();
-                });
+                        const instance = instanceMap.get(instanceVersion);
+                        await instance.waitForState("on");
+                        await instance.waitForAgentReady();
+                    }),
+                );
 
                 beforeEach(async function () {
                     const instance = instanceMap.get(instanceVersion);
@@ -325,9 +366,11 @@ describe("Corellium API", function () {
                     }
                 });
 
-                after(async function () {
-                    if (agent !== undefined && agent.connected) agent.disconnect();
-                });
+                after(
+                    setFlagIfHookFailedDecorator(async function () {
+                        if (agent !== undefined && agent.connected) agent.disconnect();
+                    }),
+                );
 
                 it("can list device apps", async function () {
                     let appList = await agent.appList();
@@ -337,6 +380,7 @@ describe("Corellium API", function () {
                 describe(`Files ${instanceVersion}`, function () {
                     let expectedData = Buffer.from("D1FF", "hex");
                     let testPath;
+
                     it("can get temp file", async function () {
                         testPath = await agent.tempFile();
                     });
@@ -402,7 +446,7 @@ describe("Corellium API", function () {
                 });
 
                 describe(`profiles ${instanceVersion}`, function () {
-                    if (config.testFlavor === "ranchu") {
+                    if (CONFIGURATION.testFlavor === "ranchu") {
                         // These are unimplemented on ranchu devices
                         it("cannot use profile/list", async function () {
                             assert.rejects(() => agent.profileList());
@@ -423,7 +467,7 @@ describe("Corellium API", function () {
                 });
 
                 describe(`locks ${instanceVersion}`, function () {
-                    if (config.testFlavor === "ranchu") {
+                    if (CONFIGURATION.testFlavor === "ranchu") {
                         // These are unimplemented on ranchu devices
                         it("cannot use lock", async function () {
                             assert.rejects(() => agent.lockDevice());
@@ -444,7 +488,7 @@ describe("Corellium API", function () {
                 });
 
                 describe(`WiFi ${instanceVersion}`, function () {
-                    if (config.testFlavor === "ranchu") {
+                    if (CONFIGURATION.testFlavor === "ranchu") {
                         // These are unimplemented on ranchu devices
                         it("cannot use connectToWifi", async function () {
                             assert.rejects(() => agent.connectToWifi());
@@ -485,17 +529,22 @@ describe("Corellium API", function () {
 
                 describe(`crash watcher ${instanceVersion}`, function () {
                     let crashListener;
-                    before(async function () {
-                        const instance = instanceMap.get(instanceVersion);
-                        await instance.waitForState("on");
-                        await instance.waitForAgentReady();
-                        crashListener = await instance.newAgent();
-                    });
 
-                    after(async function () {
-                        if (crashListener !== undefined && crashListener.connected)
-                            crashListener.disconnect();
-                    });
+                    before(
+                        setFlagIfHookFailedDecorator(async function () {
+                            const instance = instanceMap.get(instanceVersion);
+                            await instance.waitForState("on");
+                            await instance.waitForAgentReady();
+                            crashListener = await instance.newAgent();
+                        }),
+                    );
+
+                    after(
+                        setFlagIfHookFailedDecorator(async function () {
+                            if (crashListener !== undefined && crashListener.connected)
+                                crashListener.disconnect();
+                        }),
+                    );
 
                     it("can catch an expected crash", function () {
                         return new Promise((resolve) => {
@@ -537,6 +586,13 @@ describe("Corellium API", function () {
 
                 describe(`Network Monitor ${instanceVersion}`, function () {
                     let netmon;
+
+                    after(
+                        "disconnect network monitor",
+                        setFlagIfHookFailedDecorator(function () {
+                            netmon.disconnect();
+                        }),
+                    );
 
                     it("can get monitor", async function () {
                         const instance = instanceMap.get(instanceVersion);
@@ -586,10 +642,6 @@ describe("Corellium API", function () {
 
                     it("can clear log", function () {
                         return netmon.clearLog();
-                    });
-
-                    after("disconnect network monitor", function () {
-                        netmon.disconnect();
                     });
                 });
 
@@ -810,10 +862,13 @@ describe("Corellium API", function () {
             });
 
             describe(`snapshots ${instanceVersion}`, function () {
-                before(async function () {
-                    const instance = instanceMap.get(instanceVersion);
-                    await instance.update();
-                });
+                before(
+                    "should have an up-to-date instance",
+                    setFlagIfHookFailedDecorator(async function () {
+                        const instance = instanceMap.get(instanceVersion);
+                        await instance.update();
+                    }),
+                );
 
                 it("has a fresh snapshot", async function () {
                     const instance = instanceMap.get(instanceVersion);
