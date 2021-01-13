@@ -7,10 +7,10 @@ async function launch(instance, bundleID) {
     let retries = 10;
 
     // Try ten times to launch the app. If the screen is locked, push the home button (which wakes or unlocks the phone).
-    while (true) {
+    do {
         try {
             await agent.run(bundleID);
-            break;
+            return;
         } catch (e) {
             if (e.name === "DeviceLocked") {
                 await instance.sendInput(I.pressRelease("home"));
@@ -25,7 +25,9 @@ async function launch(instance, bundleID) {
 
             throw e;
         }
-    }
+    } while (retries > 0);
+
+    throw new Error(`Unable to launch ${bundleID}.`);
 }
 
 async function main() {

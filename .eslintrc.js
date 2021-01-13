@@ -2,24 +2,21 @@
 
 module.exports = {
     env: {
-        node: true,
         es2021: true,
         mocha: true,
+        node: true,
     },
     extends: ["eslint:recommended", "plugin:mocha/recommended"],
+    ignorePatterns: ["docs/**/*", "resumable.js"],
     parserOptions: {
         ecmaVersion: 12,
     },
+    plugins: ["mocha"],
     rules: {
-        "no-constant-condition": "off",
-        "no-empty": "off",
-        "no-async-promise-executor": "off",
+        "mocha/no-setup-in-describe": "off",
         "no-unused-vars": [
             2,
             { vars: "all", args: "all", argsIgnorePattern: "^_", ignoreRestSiblings: false },
         ],
-        "mocha/no-setup-in-describe": "off",
     },
-    ignorePatterns: ["resumable.js", "docs/**/*"],
-    plugins: ["mocha"],
 };

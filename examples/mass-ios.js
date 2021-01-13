@@ -30,10 +30,10 @@ async function launch(instance, bundleID) {
     let retries = 10;
 
     // Try ten times to launch the app. If the screen is locked, push the home button (which wakes or unlocks the phone).
-    while (true) {
+    do {
         try {
             await agent.run(bundleID);
-            break;
+            return;
         } catch (e) {
             if (e.name === "DeviceLocked") {
                 await instance.sendInput(I.pressRelease("home"));
@@ -48,7 +48,9 @@ async function launch(instance, bundleID) {
 
             throw e;
         }
-    }
+    } while (retries > 0);
+
+    throw new Error(`Unable to launch ${bundleID}.`);
 }
 
 async function main() {
@@ -131,28 +133,13 @@ async function main() {
                 console.log("finished restoring", vm);
 
                 // Wait for the agent to start working on device and report that SpringBoard is started.
-                await new Promise(async (resolve) => {
-                    while (true) {
-                        try {
-                            // Wait for the agent to respond.
-                            console.log("waiting for agent", vm);
-                            let agent = await instance.agent();
-                            console.log("connected to agent", vm);
-
-                            // Wait for SpringBoard to finish loading.
-                            await agent.ready();
-                            break;
-                        } catch (e) {
-                            console.error(e);
-                        }
-                    }
-
-                    resolve();
-                });
+                console.log("waiting for agent", vm);
+                let agent = await instance.agent();
+                console.log("connected to agent", vm);
+                await agent.ready();
                 console.log("device is booted", vm);
 
                 // Get a list of apps.
-                let agent = await instance.agent();
                 let appList = await agent.appList();
                 let apps = new Map();
                 for (let app of appList) {

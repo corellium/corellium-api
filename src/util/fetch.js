@@ -29,15 +29,11 @@ async function fetch(url, options) {
         options.headers["Authorization"] = options.token;
     }
 
-    let res;
-    while (true) {
+    let res = await pRetry(() => realFetch(url, options), { retries: 3 });
+    while (res.status === 429) {
+        const retryAfter = res.headers.get("retry-after");
+        await new Promise((resolve) => setTimeout(resolve, parseInt(retryAfter) * 1000));
         res = await pRetry(() => realFetch(url, options), { retries: 3 });
-        if (res.status == 429) {
-            const retryAfter = res.headers.get("retry-after");
-            await new Promise((resolve) => setTimeout(resolve, parseInt(retryAfter) * 1000));
-            continue;
-        }
-        break;
     }
 
     if (res.status == 204) return null;

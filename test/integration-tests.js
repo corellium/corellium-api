@@ -307,6 +307,7 @@ describe("Corellium API", function () {
 
             describe(`agent ${instanceVersion}`, function () {
                 let agent;
+                let installSuccess = false;
 
                 before(async function () {
                     this.timeout(100000);
@@ -455,51 +456,14 @@ describe("Corellium API", function () {
                     }
                 });
 
-                let installSuccess;
                 describe(`Applications ${instanceVersion}`, function () {
-                    const instance = instanceMap.get(instanceVersion);
-
-                    it("can install a signed apk", async function () {
+                    it("can install a signed apk", function () {
                         this.slow(50000);
                         this.timeout(100000);
-                        let retries = 3;
 
-                        while (true) {
-                            let lastStatus;
-                            let rs = fs.createReadStream(path.join(__dirname, "api-test.apk"));
-                            try {
-                                await agent.installFile(rs, (_progress, status) => {
-                                    lastStatus = status;
-                                });
-                                installSuccess = true;
-                            } catch (err) {
-                                if (
-                                    err
-                                        .toString()
-                                        .includes(
-                                            "Agent did not get a response to pong in 10 seconds, disconnecting.",
-                                        )
-                                ) {
-                                    --retries;
-                                    if (retries !== 0) {
-                                        agent.disconnect();
-                                        agent = await instance.newAgent();
-                                        await agent.ready();
-                                        continue;
-                                    }
-                                }
-
-                                assert(
-                                    false,
-                                    `Error installing app during '${lastStatus} stage: ${err}`,
-                                );
-                                installSuccess = false;
-                            } finally {
-                                rs.close();
-                            }
-
-                            break;
-                        }
+                        return agent
+                            .installFile(fs.createReadStream(path.join(__dirname, "api-test.apk")))
+                            .then(() => (installSuccess = true));
                     });
 
                     it("can run an app", async function () {
@@ -534,35 +498,39 @@ describe("Corellium API", function () {
                     });
 
                     it("can catch an expected crash", function () {
-                        return new Promise(async (resolve) => {
+                        return new Promise((resolve) => {
                             assert(
                                 installSuccess,
                                 "This test cannot run because application installation failed",
                             );
-                            await crashListener.ready();
-                            crashListener
-                                .crashes("com.corellium.test.app", (err, crashReport) => {
-                                    assert(!err, err);
-                                    assert(
-                                        crashReport !== undefined,
-                                        "The crash report is undefined",
-                                    );
-                                    assert(
-                                        crashReport.includes("com.corellium.test.app"),
-                                        `The crash reported doesn't include "com.corellium.test.app":\n\n${crashReport}`,
-                                    );
-                                    resolve();
-                                })
-                                .catch((error) => {
-                                    if (error.message && error.message.includes("disconnected")) {
-                                        return;
-                                    }
-                                    throw error;
-                                });
-                            await agent.runActivity(
-                                "com.corellium.test.app",
-                                "com.corellium.test.app/com.corellium.test.app.CrashActivity",
-                            );
+                            return crashListener.ready().then(() => {
+                                crashListener
+                                    .crashes("com.corellium.test.app", (err, crashReport) => {
+                                        assert(!err, err);
+                                        assert(
+                                            crashReport !== undefined,
+                                            "The crash report is undefined",
+                                        );
+                                        assert(
+                                            crashReport.includes("com.corellium.test.app"),
+                                            `The crash reported doesn't include "com.corellium.test.app":\n\n${crashReport}`,
+                                        );
+                                        resolve();
+                                    })
+                                    .catch((error) => {
+                                        if (
+                                            error.message &&
+                                            error.message.includes("disconnected")
+                                        ) {
+                                            return;
+                                        }
+                                        throw error;
+                                    });
+                                return agent.runActivity(
+                                    "com.corellium.test.app",
+                                    "com.corellium.test.app/com.corellium.test.app.CrashActivity",
+                                );
+                            });
                         });
                     });
                 });
@@ -659,15 +627,12 @@ describe("Corellium API", function () {
                                 name = "keystore";
                             }
                             await agent.runFrida(pid, name);
-                            while (true) {
-                                await new Promise((resolve) => setTimeout(resolve, 500));
-                                let procList = await agent.runFridaPs();
-                                if (
-                                    procList.attached !== undefined &&
-                                    procList.attached.target_name == name
-                                )
-                                    break;
-                            }
+                            let processList;
+                            do {
+                                processList = await agent.runFridaPs();
+                            } while (
+                                !(processList.attached && processList.attached.target_name === name)
+                            );
                         });
 
                         it("can get frida scripts", async function () {

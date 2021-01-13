@@ -241,11 +241,12 @@ class Instance extends EventEmitter {
     }
 
     async waitForAgentReady() {
-        while (true) {
+        let agentObtained;
+        do {
             try {
                 await this.agentEndpoint();
 
-                const agentObtained = await pTimeout(
+                agentObtained = await pTimeout(
                     (async () => {
                         const agent = await this.newAgent();
                         try {
@@ -260,12 +261,10 @@ class Instance extends EventEmitter {
                         return false;
                     },
                 );
-
-                if (agentObtained) break;
             } catch (e) {
                 console.log(e);
             }
-        }
+        } while (!agentObtained);
     }
 
     /**
