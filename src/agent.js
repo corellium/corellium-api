@@ -151,7 +151,9 @@ class Agent {
                 if (this.ws !== ws) {
                     try {
                         ws.close();
-                    } catch (e) {}
+                    } catch (e) {
+                        // Swallow ws.close() errors.
+                    }
 
                     reject(new Error("connection cancelled"));
                     return;
@@ -168,7 +170,9 @@ class Agent {
                     } else {
                         try {
                             ws.close();
-                        } catch (e) {}
+                        } catch (e) {
+                            // Swallow ws.close() errors.
+                        }
                     }
 
                     console.error("error in agent socket", err);
@@ -183,7 +187,9 @@ class Agent {
                 } else {
                     try {
                         ws.close();
-                    } catch (e) {}
+                    } catch (e) {
+                        // Swallow ws.close() errors.
+                    }
                 }
 
                 reject(err);
@@ -205,7 +211,9 @@ class Agent {
             if (this.ws !== ws) {
                 try {
                     ws.close();
-                } catch (e) {}
+                } catch (e) {
+                    // Swallow ws.close() errors.
+                }
                 return;
             }
 
@@ -262,7 +270,9 @@ class Agent {
         if (this.ws) {
             try {
                 this.ws.close();
-            } catch (e) {}
+            } catch (e) {
+                // Swallow ws.close() errors.
+            }
             this.ws = null;
         }
     }

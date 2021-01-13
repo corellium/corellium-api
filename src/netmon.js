@@ -113,7 +113,9 @@ class NetworkMonitor {
                 if (this.ws !== ws) {
                     try {
                         ws.close();
-                    } catch (e) {}
+                    } catch (e) {
+                        // Swallow ws.close() errors.
+                    }
 
                     reject(new Error("connection cancelled"));
                     return;
@@ -125,7 +127,9 @@ class NetworkMonitor {
                     } else {
                         try {
                             ws.close();
-                        } catch (e) {}
+                        } catch (e) {
+                            // Swallow ws.close() errors.
+                        }
                     }
 
                     console.error("error in netmon socket", err);
@@ -140,7 +144,9 @@ class NetworkMonitor {
                 } else {
                     try {
                         ws.close();
-                    } catch (e) {}
+                    } catch (e) {
+                        // Swallow ws.close() errors.
+                    }
                 }
 
                 reject(err);
@@ -162,7 +168,9 @@ class NetworkMonitor {
             if (this.ws !== ws) {
                 try {
                     ws.close();
-                } catch (e) {}
+                } catch (e) {
+                    // Swallow ws.close() errors.
+                }
                 return;
             }
 
@@ -208,7 +216,9 @@ class NetworkMonitor {
         if (this.ws) {
             try {
                 this.ws.close();
-            } catch (e) {}
+            } catch (e) {
+                // Swallow ws.close() errors.
+            }
             this.ws = null;
         }
     }
