@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    
+    <meta charset="utf-8">
+    <title>corellium.js - Documentation</title>
+    
+    
+    <script src="scripts/prettify/prettify.js"></script>
+    <script src="scripts/prettify/lang-css.js"></script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc.css">
+    <script src="scripts/nav.js" defer></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+
+<input type="checkbox" id="nav-trigger" class="nav-trigger" />
+<label for="nav-trigger" class="navicon-button x">
+  <div class="navicon"></div>
+</label>
+
+<label for="nav-trigger" class="overlay"></label>
+
+<nav >
+    
+    <input type="text" id="nav-search" placeholder="Search" />
+    
+    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="Agent.html">Agent</a><ul class='methods'><li data-type='method' style='display: none;'><a href="Agent.html#appList">appList</a></li><li data-type='method' style='display: none;'><a href="Agent.html#changeFileAttributes">changeFileAttributes</a></li><li data-type='method' style='display: none;'><a href="Agent.html#connectToWifi">connectToWifi</a></li><li data-type='method' style='display: none;'><a href="Agent.html#crashes">crashes</a></li><li data-type='method' style='display: none;'><a href="Agent.html#deleteFile">deleteFile</a></li><li data-type='method' style='display: none;'><a href="Agent.html#disconnect">disconnect</a></li><li data-type='method' style='display: none;'><a href="Agent.html#disconnectFromWifi">disconnectFromWifi</a></li><li data-type='method' style='display: none;'><a href="Agent.html#download">download</a></li><li data-type='method' style='display: none;'><a href="Agent.html#getProp">getProp</a></li><li data-type='method' style='display: none;'><a href="Agent.html#install">install</a></li><li data-type='method' style='display: none;'><a href="Agent.html#installFile">installFile</a></li><li data-type='method' style='display: none;'><a href="Agent.html#kill">kill</a></li><li data-type='method' style='display: none;'><a href="Agent.html#lockDevice">lockDevice</a></li><li data-type='method' style='display: none;'><a href="Agent.html#network">network</a></li><li data-type='method' style='display: none;'><a href="Agent.html#ready">ready</a></li><li data-type='method' style='display: none;'><a href="Agent.html#run">run</a></li><li data-type='method' style='display: none;'><a href="Agent.html#runActivity">runActivity</a></li><li data-type='method' style='display: none;'><a href="Agent.html#runFrida">runFrida</a></li><li data-type='method' style='display: none;'><a href="Agent.html#runFridaKill">runFridaKill</a></li><li data-type='method' style='display: none;'><a href="Agent.html#runFridaPs">runFridaPs</a></li><li data-type='method' style='display: none;'><a href="Agent.html#shutdown">shutdown</a></li><li data-type='method' style='display: none;'><a href="Agent.html#stat">stat</a></li><li data-type='method' style='display: none;'><a href="Agent.html#tempFile">tempFile</a></li><li data-type='method' style='display: none;'><a href="Agent.html#uninstall">uninstall</a></li><li data-type='method' style='display: none;'><a href="Agent.html#unlockDevice">unlockDevice</a></li><li data-type='method' style='display: none;'><a href="Agent.html#upload">upload</a></li></ul></li><li><a href="Corellium.html">Corellium</a><ul class='methods'><li data-type='method' style='display: none;'><a href="Corellium.html#addProjectKey">addProjectKey</a></li><li data-type='method' style='display: none;'><a href="Corellium.html#createProject">createProject</a></li><li data-type='method' style='display: none;'><a href="Corellium.html#createRole">createRole</a></li><li data-type='method' style='display: none;'><a href="Corellium.html#createUser">createUser</a></li><li data-type='method' style='display: none;'><a href="Corellium.html#deleteProjectKey">deleteProjectKey</a></li><li data-type='method' style='display: none;'><a href="Corellium.html#destroyRole">destroyRole</a></li><li data-type='method' style='display: none;'><a href="Corellium.html#destroyUser">destroyUser</a></li><li data-type='method' style='display: none;'><a href="Corellium.html#getProject">getProject</a></li><li data-type='method' style='display: none;'><a href="Corellium.html#getTeam">getTeam</a></li><li data-type='method' style='display: none;'><a href="Corellium.html#getTeamsAndUsers">getTeamsAndUsers</a></li><li data-type='method' style='display: none;'><a href="Corellium.html#getToken">getToken</a></li><li data-type='method' style='display: none;'><a href="Corellium.html#getUser">getUser</a></li><li data-type='method' style='display: none;'><a href="Corellium.html#login">login</a></li><li data-type='method' style='display: none;'><a href="Corellium.html#projectKeys">projectKeys</a></li><li data-type='method' style='display: none;'><a href="Corellium.html#projectNamed">projectNamed</a></li><li data-type='method' style='display: none;'><a href="Corellium.html#projects">projects</a></li><li data-type='method' style='display: none;'><a href="Corellium.html#roles">roles</a></li><li data-type='method' style='display: none;'><a href="Corellium.html#supported">supported</a></li><li data-type='method' style='display: none;'><a href="Corellium.html#teams">teams</a></li><li data-type='method' style='display: none;'><a href="Corellium.html#users">users</a></li></ul></li><li><a href="Input.html">Input</a><ul class='methods'><li data-type='method' style='display: none;'><a href="Input.html#delay">delay</a></li><li data-type='method' style='display: none;'><a href="Input.html#press">press</a></li><li data-type='method' style='display: none;'><a href="Input.html#pressRelease">pressRelease</a></li><li data-type='method' style='display: none;'><a href="Input.html#release">release</a></li><li data-type='method' style='display: none;'><a href="Input.html#swipeTo">swipeTo</a></li><li data-type='method' style='display: none;'><a href="Input.html#tap">tap</a></li><li data-type='method' style='display: none;'><a href="Input.html#touch">touch</a></li><li data-type='method' style='display: none;'><a href="Input.html#touchUp">touchUp</a></li></ul></li><li><a href="Instance.html">Instance</a><ul class='methods'><li data-type='method' style='display: none;'><a href="Instance.html#agent">agent</a></li><li data-type='method' style='display: none;'><a href="Instance.html#clearCoreTraceFilter">clearCoreTraceFilter</a></li><li data-type='method' style='display: none;'><a href="Instance.html#clearCoreTraceLog">clearCoreTraceLog</a></li><li data-type='method' style='display: none;'><a href="Instance.html#clearPanics">clearPanics</a></li><li data-type='method' style='display: none;'><a href="Instance.html#console">console</a></li><li data-type='method' style='display: none;'><a href="Instance.html#consoleLog">consoleLog</a></li><li data-type='method' style='display: none;'><a href="Instance.html#destroy">destroy</a></li><li data-type='method' style='display: none;'><a href="Instance.html#disableExposedPort">disableExposedPort</a></li><li data-type='method' style='display: none;'><a href="Instance.html#downloadCoreTraceLog">downloadCoreTraceLog</a></li><li data-type='method' style='display: none;'><a href="Instance.html#enableExposedPort">enableExposedPort</a></li><li data-type='method' style='display: none;'><a href="Instance.html#executeFridaScript">executeFridaScript</a></li><li data-type='method' style='display: none;'><a href="Instance.html#finishRestore">finishRestore</a></li><li data-type='method' style='display: none;'><a href="Instance.html#fridaConsole">fridaConsole</a></li><li data-type='method' style='display: none;'><a href="Instance.html#getCoreTraceThreadList">getCoreTraceThreadList</a></li><li data-type='method' style='display: none;'><a href="Instance.html#modifyBootOptions">modifyBootOptions</a></li><li data-type='method' style='display: none;'><a href="Instance.html#networkMonitor">networkMonitor</a></li><li data-type='method' style='display: none;'><a href="Instance.html#newAgent">newAgent</a></li><li data-type='method' style='display: none;'><a href="Instance.html#newNetworkMonitor">newNetworkMonitor</a></li><li data-type='method' style='display: none;'><a href="Instance.html#panics">panics</a></li><li data-type='method' style='display: none;'><a href="Instance.html#pause">pause</a></li><li data-type='method' style='display: none;'><a href="Instance.html#reboot">reboot</a></li><li data-type='method' style='display: none;'><a href="Instance.html#rename">rename</a></li><li data-type='method' style='display: none;'><a href="Instance.html#sendInput">sendInput</a></li><li data-type='method' style='display: none;'><a href="Instance.html#setCoreTraceFilter">setCoreTraceFilter</a></li><li data-type='method' style='display: none;'><a href="Instance.html#snapshots">snapshots</a></li><li data-type='method' style='display: none;'><a href="Instance.html#start">start</a></li><li data-type='method' style='display: none;'><a href="Instance.html#startCoreTrace">startCoreTrace</a></li><li data-type='method' style='display: none;'><a href="Instance.html#stop">stop</a></li><li data-type='method' style='display: none;'><a href="Instance.html#stopCoreTrace">stopCoreTrace</a></li><li data-type='method' style='display: none;'><a href="Instance.html#takeScreenshot">takeScreenshot</a></li><li data-type='method' style='display: none;'><a href="Instance.html#takeSnapshot">takeSnapshot</a></li><li data-type='method' style='display: none;'><a href="Instance.html#unpause">unpause</a></li><li data-type='method' style='display: none;'><a href="Instance.html#waitForState">waitForState</a></li></ul></li><li><a href="NetworkMonitor.html">NetworkMonitor</a><ul class='methods'><li data-type='method' style='display: none;'><a href="NetworkMonitor.html#clearLog">clearLog</a></li><li data-type='method' style='display: none;'><a href="NetworkMonitor.html#disconnect">disconnect</a></li><li data-type='method' style='display: none;'><a href="NetworkMonitor.html#handleMessage">handleMessage</a></li><li data-type='method' style='display: none;'><a href="NetworkMonitor.html#isEnabled">isEnabled</a></li><li data-type='method' style='display: none;'><a href="NetworkMonitor.html#start">start</a></li><li data-type='method' style='display: none;'><a href="NetworkMonitor.html#stop">stop</a></li></ul></li><li><a href="Project.html">Project</a><ul class='methods'><li data-type='method' style='display: none;'><a href="Project.html#addKey">addKey</a></li><li data-type='method' style='display: none;'><a href="Project.html#createInstance">createInstance</a></li><li data-type='method' style='display: none;'><a href="Project.html#createRole">createRole</a></li><li data-type='method' style='display: none;'><a href="Project.html#deleteKey">deleteKey</a></li><li data-type='method' style='display: none;'><a href="Project.html#destroy">destroy</a></li><li data-type='method' style='display: none;'><a href="Project.html#getInstance">getInstance</a></li><li data-type='method' style='display: none;'><a href="Project.html#getToken">getToken</a></li><li data-type='method' style='display: none;'><a href="Project.html#instances">instances</a></li><li data-type='method' style='display: none;'><a href="Project.html#keys">keys</a></li><li data-type='method' style='display: none;'><a href="Project.html#refresh">refresh</a></li><li data-type='method' style='display: none;'><a href="Project.html#roles">roles</a></li><li data-type='method' style='display: none;'><a href="Project.html#setQuotas">setQuotas</a></li><li data-type='method' style='display: none;'><a href="Project.html#uploadImage">uploadImage</a></li><li data-type='method' style='display: none;'><a href="Project.html#vpnConfig">vpnConfig</a></li></ul></li><li><a href="Role.html">Role</a><ul class='methods'><li data-type='method' style='display: none;'><a href="Role.html#destroy">destroy</a></li></ul></li><li><a href="Snapshot.html">Snapshot</a><ul class='methods'><li data-type='method' style='display: none;'><a href="Snapshot.html#delete">delete</a></li><li data-type='method' style='display: none;'><a href="Snapshot.html#rename">rename</a></li><li data-type='method' style='display: none;'><a href="Snapshot.html#restore">restore</a></li></ul></li><li><a href="Team.html">Team</a></li><li><a href="User.html">User</a><ul class='methods'><li data-type='method' style='display: none;'><a href="User.html#destroy">destroy</a></li></ul></li></ul><h3>Events</h3><ul><li><a href="Instance.html#event:change">change</a></li><li><a href="Instance.html#event:panic">panic</a></li></ul><h3>Global</h3><ul><li><a href="global.html#AppListEntry">AppListEntry</a></li><li><a href="global.html#CommandResult">CommandResult</a></li><li><a href="global.html#FridaPsResult">FridaPsResult</a></li><li><a href="global.html#I">I</a></li><li><a href="global.html#NetmonEntry">NetmonEntry</a></li><li><a href="global.html#PanicInfo">PanicInfo</a></li><li><a href="global.html#ProjectKey">ProjectKey</a></li><li><a href="global.html#ProjectQuotas">ProjectQuotas</a></li><li><a href="global.html#StatEntry">StatEntry</a></li><li><a href="global.html#SupportedDevice">SupportedDevice</a></li><li><a href="global.html#ThreadInfo">ThreadInfo</a></li></ul>
+</nav>
+
+<div id="main">
+    
+    <h1 class="page-title">corellium.js</h1>
+    
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>"use strict";
+
+const { fetch, fetchApi, CorelliumError } = require("./util/fetch");
+const Project = require("./project");
+const Team = require("./team");
+const User = require("./user");
+const Role = require("./role");
+const { I } = require("./input");
+
+/**
+ * @typedef {object} SupportedDevice
+ * @property {string} type
+ * @property {string} name
+ * @property {string} flavor
+ * @property {string} description
+ * @property {string} model
+ * @property {Object} firmwares
+ * @property {string} firmwares.version
+ * @property {string} firmwares.buildid
+ * @property {string} firmwares.sha256sum
+ * @property {string} firmwares.sha1sum
+ * @property {string} firmwares.md5sum
+ * @property {integer} firmwares.size
+ * @property {string} firmwares.uniqueid
+ * @property {string} firmwares.metadata
+ * @property {string} firmwares.releasedate - ISO datetime string
+ * @property {string} firmwares.uploaddate - ISO datetime string
+ * @property {string} firmwares.url
+ * @property {string} firmwares.orig_url
+ * @property {string} firmwares.filename
+ * @property {Object} quotas
+ * @property {integer} quotas.cores
+ * @property {integer} quotas.cpus
+ */
+
+/**
+ * The Corellium API client.
+ */
+class Corellium {
+    /**
+     * Create a new Corellium client.
+     * @constructor
+     * @param {Object} options
+     * @param {string} options.endpoint - Endpoint URL
+     * @param {string} options.username - Login username
+     * @param {string} options.password - Login password
+     * @example
+     * const corellium = new Corellium({
+     *     endpoint: 'https://app.corellium.com',
+     *     username: 'username',
+     *     password: 'password',
+     * });
+     */
+    constructor(options) {
+        this.options = options;
+        this.api = options.endpoint + "/api/v1";
+        this.token = null;
+        this.supportedDevices = null;
+        this._teams = null;
+    }
+
+    /**
+     * Returns refreshed authentication token
+     * @return {string} token
+     * @example
+     * let token = await corellium.getToken()
+     */
+    async getToken() {
+        const token = await this.token;
+
+        // If the token is more than 15 minutes from expiring, we don't need to refresh it.
+        if (token &amp;&amp; token.expiration > new Date(new Date().getTime() + 15 * 60 * 1000))
+            return token.token;
+
+        this.token = (async () => {
+            const res = await fetch(`${this.api}/tokens`, {
+                method: "POST",
+                json: {
+                    username: this.options.username,
+                    password: this.options.password,
+                },
+            });
+            return {
+                token: res.token,
+                expiration: new Date(res.expiration),
+            };
+        })();
+        return (await this.token).token;
+    }
+
+    /**
+     * Logs into the Corellium API and obtains an authentication token. Does
+     * nothing if the current authentication token is up to date.
+     *
+     * Calling this method is not required, as calling any other method that
+     * needs an authentication token will do the same thing.
+     * @example
+     * await corellium.login();
+     */
+    async login() {
+        await this.getToken();
+    }
+
+    /**
+     * Returns an array of {@link Project}s that this client is allowed to
+     * access.
+     * @returns {Project[]}
+     * @example
+     * let projects = await corellium.projects();
+     * let project = projects.find(project => project.name === "Demo Project");
+     */
+    async projects() {
+        const projects = await fetchApi(this, "/projects?ids_only=1");
+        return await Promise.all(projects.map((project) => this.getProject(project.id)));
+    }
+
+    /**
+     * Returns teams and users belonging to the domain.
+     *
+     * This function is only available to administrators.
+     *
+     * @returns {Promise&lt;{ teams: Map&lt;string, Team>, users: Map&lt;string, User>}>}
+     * @example
+     * let teamsAndUsers = await corellium.getTeamsAndUsers();
+     */
+    async getTeamsAndUsers() {
+        const teams = (this._teams = new Map());
+        for (const team of await fetchApi(this, "/teams")) {
+            teams.set(team.id, new Team(this, team));
+        }
+
+        const users = (this._users = new Map());
+        for (const user of teams.get("all-users").info.users) {
+            users.set(user.id, new User(this, user));
+        }
+
+        return { teams, users };
+    }
+
+    /**
+     * Returns {@link Role}s belonging to the domain.
+     *
+     * This function is only available to domain and project administrators.
+     * @return {Promise&lt;Map&lt;string, Role[]>>}
+     * @example
+     * let roles = await corellium.roles();
+     */
+    async roles() {
+        const roles = (this._roles = new Map());
+
+        for (const role of await fetchApi(this, "/roles")) {
+            let rolesForProject = roles.get(role.project);
+            if (!rolesForProject) {
+                rolesForProject = [];
+                roles.set(role.project, rolesForProject);
+            }
+            rolesForProject.push(new Role(this, role));
+        }
+
+        return roles;
+    }
+
+    /**
+     * Returns {@link Team}s belonging to the domain.
+     *
+     * This function is only available to domain and project administrators.
+     * @return {Promise&lt;Map&lt;string, Team>>}
+     * @example
+     * let teams = await corellium.teams();
+     */
+    async teams() {
+        return (await this.getTeamsAndUsers()).teams;
+    }
+
+    /**
+     * Returns {@link User}s belonging to the domain.
+     *
+     * This function is only available to domain and project administrators.
+     * @return {Promise&lt;Map&lt;string, User>>}
+     * @example
+     * let users = await corellium.users();
+     */
+    async users() {
+        return (await this.getTeamsAndUsers()).users;
+    }
+
+    /**
+     * Given a user id, returns the {@link User}.
+     *
+     * This function is only available to domain and project administrators.
+     * @returns {Promise&lt;User>}
+     * @example
+     * let user = await instance.getUser('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa');
+     */
+    getUser(id) {
+        return this._users.get(id);
+    }
+
+    /**
+     * Given a team id, returns the {@link Team}.
+     *
+     * This function is only available to domain and project administrators.
+     * @returns {Promise&lt;Team>}
+     * @example
+     * let team = await instance.getTeam('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa');
+     */
+    getTeam(id) {
+        return this._teams.get(id);
+    }
+
+    /**
+     * Creates a new user in the domain.
+     *
+     * This function is only available to domain administrators.
+     * @returns {Promise&lt;User>}
+     * @example
+     * let user = await instance.createUser("login", "User Name", "user@email.com", "password");
+     */
+    async createUser(login, name, email, password) {
+        const response = await fetchApi(this, "/users", {
+            method: "POST",
+            json: {
+                label: name,
+                name: login,
+                email,
+                password,
+            },
+        });
+
+        await this.getTeamsAndUsers();
+        return this.getUser(response.id);
+    }
+
+    /**
+     * Destroys a user in the domain.
+     *
+     * This function is only available to domain administrators.
+     * @param {string} id - user ID
+     * @example
+     * instance.destroyUser('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa');
+     */
+    async destroyUser(id) {
+        await fetchApi(this, `/users/${id}`, {
+            method: "DELETE",
+        });
+    }
+
+    /**
+     * Creates a {@link Role} for a {@link Project} and a {@link Team} or {@link User}.
+     * @param {string} project - project ID
+     * @param {User|Team} grantee - must be an instance of {@link User} or {@link Team}
+     * @param {string} type - user ID
+     * @example
+     * instance.createRole(project.id, grantee, 'user');
+     */
+    async createRole(project, grantee, type = "user") {
+        let usersOrTeams = grantee instanceof User &amp;&amp; "users";
+        if (!usersOrTeams) usersOrTeams = grantee instanceof Team &amp;&amp; "teams";
+        if (!usersOrTeams) throw "Grantee not User or Team";
+
+        await fetchApi(
+            this,
+            `/roles/projects/${project}/${usersOrTeams}/${grantee.id}/roles/${type}`,
+            {
+                method: "PUT",
+            },
+        );
+    }
+
+    /**
+     * Destroys a {@link Role}
+     * @param {Role} role - role object
+     * @example
+     * instance.destroyRole(role);
+     */
+    async destroyRole(role) {
+        let usersOrTeams = role.isUser ? "users" : "teams";
+        await fetchApi(
+            this,
+            `/roles/projects/${role.project}/${usersOrTeams}/${role.grantee.id}/roles/{$role.type}`,
+            {
+                method: "DELETE",
+            },
+        );
+    }
+
+    /**
+     * Returns the {@link Project} with the given ID.
+     * @param {string} projectId - project ID
+     * @returns {Promise&lt;Project>}
+     * @example
+     * let project = await corellium.getProject('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa');
+     */
+    async getProject(projectId) {
+        const project = new Project(this, projectId);
+        await project.refresh();
+        return project;
+    }
+
+    /**
+     * Creates a {@link Project} with the given name {@link Color} and {@link ProjectSettings}.
+     * @param {string} name - project name
+     * @param {integer} color - color
+     * @param {Object} [settings] - project settings
+     * @param {integer} settings.version
+     * @param {boolean} settings.internet-access
+     * @returns {Promise&lt;Project>}
+     * @example
+     * corellium.createProject("TestProject");
+     */
+    async createProject(name, color = 1, settings = { version: 1, "internet-access": true }) {
+        const response = await fetchApi(this, "/projects", {
+            method: "POST",
+            json: {
+                name,
+                color,
+                settings,
+            },
+        });
+
+        return await this.getProject(response.id);
+    }
+
+    /**
+     * Returns the {@link Project} with the given name. If the project doesn't
+     * exist, returns undefined.
+     * @param {string} name - project name to match
+     * @returns {Promise&lt;Project>}
+     * @example
+     * let project = await corellium.projectNamed('Default Project');
+     */
+    async projectNamed(name) {
+        const projects = await this.projects();
+        return projects.find((project) => project.name === name);
+    }
+
+    /** Returns supported device list
+     * @return {SupportedDevice[]}
+     * @example
+     * let supported = await corellium.supported();
+     */
+    async supported() {
+        if (!this.supportedDevices) this.supportedDevices = await fetchApi(this, "/supported");
+        return this.supportedDevices;
+    }
+
+    /** Returns all keys for the project
+     * @param {string} project - project ID
+     * @return {ProjectKey[]}
+     * @example
+     * let keys = instance.projectKeys(project.id);
+     * for(let key of keys)
+     *   console.log(key);
+     */
+    async projectKeys(project) {
+        return await fetchApi(this, `/projects/${project}/keys`);
+    }
+
+    /** Adds key to the project
+     * @param {string} project - project ID
+     * @param {string} key - public key
+     * @param {string} kind - key type ('ssh'/'abd')
+     * @param {string} [label] - key label
+     * @return {string} key ID
+     * @example
+     * let project = insatnce.getProjectNamed('TestProject');
+     * instance.addProjectKey(project.id, key, 'ssh', 'SSH Key');
+     */
+    async addProjectKey(project, key, kind = "ssh", label = null) {
+        return await fetchApi(this, `/projects/${project}/keys`, {
+            method: "POST",
+            json: {
+                key,
+                label,
+                kind,
+            },
+        });
+    }
+
+    /** Adds key to the project
+     * @param {string} project - project ID
+     * @param {string} keyId - key ID
+     * @example
+     * let project = insatnce.getProjectNamed('TestProject');
+     * instance.deleteProjectKey(project.id, 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa');
+     */
+    async deleteProjectKey(project, keyId) {
+        return await fetchApi(this, `/projects/${project}/keys/${keyId}`, {
+            method: "DELETE",
+        });
+    }
+}
+
+module.exports = {
+    Corellium,
+    CorelliumError,
+    I,
+};
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+    
+    
+</div>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.6.6</a> on Thu Jan 21 2021 10:44:46 GMT+1100 (Australian Eastern Daylight Time) using the <a href="https://github.com/clenemt/docdash">docdash</a> theme.
+</footer>
+
+<script>prettyPrint();</script>
+<script src="scripts/polyfill.js"></script>
+<script src="scripts/linenumber.js"></script>
+
+<script src="scripts/search.js" defer></script>
+
+
+<script src="scripts/collapse.js" defer></script>
+
+
+</body>
+</html>
