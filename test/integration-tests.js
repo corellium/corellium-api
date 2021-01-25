@@ -25,10 +25,24 @@ function setFlagIfHookFailedDecorator(fn) {
 }
 
 describe("Corellium API", function () {
-    this.slow(10000);
-    this.timeout(20000);
+    let BASE_LIFECYCLE_TIMEOUT = 0;
+    let BASE_SNAPSHOT_TIMEOUT = 0;
+    let INSTANCE_VERSIONS = [];
+    if (CONFIGURATION.testFlavor === "ranchu") {
+        this.slow(10000);
+        this.timeout(20000);
 
-    const INSTANCE_VERSIONS = ["7.1.2", "8.1.0", "9.0.0", "10.0.0", "11.0.0"];
+        BASE_LIFECYCLE_TIMEOUT = 40000;
+        BASE_SNAPSHOT_TIMEOUT = 20000;
+        INSTANCE_VERSIONS = ["7.1.2", "8.1.0", "9.0.0", "10.0.0", "11.0.0"];
+    } else {
+        this.slow(40000);
+        this.timeout(50000);
+
+        BASE_LIFECYCLE_TIMEOUT = 700000;
+        BASE_SNAPSHOT_TIMEOUT = 300000;
+        INSTANCE_VERSIONS = ["10.3.3", "11.4.1", "12.4.1", "13.7", "14.1"];
+    }
 
     const instanceMap = new Map();
     let corellium = null;
@@ -122,11 +136,24 @@ describe("Corellium API", function () {
             it(`can start create ${instanceVersion}`, async function () {
                 assert(project, "Unable to test as no project was returned from previous tests");
                 const name = `API Test ${instanceVersion}`;
-                const instance = await project.createInstance({
-                    flavor: CONFIGURATION.testFlavor,
-                    name: name,
-                    os: instanceVersion,
-                });
+                let instanceConfig = {};
+                if (CONFIGURATION.testFlavor === "ranchu") {
+                    instanceConfig = {
+                        flavor: CONFIGURATION.testFlavor,
+                        name: name,
+                        os: instanceVersion,
+                    };
+                } else {
+                    instanceConfig = {
+                        flavor: CONFIGURATION.testFlavor,
+                        name: name,
+                        os: instanceVersion,
+                        bootOptions: {
+                            udid: "9564a02c6255d8c449a3f691aeb8296dd352f3d6",
+                        },
+                    };
+                }
+                const instance = await project.createInstance(instanceConfig);
 
                 instanceMap.set(instanceVersion, instance);
 
@@ -247,8 +274,8 @@ describe("Corellium API", function () {
 
         INSTANCE_VERSIONS.forEach((instanceVersion) => {
             it(`can finish create ${instanceVersion}`, async function () {
-                this.slow(40000);
-                this.timeout(70000);
+                this.slow(BASE_LIFECYCLE_TIMEOUT);
+                this.timeout(BASE_LIFECYCLE_TIMEOUT + 30000);
 
                 const instance = instanceMap.get(instanceVersion);
                 await instance.finishRestore();
@@ -350,7 +377,7 @@ describe("Corellium API", function () {
 
                 before(
                     setFlagIfHookFailedDecorator(async function () {
-                        this.timeout(100000);
+                        this.timeout(BASE_LIFECYCLE_TIMEOUT + 60000);
 
                         const instance = instanceMap.get(instanceVersion);
                         await instance.waitForState("on");
@@ -440,7 +467,15 @@ describe("Corellium API", function () {
                         try {
                             await agent.stat(testPath);
                         } catch (error) {
-                            assert(error.toString().includes("No such file or directory"));
+                            if (CONFIGURATION.testFlavor === "ranchu") {
+                                assert(error.toString().includes("No such file or directory"));
+                            } else {
+                                assert(
+                                    error
+                                        .toString()
+                                        .includes("Stat of file '" + testPath + "' failed."),
+                                );
+                            }
                         }
                     });
                 });
@@ -463,6 +498,27 @@ describe("Corellium API", function () {
                         it("cannot use profile/get", async function () {
                             assert.rejects(() => agent.getProfile("test"));
                         });
+                    } else {
+                        let profileID = "com.tweakmo.v4tweakmo";
+
+                        it("can use profile/list", async function () {
+                            await agent.profileList();
+                        });
+
+                        it("can use profile/install", async function () {
+                            var profile = fs.readFileSync(
+                                path.join(__dirname, "TweakMo.mobileconfig"),
+                            );
+                            await agent.installProfile(profile);
+                        });
+
+                        it("can use profile/get", async function () {
+                            await agent.getProfile(profileID);
+                        });
+
+                        it("can use profile/remove", async function () {
+                            await agent.removeProfile(profileID);
+                        });
                     }
                 });
 
@@ -484,6 +540,22 @@ describe("Corellium API", function () {
                         it("cannot use releaseDisableAutolockAssertion", async function () {
                             assert.rejects(() => agent.releaseDisableAutolockAssertion());
                         });
+                    } else {
+                        it("can use lock", async function () {
+                            await agent.lockDevice();
+                        });
+
+                        it("can use unlock", async function () {
+                            await agent.unlockDevice();
+                        });
+
+                        it("can use acquireDisableAutolockAssertion", async function () {
+                            await agent.acquireDisableAutolockAssertion();
+                        });
+
+                        it("can use releaseDisableAutolockAssertion", async function () {
+                            await agent.releaseDisableAutolockAssertion();
+                        });
                     }
                 });
 
@@ -497,16 +569,36 @@ describe("Corellium API", function () {
                         it("cannot use disconnectFromWifi", async function () {
                             assert.rejects(() => agent.disconnectFromWifi());
                         });
+                    } else {
+                        it("can use disconnectFromWifi", async function () {
+                            await agent.disconnectFromWifi();
+
+                            // Wait a bit to avoid WiFi connection race on some devices
+                            await new Promise((resolve) => setTimeout(resolve, 1000));
+                        });
+
+                        it("can use connectToWifi", async function () {
+                            await agent.connectToWifi();
+                        });
                     }
                 });
 
+                let bundleID = "";
+                if (CONFIGURATION.testFlavor === "ranchu") bundleID = "com.corellium.test.app";
+                else bundleID = "com.corellium.Red";
                 describe(`Applications ${instanceVersion}`, function () {
-                    it("can install a signed apk", function () {
+                    it("can install a signed apk/ipa", function () {
                         this.slow(50000);
                         this.timeout(100000);
 
+                        let appFile = "";
+                        if (CONFIGURATION.testFlavor === "ranchu") {
+                            appFile = "api-test.apk";
+                        } else {
+                            appFile = "Red.ipa";
+                        }
                         return agent
-                            .installFile(fs.createReadStream(path.join(__dirname, "api-test.apk")))
+                            .installFile(fs.createReadStream(path.join(__dirname, appFile)))
                             .then(() => (installSuccess = true));
                     });
 
@@ -515,7 +607,7 @@ describe("Corellium API", function () {
                             installSuccess,
                             "This test cannot run because application installation failed",
                         );
-                        await agent.run("com.corellium.test.app");
+                        await agent.run(bundleID);
                     });
 
                     it("can kill an app", async function () {
@@ -523,7 +615,7 @@ describe("Corellium API", function () {
                             installSuccess,
                             "This test cannot run because application installation failed",
                         );
-                        await agent.kill("com.corellium.test.app");
+                        await agent.kill(bundleID);
                     });
                 });
 
@@ -552,17 +644,23 @@ describe("Corellium API", function () {
                                 installSuccess,
                                 "This test cannot run because application installation failed",
                             );
+                            let targetLine = "";
+                            if (CONFIGURATION.testFlavor === "ranchu") {
+                                targetLine = "com.corellium.test.app";
+                            } else {
+                                targetLine = "com.apple.Maps";
+                            }
                             return crashListener.ready().then(() => {
                                 crashListener
-                                    .crashes("com.corellium.test.app", (err, crashReport) => {
+                                    .crashes(targetLine, (err, crashReport) => {
                                         assert(!err, err);
                                         assert(
                                             crashReport !== undefined,
                                             "The crash report is undefined",
                                         );
                                         assert(
-                                            crashReport.includes("com.corellium.test.app"),
-                                            `The crash reported doesn't include "com.corellium.test.app":\n\n${crashReport}`,
+                                            crashReport.includes(targetLine),
+                                            `The crash reported doesn't include "${targetLine}":\n\n${crashReport}`,
                                         );
                                         resolve();
                                     })
@@ -575,10 +673,14 @@ describe("Corellium API", function () {
                                         }
                                         throw error;
                                     });
-                                return agent.runActivity(
-                                    "com.corellium.test.app",
-                                    "com.corellium.test.app/com.corellium.test.app.CrashActivity",
-                                );
+                                if (CONFIGURATION.testFlavor === "ranchu") {
+                                    return agent.runActivity(
+                                        "com.corellium.test.app",
+                                        "com.corellium.test.app/com.corellium.test.app.CrashActivity",
+                                    );
+                                } else {
+                                    return agent.run("com.apple.Maps");
+                                }
                             });
                         });
                     });
@@ -590,6 +692,10 @@ describe("Corellium API", function () {
                     after(
                         "disconnect network monitor",
                         setFlagIfHookFailedDecorator(function () {
+                            if (CONFIGURATION.testFlavor !== "ranchu") {
+                                agent.kill("com.saurik.Cydia");
+                            }
+
                             netmon.disconnect();
                         }),
                     );
@@ -610,16 +716,23 @@ describe("Corellium API", function () {
                         );
 
                         return new Promise((resolve) => {
-                            this.slow(20000);
-                            this.timeout(30000);
+                            this.slow(80000);
+                            this.timeout(100000);
 
                             netmon.handleMessage((message) => {
                                 const hostHeader = message.request.headers.find(
                                     (header) => header.key === "Host",
                                 );
-                                if (hostHeader.value === "corellium.com") {
-                                    netmon.handleMessage(null);
-                                    resolve();
+                                if (CONFIGURATION.testFlavor === "ranchu") {
+                                    if (hostHeader.value === "corellium.com") {
+                                        netmon.handleMessage(null);
+                                        resolve();
+                                    }
+                                } else {
+                                    if (hostHeader.value === "cydia.zodttd.com") {
+                                        netmon.handleMessage(null);
+                                        resolve();
+                                    }
                                 }
                             });
 
@@ -627,10 +740,14 @@ describe("Corellium API", function () {
                             // Network Monitor starts.
                             return new Promise((resolve) => setTimeout(resolve, 1000 * 5)).then(
                                 () => {
-                                    return agent.runActivity(
-                                        "com.corellium.test.app",
-                                        "com.corellium.test.app/com.corellium.test.app.NetworkActivity",
-                                    );
+                                    if (CONFIGURATION.testFlavor === "ranchu") {
+                                        return agent.runActivity(
+                                            "com.corellium.test.app",
+                                            "com.corellium.test.app/com.corellium.test.app.NetworkActivity",
+                                        );
+                                    } else {
+                                        return agent.run("com.saurik.Cydia");
+                                    }
                                 },
                             );
                         });
@@ -649,19 +766,25 @@ describe("Corellium API", function () {
                     let pid = 0;
                     let name = "";
 
-                    it("can get process list", async function () {
-                        let procList = await agent.runFridaPs();
-                        let lines = procList.output.trim().split("\n");
-                        lines.shift();
-                        lines.shift();
-                        for (const line of lines) {
-                            [pid, name] = line.trim().split(/\s+/);
-                            if (name === "keystore") {
-                                break;
+                    if (CONFIGURATION.testFlavor === "ranchu") {
+                        it("can get process list", async function () {
+                            let procList = await agent.runFridaPs();
+                            let lines = procList.output.trim().split("\n");
+                            lines.shift();
+                            lines.shift();
+                            for (const line of lines) {
+                                [pid, name] = line.trim().split(/\s+/);
+                                if (name === "keystore") {
+                                    break;
+                                }
                             }
-                        }
-                        assert(pid != 0);
-                    });
+                            assert(pid != 0);
+                        });
+                    } else {
+                        it("cannot get process list", async function () {
+                            assert.rejects(() => agent.runFridaPs());
+                        });
+                    }
 
                     it("can get console", async function () {
                         const instance = instanceMap.get(instanceVersion);
@@ -674,52 +797,78 @@ describe("Corellium API", function () {
                     });
 
                     describe("frida attaching and execution", function () {
-                        it("can attach frida", async function () {
-                            if (name === "") {
-                                name = "keystore";
-                            }
-                            await agent.runFrida(pid, name);
-                            let processList;
-                            do {
-                                processList = await agent.runFridaPs();
-                            } while (
-                                !(processList.attached && processList.attached.target_name === name)
-                            );
-                        });
-
-                        it("can get frida scripts", async function () {
-                            let fridaScripts = await agent.stat("/data/corellium/frida/scripts/");
-                            let scriptList = fridaScripts.entries.map((entry) => entry.name);
-                            let s = "";
-                            for (s of scriptList) {
-                                if (s === "hook_native.js") break;
-                            }
-                            assert(s != "");
-                        });
-
-                        it.skip("can execute script", async function () {
-                            const instance = instanceMap.get(instanceVersion);
-                            await instance.executeFridaScript(
-                                "/data/corellium/frida/scripts/hook_native.js",
-                            );
-                            await new Promise((resolve) => setTimeout(resolve, 5000));
-
-                            let fridaConsole = await instance.fridaConsole();
-                            let fridaOutput = await new Promise((resolve) => {
-                                const w = new stream.Writable({
-                                    write(chunk, _encoding, _callback) {
-                                        fridaConsole.socket.close();
-                                        resolve(chunk);
-                                    },
-                                });
-                                fridaConsole.pipe(w);
+                        if (CONFIGURATION.testFlavor === "ranchu") {
+                            it("can attach frida", async function () {
+                                if (name === "") {
+                                    name = "keystore";
+                                }
+                                await agent.runFrida(pid, name);
+                                let processList;
+                                do {
+                                    processList = await agent.runFridaPs();
+                                } while (
+                                    !(
+                                        processList.attached &&
+                                        processList.attached.target_name === name
+                                    )
+                                );
                             });
-                            assert(fridaOutput.toString().includes("Hook android_log_write()"));
-                        });
 
-                        it("can detach frida", async function () {
-                            await agent.runFridaKill();
-                        });
+                            it("can get frida scripts", async function () {
+                                let fridaScripts = await agent.stat(
+                                    "/data/corellium/frida/scripts/",
+                                );
+                                let scriptList = fridaScripts.entries.map((entry) => entry.name);
+                                let s = "";
+                                for (s of scriptList) {
+                                    if (s === "hook_native.js") break;
+                                }
+                                assert(s != "");
+                            });
+
+                            it.skip("can execute script", async function () {
+                                const instance = instanceMap.get(instanceVersion);
+                                await instance.executeFridaScript(
+                                    "/data/corellium/frida/scripts/hook_native.js",
+                                );
+                                await new Promise((resolve) => setTimeout(resolve, 5000));
+
+                                let fridaConsole = await instance.fridaConsole();
+                                let fridaOutput = await new Promise((resolve) => {
+                                    const w = new stream.Writable({
+                                        write(chunk, _encoding, _callback) {
+                                            fridaConsole.socket.close();
+                                            resolve(chunk);
+                                        },
+                                    });
+                                    fridaConsole.pipe(w);
+                                });
+                                assert(fridaOutput.toString().includes("Hook android_log_write()"));
+                            });
+
+                            it("can detach frida", async function () {
+                                await agent.runFridaKill();
+                            });
+                        } else {
+                            it("cannot attach frida", async function () {
+                                assert.rejects(() => agent.runFrida(1, "launchd"));
+                            });
+
+                            it("cannot get frida scripts", async function () {
+                                assert.rejects(() => agent.stat("/data/corellium/frida/scripts/"));
+                            });
+
+                            it.skip("cannot execute script", async function () {
+                                const instance = instanceMap.get(instanceVersion);
+                                await instance.executeFridaScript(
+                                    "/data/corellium/frida/scripts/hook_native.js",
+                                );
+                            });
+
+                            it("cannot detach frida", async function () {
+                                assert.rejects(() => agent.runFridaKill());
+                            });
+                        }
                     });
                 });
 
@@ -770,8 +919,12 @@ describe("Corellium API", function () {
                     });
 
                     it("can capture data", async function () {
+                        let statTarget = "";
                         const instance = instanceMap.get(instanceVersion);
-                        await agent.stat("/data/corellium/frida/scripts/");
+                        if (CONFIGURATION.testFlavor === "ranchu")
+                            statTarget = "/data/corellium/frida/scripts/";
+                        else statTarget = "/var/mobile/Media";
+                        await agent.stat(statTarget);
                         await new Promise((resolve) => setTimeout(resolve, 9000));
                         const log = await instance.downloadCoreTraceLog();
                         assert(log !== undefined);
@@ -810,8 +963,8 @@ describe("Corellium API", function () {
             }
 
             describe(`device lifecycle ${instanceVersion}`, function () {
-                this.slow(20000);
-                this.timeout(40000);
+                this.slow(BASE_LIFECYCLE_TIMEOUT / 2);
+                this.timeout(BASE_LIFECYCLE_TIMEOUT);
 
                 beforeEach(async function () {
                     const instance = instanceMap.get(instanceVersion);
@@ -842,6 +995,9 @@ describe("Corellium API", function () {
                         await turnOn(instance);
                     }
                     await instance.reboot();
+                    if (CONFIGURATION.testFlavor !== "ranchu") {
+                        await instance.waitForAgentReady();
+                    }
                 });
 
                 it("can stop", async function () {
@@ -862,6 +1018,9 @@ describe("Corellium API", function () {
             });
 
             describe(`snapshots ${instanceVersion}`, function () {
+                this.slow(BASE_SNAPSHOT_TIMEOUT / 2);
+                this.timeout(BASE_SNAPSHOT_TIMEOUT);
+
                 before(
                     "should have an up-to-date instance",
                     setFlagIfHookFailedDecorator(async function () {
@@ -877,23 +1036,33 @@ describe("Corellium API", function () {
                     assert(fresh !== undefined);
                 });
 
-                it("refuses to take snapshot if instance is on", async function () {
-                    const instance = instanceMap.get(instanceVersion);
-                    if (instance.state !== "on") {
-                        await turnOn(instance);
-                    }
-                    await assert.rejects(() => instance.takeSnapshot());
-                });
-
                 let latest_snapshot;
-                it("can take snapshot if instance is off", async function () {
-                    const instance = instanceMap.get(instanceVersion);
-                    if (instance.state !== "off") {
-                        await turnOff(instance);
-                    }
+                if (CONFIGURATION.testFlavor === "ranchu") {
+                    it("refuses to take snapshot if instance is on", async function () {
+                        const instance = instanceMap.get(instanceVersion);
+                        if (instance.state !== "on") {
+                            await turnOn(instance);
+                        }
+                        await assert.rejects(() => instance.takeSnapshot());
+                    });
 
-                    latest_snapshot = await instance.takeSnapshot();
-                });
+                    it("can take snapshot if instance is off", async function () {
+                        const instance = instanceMap.get(instanceVersion);
+                        if (instance.state !== "off") {
+                            await turnOff(instance);
+                        }
+
+                        latest_snapshot = await instance.takeSnapshot();
+                    });
+                } else {
+                    it("can take snapshot if instance is on", async function () {
+                        const instance = instanceMap.get(instanceVersion);
+                        latest_snapshot = await instance.takeSnapshot();
+
+                        await instance.waitForState("paused");
+                        await instance.waitForState("on");
+                    });
+                }
 
                 it("can restore a snapshot", async function () {
                     assert(
@@ -901,11 +1070,18 @@ describe("Corellium API", function () {
                         "This test cannot run because there is no latest_snapshot to utilize",
                     );
                     const instance = instanceMap.get(instanceVersion);
-                    if (instance.state !== "off") {
-                        await turnOff(instance);
-                    }
+                    if (CONFIGURATION.testFlavor === "ranchu") {
+                        if (instance.state !== "off") {
+                            await turnOff(instance);
+                        }
 
-                    await latest_snapshot.restore();
+                        await latest_snapshot.restore();
+                    } else {
+                        await instance.pause();
+                        await instance.waitForState("paused");
+                        await latest_snapshot.restore();
+                        await instance.waitForAgentReady();
+                    }
                 });
 
                 it("can delete a snapshot", async function () {
@@ -913,9 +1089,12 @@ describe("Corellium API", function () {
                         latest_snapshot,
                         "This test cannot run because there is no latest_snapshot to utilize",
                     );
-                    const instance = instanceMap.get(instanceVersion);
-                    if (instance.state !== "off") {
-                        await turnOff(instance);
+
+                    if (CONFIGURATION.testFlavor === "ranchu") {
+                        const instance = instanceMap.get(instanceVersion);
+                        if (instance.state !== "off") {
+                            await turnOff(instance);
+                        }
                     }
 
                     await latest_snapshot.delete();
