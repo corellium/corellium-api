@@ -482,7 +482,7 @@ class Agent {
     async getProfile(profileID) {
         const { profile } = await this.command("profile", "get", { profileID });
         if (!profile) return null;
-        return new Buffer(profile, "base64");
+        return new Buffer.from(profile, "base64");
     }
 
     /**
