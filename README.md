@@ -1,4 +1,10 @@
-# Corellium API Documentation
+# Corellium API
+
+## Reference
+
+Corellium API reference documentation is available [here](https://corellium.github.io/corellium-api/index.html).
+
+## Overview
 
 ```javascript=
 const Corellium = require('corellium-api').Corellium;

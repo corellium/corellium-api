@@ -17,16 +17,19 @@ const TOUCH = 1;
  * An input to send to an instance.
  *
  * Inputs consist of a series of steps. Each method in this class adds a step
- * to the current input, and returns the current for chaining.
+ * to the current input, and returns the current input to allow chaining. To
+ * run the input, send it to an instance with {@link Instance#sendInput}.
  *
- * As a shortcut for `new Input().doThing()`, there is a global called `{@link
- * I}`. It's a strange object for which `I.doThing()` gives the same result as
- * `new Input().doThing()`.
+ * A global, `{@link I}`, is provided as a convenience. `I.doThing()` is a
+ * shorthand for `new Input().doThing()`.
  *
+ * @see {@link Instance#sendInput}
  * @example
  * const input = new Input().pressRelease('home').tap(100, 100);
+ * await instance.sendInput(input);
  * // using the I shortcut
  * const input2 = I.pressRelease('home').tap(100, 100);
+ * await instance.sendInput(input2);
  */
 class Input {
     /**
