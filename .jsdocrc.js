@@ -1,7 +1,7 @@
 "use strict";
 
 module.exports = {
-    source: { include: ["src"] },
+    source: { include: ["README.md", "src"] },
     opts: {
         recurse: true,
         template: "node_modules/docdash",
