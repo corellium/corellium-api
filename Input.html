@@ -52,9 +52,10 @@
         
             <div class="class-description usertext"><p>An input to send to an instance.</p>
 <p>Inputs consist of a series of steps. Each method in this class adds a step
-to the current input, and returns the current for chaining.</p>
-<p>As a shortcut for <code>new Input().doThing()</code>, there is a global called <code><a href="global.html#I">I</a></code>. It's a strange object for which <code>I.doThing()</code> gives the same result as
-<code>new Input().doThing()</code>.</p></div>
+to the current input, and returns the current input to allow chaining. To
+run the input, send it to an instance with <a href="Instance.html#sendInput">Instance#sendInput</a>.</p>
+<p>A global, <code><a href="global.html#I">I</a></code>, is provided as a convenience. <code>I.doThing()</code> is a
+shorthand for <code>new Input().doThing()</code>.</p></div>
         
     
 </header>
@@ -81,7 +82,7 @@ to the current input, and returns the current for chaining.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="input.js.html">input.js</a>, <a href="input.js.html#line31">line 31</a>
+        <a href="input.js.html">input.js</a>, <a href="input.js.html#line34">line 34</a>
     </li></ul></dd>
     
 
@@ -112,6 +113,13 @@ to the current input, and returns the current for chaining.</p>
     
 
     
+    <dt class="tag-see">See:</dt>
+    <dd class="tag-see">
+        <ul>
+            <li><a href="Instance.html#sendInput">Instance#sendInput</a></li>
+        </ul>
+    </dd>
+    
 
     
 </dl>
@@ -136,8 +144,10 @@ to the current input, and returns the current for chaining.</p>
     <h5>Example</h5>
     
     <pre class="prettyprint"><code>const input = new Input().pressRelease('home').tap(100, 100);
+await instance.sendInput(input);
 // using the I shortcut
-const input2 = I.pressRelease('home').tap(100, 100);</code></pre>
+const input2 = I.pressRelease('home').tap(100, 100);
+await instance.sendInput(input2);</code></pre>
 
 
 
@@ -197,7 +207,7 @@ const input2 = I.pressRelease('home').tap(100, 100);</code></pre>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="input.js.html">input.js</a>, <a href="input.js.html#line91">line 91</a>
+        <a href="input.js.html">input.js</a>, <a href="input.js.html#line94">line 94</a>
     </li></ul></dd>
     
 
@@ -363,7 +373,7 @@ const input2 = I.pressRelease('home').tap(100, 100);</code></pre>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="input.js.html">input.js</a>, <a href="input.js.html#line67">line 67</a>
+        <a href="input.js.html">input.js</a>, <a href="input.js.html#line70">line 70</a>
     </li></ul></dd>
     
 
@@ -521,7 +531,7 @@ const input2 = I.pressRelease('home').tap(100, 100);</code></pre>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="input.js.html">input.js</a>, <a href="input.js.html#line103">line 103</a>
+        <a href="input.js.html">input.js</a>, <a href="input.js.html#line106">line 106</a>
     </li></ul></dd>
     
 
@@ -723,7 +733,7 @@ defaulting to 100 milliseconds, and release the specified button.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="input.js.html">input.js</a>, <a href="input.js.html#line79">line 79</a>
+        <a href="input.js.html">input.js</a>, <a href="input.js.html#line82">line 82</a>
     </li></ul></dd>
     
 
@@ -881,7 +891,7 @@ defaulting to 100 milliseconds, and release the specified button.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="input.js.html">input.js</a>, <a href="input.js.html#line138">line 138</a>
+        <a href="input.js.html">input.js</a>, <a href="input.js.html#line141">line 141</a>
     </li></ul></dd>
     
 
@@ -1096,7 +1106,7 @@ coordinate.</p></td>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="input.js.html">input.js</a>, <a href="input.js.html#line150">line 150</a>
+        <a href="input.js.html">input.js</a>, <a href="input.js.html#line153">line 153</a>
     </li></ul></dd>
     
 
@@ -1323,7 +1333,7 @@ interval defaulting to 100 milliseconds, and release the touchscreen.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="input.js.html">input.js</a>, <a href="input.js.html#line113">line 113</a>
+        <a href="input.js.html">input.js</a>, <a href="input.js.html#line116">line 116</a>
     </li></ul></dd>
     
 
@@ -1492,7 +1502,7 @@ interval defaulting to 100 milliseconds, and release the touchscreen.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="input.js.html">input.js</a>, <a href="input.js.html#line122">line 122</a>
+        <a href="input.js.html">input.js</a>, <a href="input.js.html#line125">line 125</a>
     </li></ul></dd>
     
 
@@ -1591,7 +1601,7 @@ interval defaulting to 100 milliseconds, and release the touchscreen.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="input.js.html">input.js</a>, <a href="input.js.html#line32">line 32</a>
+        <a href="input.js.html">input.js</a>, <a href="input.js.html#line35">line 35</a>
     </li></ul></dd>
     
 
@@ -1699,7 +1709,7 @@ interval defaulting to 100 milliseconds, and release the touchscreen.</p>
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.6.6</a> on Thu Jan 21 2021 10:44:46 GMT+1100 (Australian Eastern Daylight Time) using the <a href="https://github.com/clenemt/docdash">docdash</a> theme.
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.6.6</a> on Tue Jan 26 2021 10:03:14 GMT-0800 (Pacific Standard Time) using the <a href="https://github.com/clenemt/docdash">docdash</a> theme.
 </footer>
 
 <script>prettyPrint();</script>
