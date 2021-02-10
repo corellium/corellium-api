@@ -44,11 +44,13 @@ class Corellium {
      * @param {string} options.endpoint - Endpoint URL
      * @param {string} options.username - Login username
      * @param {string} options.password - Login password
+     * @param {string} options.totpToken - Login TOTP (Timebased One Time Password)
      * @example
      * const corellium = new Corellium({
      *     endpoint: 'https://app.corellium.com',
      *     username: 'username',
      *     password: 'password',
+     *     totpToken: '123456',
      * });
      */
     constructor(options) {
@@ -78,6 +80,7 @@ class Corellium {
                 json: {
                     username: this.options.username,
                     password: this.options.password,
+                    totpToken: this.options.totpToken,
                 },
             });
             return {

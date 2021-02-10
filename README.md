@@ -19,6 +19,7 @@ Sets up a new Corellium endpoint to use. Accepted options are:
 - `options.endpoint`: the URL of the endpoint to use
 - `options.username`: username to use for login
 - `options.password`: password for given username
+- `options.totpToken`: Timebased One Time Password Token for a given username
 
 Example:
 
@@ -26,7 +27,8 @@ Example:
 let corellium = new Corellium({
     endpoint: 'https://app.corellium.com',
     username: 'username',
-    password: 'password'
+    password: 'password',
+    totpToken: '12345',
 });
 ```
 
