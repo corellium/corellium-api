@@ -134,6 +134,7 @@
     endpoint: 'https://app.corellium.com',
     username: 'username',
     password: 'password',
+    totpToken: '123456',
 });</code></pre>
 
 
@@ -272,6 +273,29 @@
         </tr>
 
     
+
+        <tr>
+            
+                <td class="name"><code>totpToken</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"><p>Login TOTP (Timebased One Time Password)</p></td>
+        </tr>
+
+    
     </tbody>
 </table>
 
@@ -338,7 +362,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="corellium.js.html">corellium.js</a>, <a href="corellium.js.html#line369">line 369</a>
+        <a href="corellium.js.html">corellium.js</a>, <a href="corellium.js.html#line372">line 372</a>
     </li></ul></dd>
     
 
@@ -629,7 +653,7 @@ instance.addProjectKey(project.id, key, 'ssh', 'SSH Key');</code></pre>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="corellium.js.html">corellium.js</a>, <a href="corellium.js.html#line311">line 311</a>
+        <a href="corellium.js.html">corellium.js</a>, <a href="corellium.js.html#line314">line 314</a>
     </li></ul></dd>
     
 
@@ -950,7 +974,7 @@ instance.addProjectKey(project.id, key, 'ssh', 'SSH Key');</code></pre>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="corellium.js.html">corellium.js</a>, <a href="corellium.js.html#line256">line 256</a>
+        <a href="corellium.js.html">corellium.js</a>, <a href="corellium.js.html#line259">line 259</a>
     </li></ul></dd>
     
 
@@ -1156,7 +1180,7 @@ instance.addProjectKey(project.id, key, 'ssh', 'SSH Key');</code></pre>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="corellium.js.html">corellium.js</a>, <a href="corellium.js.html#line219">line 219</a>
+        <a href="corellium.js.html">corellium.js</a>, <a href="corellium.js.html#line222">line 222</a>
     </li></ul></dd>
     
 
@@ -1267,7 +1291,7 @@ instance.addProjectKey(project.id, key, 'ssh', 'SSH Key');</code></pre>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="corellium.js.html">corellium.js</a>, <a href="corellium.js.html#line387">line 387</a>
+        <a href="corellium.js.html">corellium.js</a>, <a href="corellium.js.html#line390">line 390</a>
     </li></ul></dd>
     
 
@@ -1432,7 +1456,7 @@ instance.deleteProjectKey(project.id, 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa');</
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="corellium.js.html">corellium.js</a>, <a href="corellium.js.html#line276">line 276</a>
+        <a href="corellium.js.html">corellium.js</a>, <a href="corellium.js.html#line279">line 279</a>
     </li></ul></dd>
     
 
@@ -1573,7 +1597,7 @@ instance.deleteProjectKey(project.id, 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa');</
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="corellium.js.html">corellium.js</a>, <a href="corellium.js.html#line242">line 242</a>
+        <a href="corellium.js.html">corellium.js</a>, <a href="corellium.js.html#line245">line 245</a>
     </li></ul></dd>
     
 
@@ -1715,7 +1739,7 @@ instance.deleteProjectKey(project.id, 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa');</
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="corellium.js.html">corellium.js</a>, <a href="corellium.js.html#line294">line 294</a>
+        <a href="corellium.js.html">corellium.js</a>, <a href="corellium.js.html#line297">line 297</a>
     </li></ul></dd>
     
 
@@ -1874,7 +1898,7 @@ instance.deleteProjectKey(project.id, 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa');</
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="corellium.js.html">corellium.js</a>, <a href="corellium.js.html#line207">line 207</a>
+        <a href="corellium.js.html">corellium.js</a>, <a href="corellium.js.html#line210">line 210</a>
     </li></ul></dd>
     
 
@@ -1985,7 +2009,7 @@ instance.deleteProjectKey(project.id, 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa');</
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="corellium.js.html">corellium.js</a>, <a href="corellium.js.html#line126">line 126</a>
+        <a href="corellium.js.html">corellium.js</a>, <a href="corellium.js.html#line129">line 129</a>
     </li></ul></dd>
     
 
@@ -2096,7 +2120,7 @@ instance.deleteProjectKey(project.id, 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa');</
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="corellium.js.html">corellium.js</a>, <a href="corellium.js.html#line68">line 68</a>
+        <a href="corellium.js.html">corellium.js</a>, <a href="corellium.js.html#line70">line 70</a>
     </li></ul></dd>
     
 
@@ -2210,7 +2234,7 @@ instance.deleteProjectKey(project.id, 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa');</
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="corellium.js.html">corellium.js</a>, <a href="corellium.js.html#line195">line 195</a>
+        <a href="corellium.js.html">corellium.js</a>, <a href="corellium.js.html#line198">line 198</a>
     </li></ul></dd>
     
 
@@ -2321,7 +2345,7 @@ instance.deleteProjectKey(project.id, 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa');</
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="corellium.js.html">corellium.js</a>, <a href="corellium.js.html#line100">line 100</a>
+        <a href="corellium.js.html">corellium.js</a>, <a href="corellium.js.html#line103">line 103</a>
     </li></ul></dd>
     
 
@@ -2416,7 +2440,7 @@ needs an authentication token will do the same thing.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="corellium.js.html">corellium.js</a>, <a href="corellium.js.html#line355">line 355</a>
+        <a href="corellium.js.html">corellium.js</a>, <a href="corellium.js.html#line358">line 358</a>
     </li></ul></dd>
     
 
@@ -2577,7 +2601,7 @@ for(let key of keys)
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="corellium.js.html">corellium.js</a>, <a href="corellium.js.html#line332">line 332</a>
+        <a href="corellium.js.html">corellium.js</a>, <a href="corellium.js.html#line335">line 335</a>
     </li></ul></dd>
     
 
@@ -2737,7 +2761,7 @@ exist, returns undefined.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="corellium.js.html">corellium.js</a>, <a href="corellium.js.html#line112">line 112</a>
+        <a href="corellium.js.html">corellium.js</a>, <a href="corellium.js.html#line115">line 115</a>
     </li></ul></dd>
     
 
@@ -2849,7 +2873,7 @@ let project = projects.find(project => project.name === "Demo Project");</code><
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="corellium.js.html">corellium.js</a>, <a href="corellium.js.html#line148">line 148</a>
+        <a href="corellium.js.html">corellium.js</a>, <a href="corellium.js.html#line151">line 151</a>
     </li></ul></dd>
     
 
@@ -2960,7 +2984,7 @@ let project = projects.find(project => project.name === "Demo Project");</code><
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="corellium.js.html">corellium.js</a>, <a href="corellium.js.html#line342">line 342</a>
+        <a href="corellium.js.html">corellium.js</a>, <a href="corellium.js.html#line345">line 345</a>
     </li></ul></dd>
     
 
@@ -3070,7 +3094,7 @@ let project = projects.find(project => project.name === "Demo Project");</code><
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="corellium.js.html">corellium.js</a>, <a href="corellium.js.html#line171">line 171</a>
+        <a href="corellium.js.html">corellium.js</a>, <a href="corellium.js.html#line174">line 174</a>
     </li></ul></dd>
     
 
@@ -3181,7 +3205,7 @@ let project = projects.find(project => project.name === "Demo Project");</code><
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="corellium.js.html">corellium.js</a>, <a href="corellium.js.html#line183">line 183</a>
+        <a href="corellium.js.html">corellium.js</a>, <a href="corellium.js.html#line186">line 186</a>
     </li></ul></dd>
     
 
@@ -3295,7 +3319,7 @@ let project = projects.find(project => project.name === "Demo Project");</code><
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.6.6</a> on Thu Jan 21 2021 10:44:46 GMT+1100 (Australian Eastern Daylight Time) using the <a href="https://github.com/clenemt/docdash">docdash</a> theme.
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.6.6</a> on Wed Feb 10 2021 10:34:19 GMT-0800 (Pacific Standard Time) using the <a href="https://github.com/clenemt/docdash">docdash</a> theme.
 </footer>
 
 <script>prettyPrint();</script>
