@@ -6,6 +6,7 @@ async function main() {
         endpoint: "https://app.corellium.com",
         username: "user@name.foo",
         password: "<password>",
+        totpToken: "123456",
     });
 
     console.log("Logging in...");
