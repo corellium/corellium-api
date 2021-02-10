@@ -1033,7 +1033,7 @@ describe("Corellium API", function () {
                     const instance = instanceMap.get(instanceVersion);
                     const snapshots = await instance.snapshots();
                     const fresh = snapshots.find((snap) => snap.fresh);
-                    assert(fresh !== undefined);
+                    assert(fresh.status.created === true);
                 });
 
                 let latest_snapshot;
@@ -1053,14 +1053,19 @@ describe("Corellium API", function () {
                         }
 
                         latest_snapshot = await instance.takeSnapshot();
+
+                        while (latest_snapshot.status.created !== true) {
+                            await latest_snapshot.update();
+                        }
                     });
                 } else {
                     it("can take snapshot if instance is on", async function () {
                         const instance = instanceMap.get(instanceVersion);
                         latest_snapshot = await instance.takeSnapshot();
 
-                        await instance.waitForState("paused");
-                        await instance.waitForState("on");
+                        while (latest_snapshot.status.created !== true) {
+                            await latest_snapshot.update();
+                        }
                     });
                 }
 
