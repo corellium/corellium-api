@@ -499,24 +499,22 @@ describe("Corellium API", function () {
                             assert.rejects(() => agent.getProfile("test"));
                         });
                     } else {
-                        let profileID = "com.tweakmo.v4tweakmo";
+                        let profileID = "TBA";
 
-                        it("can use profile/list", async function () {
+                        it.skip("can use profile/list", async function () {
                             await agent.profileList();
                         });
 
-                        it("can use profile/install", async function () {
-                            var profile = fs.readFileSync(
-                                path.join(__dirname, "TweakMo.mobileconfig"),
-                            );
+                        it.skip("can use profile/install", async function () {
+                            var profile = fs.readFileSync(path.join(__dirname, "TBA.mobileconfig"));
                             await agent.installProfile(profile);
                         });
 
-                        it("can use profile/get", async function () {
+                        it.skip("can use profile/get", async function () {
                             await agent.getProfile(profileID);
                         });
 
-                        it("can use profile/remove", async function () {
+                        it.skip("can use profile/remove", async function () {
                             await agent.removeProfile(profileID);
                         });
                     }
