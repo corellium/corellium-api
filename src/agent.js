@@ -61,6 +61,7 @@ class Agent {
     constructor(instance) {
         this.instance = instance;
         this.connected = false;
+        this.uploading = false;
         this.connectPromise = null;
         this.id = 0;
         this._keepAliveTimeout = null;
@@ -240,7 +241,9 @@ class Agent {
 
             await new Promise((resolve) => setTimeout(resolve, 10000));
 
-            this._startKeepAlive();
+            if (!this.uploading) {
+                this._startKeepAlive();
+            }
         });
     }
 
@@ -482,7 +485,7 @@ class Agent {
     async getProfile(profileID) {
         const { profile } = await this.command("profile", "get", { profileID });
         if (!profile) return null;
-        return new Buffer.from(profile, "base64");
+        return new Buffer(profile, "base64");
     }
 
     /**
@@ -506,18 +509,39 @@ class Agent {
      * await agent.upload(tmpName, fs.createReadStream('test.ipa'));
      */
     async upload(path, stream, progress) {
-        await this.command("file", "upload", { path }, undefined, (id) => {
-            let total = 0;
+        // Temporarily stop the keepalive as the upload appears to backlog
+        // the control packets (ping/pong) at the proxy which can cause issues
+        // and a disconnect
+        this._stopKeepAlive();
+        this.uploading = true;
+        await this.command(
+            "file",
+            "upload",
+            { path },
+            (message) => {
+                // This is hit after the upload is completed and the agent
+                // on the other end sends the reply packet of success/fail
+                // Restart the keepalive as the upload buffer should be cleared
+                this._startKeepAlive();
+                this.uploading = false;
 
-            stream.on("data", (data) => {
-                this.sendBinaryData(id, data);
-                total += data.length;
-                if (progress) progress(total);
-            });
-            stream.on("end", () => {
-                this.sendBinaryData(id);
-            });
-        });
+                // Pass back the message to the command() function to prevent
+                // blocking or returning an invalid value
+                return message;
+            },
+            (id) => {
+                let total = 0;
+
+                stream.on("data", (data) => {
+                    this.sendBinaryData(id, data);
+                    total += data.length;
+                    if (progress) progress(total);
+                });
+                stream.on("end", () => {
+                    this.sendBinaryData(id);
+                });
+            },
+        );
     }
 
     /**
@@ -548,17 +572,17 @@ class Agent {
      * Reads a packaged app from the provided stream, uploads the app to the VM
      * using {@link Agent#upload}, and installs it using {@link Agent#install}.
      * @param {ReadableStream} stream - The app to install.
-     * @param {Agent~progressCallback} progress - The callback for install progress information.
-     * @param {Agent~uploadProgressCallback} progress - The callback for file upload progress information.
+     * @param {Agent~progressCallback} installProgress - The callback for install progress information.
+     * @param {Agent~uploadProgressCallback} uploadProgress - The callback for file upload progress information.
      * @example
-     * await agent.installFile(fs.createReadStream('test.ipa'), (progress, status) => {
-     *     console.log(progress, status);
+     * await agent.installFile(fs.createReadStream('test.ipa'), (installProgress, installStatus) => {
+     *     console.log(installProgress, installStatus);
      * });
      */
-    async installFile(stream, progress, uploadProgress) {
+    async installFile(stream, installProgress, uploadProgress) {
         let path = await this.tempFile();
         await this.upload(path, stream, uploadProgress);
-        await this.install(path, progress);
+        await this.install(path, installProgress);
     }
 
     /**
