@@ -195,10 +195,15 @@ class Agent {
 
                 reject(err);
             });
-        });
-
-        this.connected = true;
-        this._startKeepAlive();
+        })
+            .then(() => {
+                this.connected = true;
+                this._startKeepAlive();
+            })
+            .catch(async () => {
+                await this.instance.update();
+                await this._connect();
+            });
     }
 
     _startKeepAlive() {
