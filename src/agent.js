@@ -65,6 +65,7 @@ class Agent {
         this.connectPromise = null;
         this.id = 0;
         this._keepAliveTimeout = null;
+        this._startKeepAliveTimeout = null;
         this._lastPong = null;
         this._lastPing = null;
     }
@@ -198,6 +199,7 @@ class Agent {
         })
             .then(() => {
                 this.connected = true;
+                clearTimeout(this._startKeepAliveTimeout);
                 this._startKeepAlive();
             })
             .catch(async () => {
@@ -244,15 +246,17 @@ class Agent {
             clearTimeout(this._keepAliveTimeout);
             this._keepAliveTimeout = null;
 
-            await new Promise((resolve) => setTimeout(resolve, 10000));
-
             if (!this.uploading) {
-                this._startKeepAlive();
+                this._startKeepAliveTimeout = setTimeout(this._startKeepAlive, 10000);
             }
         });
     }
 
     _stopKeepAlive() {
+        if (this._startKeepAliveTimeout) {
+            clearTimeout(this._startKeepAliveTimeout);
+            this._startKeepAliveTimeout = null;
+        }
         if (this._keepAliveTimeout) {
             clearTimeout(this._keepAliveTimeout);
             this._keepAliveTimeout = null;
@@ -527,6 +531,7 @@ class Agent {
                 // This is hit after the upload is completed and the agent
                 // on the other end sends the reply packet of success/fail
                 // Restart the keepalive as the upload buffer should be cleared
+                clearTimeout(this._startKeepAliveTimeout);
                 this._startKeepAlive();
                 this.uploading = false;
 
