@@ -109,9 +109,9 @@ class Project {
      * @param {string} options.ipsw - The ID of a previously uploaded image in the project to use as the firmware
      * @param {string} options.osbuild - The device operating system build
      * @param {string} [options.name] - The device name
-     * @param {string} [options.patches] - Instance patches, such as `jailbroken` (default), 'nonjailbroken' or 'corelliumd' which is non-jailbroken with API agent.
+     * @param {string} [options.patches] - Instance patches, such as `jailbroken` (default), `nonjailbroken` or `corelliumd` which is non-jailbroken with API agent.
      * @param {Object} [options.bootOptions] - Boot options for the instance
-     * @param {Object} [options.bootOptions.udid] - Predefined Unique Device ID (UDID) for iOS device
+     * @param {string} [options.bootOptions.udid] - Predefined Unique Device ID (UDID) for iOS device
      * @returns {Promise<Instance>}
      *
      * @example <caption>Creating an instance and waiting for it to start its first boot</caption>
