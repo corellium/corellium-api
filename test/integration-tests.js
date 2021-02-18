@@ -480,7 +480,7 @@ describe("Corellium API", function () {
                     });
                 });
 
-                describe(`profiles ${instanceVersion}`, function () {
+                describe(`configuration profiles ${instanceVersion}`, function () {
                     if (CONFIGURATION.testFlavor === "ranchu") {
                         // These are unimplemented on ranchu devices
                         it("cannot use profile/list", async function () {
@@ -520,6 +520,49 @@ describe("Corellium API", function () {
                     }
                 });
 
+                describe(`provisioning profiles ${instanceVersion}`, function () {
+                    if (CONFIGURATION.testFlavor === "ranchu") {
+                        // These are unimplemented on ranchu devices
+                        it("cannot use provisioning/list", async function () {
+                            assert.rejects(() => agent.listProvisioningProfiles());
+                        });
+
+                        it("cannot use provisioning/install", async function () {
+                            assert.rejects(() => agent.installProvisioningProfile("test", true));
+                        });
+
+                        it("cannot use provisioning/remove", async function () {
+                            assert.rejects(() => agent.removeProvisioningProfile("test"));
+                        });
+
+                        it("cannot use provisioning/preapprove", async function () {
+                            assert.rejects(() => agent.preApproveProvisioningProfile());
+                        });
+                    } else {
+                        let certID = "TBA";
+                        let profileID = "TBA";
+
+                        it.skip("can use provisioning/install", async function () {
+                            var profile = fs.readFileSync(
+                                path.join(__dirname, "embedded.mobileprovision"),
+                            );
+                            await agent.installProvisioningProfile(profile, true);
+                        });
+
+                        it.skip("can use provisioning/list", async function () {
+                            await agent.listProvisioningProfiles();
+                        });
+
+                        it.skip("can use provisioning/remove", async function () {
+                            await agent.removeProvisioningProfile(profileID);
+                        });
+
+                        it.skip("can use provisioning/preapprove", async function () {
+                            await agent.preApproveProvisioningProfile(certID, profileID);
+                        });
+                    }
+                });
+
                 describe(`locks ${instanceVersion}`, function () {
                     if (CONFIGURATION.testFlavor === "ranchu") {
                         // These are unimplemented on ranchu devices
@@ -553,6 +596,27 @@ describe("Corellium API", function () {
 
                         it("can use releaseDisableAutolockAssertion", async function () {
                             await agent.releaseDisableAutolockAssertion();
+                        });
+                    }
+                });
+
+                describe(`UI automation ${instanceVersion}`, function () {
+                    if (CONFIGURATION.testFlavor === "ranchu") {
+                        // These are unimplemented on ranchu devices
+                        it("cannot use enableUIAutomation", async function () {
+                            assert.rejects(() => agent.enableUIAutomation());
+                        });
+
+                        it("cannot use disableUIAutomation", async function () {
+                            assert.rejects(() => agent.disableUIAutomation());
+                        });
+                    } else {
+                        it("can use enableUIAutomation", async function () {
+                            await agent.enableUIAutomation();
+                        });
+
+                        it("can use disableUIAutomation", async function () {
+                            await agent.disableUIAutomation();
                         });
                     }
                 });

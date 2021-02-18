@@ -179,6 +179,9 @@ Creates a new instance with the given options. The following options are support
 - `options.patches`: The following values are supported:
   - `jailbroken` The instance should be jailbroken (default).
   - `nonjailbroken` The instance should not be jailbroken.
+  - `corelliumd` The instance should not be jailbroken but should profile API agent.
+- `options.bootOptions`: Various boot options
+  - `options.bootOptions.udid`: Predefined Unique Device ID (UDID) for iOS device
 
 Example:
 
@@ -693,6 +696,94 @@ Example:
 await agent.deleteFile('/var/tmp/test.log');
 ```
 
+### async profileList()
+
+Returns an array of Mobile Configuration profile IDs.
+
+Example:
+
+```javascript=
+let profiles = await agent.profileList();
+for (p of profiles) {
+    console.log('Found configuration profile: ' + p);
+}
+```
+
+### async installProfile(profile)
+
+Installs Mobile Configuration binary `profile` to iOS device.
+
+Example:
+
+```javascript=
+var profile = fs.readFileSync(path.join(__dirname, "myprofile.mobileconfig"));
+await agent.installProfile(profile);
+```
+
+### async removeProfile(profileID)
+
+Deletes Mobile Configuration profile with `profileID`.
+
+Example:
+
+```javascript=
+await agent.removeProfile('com.test.myprofile');
+```
+
+### async getProfile(profileID)
+
+Gets Mobile Configuration profile binary with `profileID`.
+
+Example:
+
+```javascript=
+var profile = await agent.getProfile('com.test.myprofile');
+```
+
+### async listProvisioningProfiles()
+
+Returns an array of Provisioning profile descriptions.
+
+Example:
+
+```javascript=
+let profiles = await agent.listProvisioningProfiles();
+for (p of profiles) {
+    console.log(p['uuid']);
+}
+```
+
+### async installProvisioningProfile(profile, trust)
+
+Installs Provisioning profile binary `profile` makes it immediately trusted if `trust` is set.
+
+Example:
+
+```javascript=
+var profile = fs.readFileSync(path.join(__dirname, "embedded.mobileprovision"));
+await agent.installProvisioningProfile(profile, true);
+```
+
+### async removeProvisioningProfile(profileID)
+
+Deletes Provisioning profile with `profileID`.
+
+Example:
+
+```javascript=
+await agent.removeProvisioningProfile('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa');
+```
+
+### async preApproveProvisioningProfile(certID, profileID)
+
+Approves (makes trusted) profile with `certID` and `profileID` which will be installed later in a future for example during app installation via Xcode. 
+
+Example:
+
+```javascript=
+await agent.preApproveProvisioningProfile('Apple Development: my@email.com (NKJDZ3DZJB)', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa');
+```
+
 ### crashes(bundleID, callback)
 
 Subscribes to crash events for a given app identified by `bundleID`. The callback will be called as soon as the agent found a new crash log. The signature is `(err, crashReport)` where `err` is only defined if an error occured setting up or watching for crash logs and `crashReport` will contain the full crash report data.
@@ -732,6 +823,25 @@ Example:
 
 ```javascript=
 await agent.unlockDevice();
+```
+
+### async enableUIAutomation()
+Enables UI Automation.
+
+Example:
+
+```javascript=
+await agent.enableUIAutomation();
+```
+
+### async disableUIAutomation()
+
+Disables UI Automation.
+
+Example:
+
+```javascript=
+await agent.disableUIAutomation();
 ```
 
 ### disconnect()
@@ -780,14 +890,15 @@ for (const line of lines) {
 }
 ```
 
-### async runFrida(pid)
+### async runFrida(pid, name)
 
-Attaches FRIDA to the process with PID.
+Attaches FRIDA to the process with `pid` and `name`.
+Please note that both arguments need to be provided as they are required by the Web UI.
 
 Example:
 
 ```javascript=
-await agent.runFrida(111);
+await agent.runFrida(111, 'myapp');
 ```
 
 ### async runFridaKill()

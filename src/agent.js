@@ -50,6 +50,14 @@ const stream = require("stream");
  */
 
 /**
+ * @typedef {object} ProvisioningProfileInfo
+ * @property {string} name
+ * @property {string} uuid
+ * @property {string} teamId
+ * @property {string[]} certs
+ */
+
+/**
  * A connection to the agent running on an instance.
  *
  * Instances of this class
@@ -476,25 +484,109 @@ class Agent {
         });
     }
 
+    /**
+     * Returns an array of Mobile Configuration profile IDs
+     * @return {Promise<string[]>}
+     * @example
+     * let profiles = await agent.profileList();
+     * for (p of profiles) {
+     *     console.log('Found configuration profile: ' + p);
+     * }
+     */
     async profileList() {
         const { profiles } = await this.command("profile", "list");
         return profiles;
     }
 
+    /**
+     * Installs Mobile Configuration profile
+     * @param {Buffer} profile - profile binary
+     * @example
+     * var profile = fs.readFileSync(path.join(__dirname, "myprofile.mobileconfig"));
+     * await agent.installProfile(profile);
+     */
     async installProfile(profile) {
         await this.command("profile", "install", {
             profile: Buffer.from(profile).toString("base64"),
         });
     }
 
+    /**
+     * Deletes Mobile Configuration profile
+     * @param {string} profileID - profile ID
+     * @example
+     * await agent.removeProfile('com.test.myprofile');
+     */
     async removeProfile(profileID) {
         await this.command("profile", "remove", { profileID });
     }
 
+    /**
+     * Gets Mobile Configuration profile binary
+     * @param {string} profileID - profile ID
+     * @return {Promise<Buffer>}
+     * @example
+     * var profile = await agent.getProfile('com.test.myprofile');
+     */
     async getProfile(profileID) {
         const { profile } = await this.command("profile", "get", { profileID });
         if (!profile) return null;
-        return new Buffer(profile, "base64");
+        return new Buffer.from(profile, "base64");
+    }
+
+    /**
+     * Returns an array of Provisioning profile descriptions
+     * @return {Promise<ProvisioningProfileInfo[]>}
+     * @example
+     * let profiles = await agent.listProvisioningProfiles();
+     * for (p of profiles) {
+     *     console.log(p['uuid']);
+     * }
+     */
+    async listProvisioningProfiles() {
+        const { profiles } = await this.command("provisioning", "list");
+        return profiles;
+    }
+
+    /**
+     * Installs Provisioning profile
+     * @param {Buffer} profile - profile binary
+     * @param {Boolean} trust - immediately trust installed profile
+     * @example
+     * var profile = fs.readFileSync(path.join(__dirname, "embedded.mobileprovision"));
+     * await agent.installProvisioningProfile(profile, true);
+     */
+    async installProvisioningProfile(profile, trust = false) {
+        await this.command("provisioning", "install", {
+            profile: Buffer.from(profile).toString("base64"),
+            trust: trust,
+        });
+    }
+
+    /**
+     * Deletes Provisioning profile
+     * @param {string} profileID - profile ID
+     * @example
+     * await agent.removeProvisioningProfile('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa');
+     */
+    async removeProvisioningProfile(profileID) {
+        await this.command("provisioning", "remove", {
+            uuid: profileID,
+        });
+    }
+
+    /**
+     * Approves (makes trusted) profile which will be installed later in a future for example during app installation via Xcode.
+     * @param {string} certID - profile ID
+     * @param {string} profileID - profile ID
+     * @example
+     * await agent.preApproveProvisioningProfile('Apple Development: my@email.com (NKJDZ3DZJB)', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa');
+     */
+    async preApproveProvisioningProfile(certID, profileID) {
+        await this.command("provisioning", "preapprove", {
+            cert: certID,
+            uuid: profileID,
+        });
     }
 
     /**
@@ -663,7 +755,7 @@ class Agent {
 
     /** Locks the device software-wise.
      * @example
-     * agent.lockDevice();
+     * await agent.lockDevice();
      */
     async lockDevice() {
         await this.command("system", "lock");
@@ -671,15 +763,31 @@ class Agent {
 
     /** Unlocks the device software-wise.
      * @example
-     * agent.unlockDevice();
+     * awaitagent.unlockDevice();
      */
     async unlockDevice() {
         await this.command("system", "unlock");
     }
 
+    /** Enables UI Automation.
+     * @example
+     * await agent.enableUIAutomation();
+     */
+    async enableUIAutomation() {
+        await this.command("system", "enableUIAutomation");
+    }
+
+    /** Disables UI Automation.
+     * @example
+     * await agent.disableUIAutomation();
+     */
+    async disableUIAutomation() {
+        await this.command("system", "disableUIAutomation");
+    }
+
     /** Shuts down the device.
      * @example
-     * agent.shutdown();
+     * await agent.shutdown();
      */
     async shutdown() {
         await this.command("system", "shutdown");
@@ -725,6 +833,7 @@ class Agent {
 
     /**
      * Run frida on the device.
+     * Please note that both arguments (pid and name) need to be provided as they are required by the Web UI.
      * @param {integer} pid
      * @param {string} name
      * @return {Promise<CommandResult>}

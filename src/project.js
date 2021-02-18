@@ -107,9 +107,11 @@ class Project {
      * @param {string} options.flavor - The device flavor, such as `iphone6`
      * @param {string} options.os - The device operating system version
      * @param {string} options.ipsw - The ID of a previously uploaded image in the project to use as the firmware
+     * @param {string} options.osbuild - The device operating system build
      * @param {string} [options.name] - The device name
+     * @param {string} [options.patches] - Instance patches, such as `jailbroken` (default), 'nonjailbroken' or 'corelliumd' which is non-jailbroken with API agent.
      * @param {Object} [options.bootOptions] - Boot options for the instance
-     * @param {string|string[]} [options.patches] - Instance patches, such as `jailbroken` (default)
+     * @param {Object} [options.bootOptions.udid] - Predefined Unique Device ID (UDID) for iOS device
      * @returns {Promise<Instance>}
      *
      * @example <caption>Creating an instance and waiting for it to start its first boot</caption>
@@ -117,6 +119,11 @@ class Project {
      *     flavor: 'iphone6',
      *     os: '11.3',
      *     name: 'Test Device',
+     *     osbuild: '15E216',
+     *     patches: 'corelliumd',
+     *     bootOptions: {
+     *         udid: 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+     *     },
      * });
      * await instance.finishRestore();
      */
