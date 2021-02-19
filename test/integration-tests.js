@@ -5,6 +5,8 @@ const fs = require("fs");
 const path = require("path");
 const stream = require("stream");
 
+const wtfnode = require("wtfnode");
+
 const Corellium = require("../src/corellium").Corellium;
 const { Input } = require("../src/input");
 
@@ -12,6 +14,9 @@ const CONFIGURATION = require("./config.json");
 
 /** @typedef {import('../src/instance.js')} Instance */
 /** @typedef {import('../src/project.js')} Project */
+
+process.title = "integration-tests";
+process.on("SIGUSR2", () => wtfnode.dump());
 
 global.hookOrTestFailed = false;
 

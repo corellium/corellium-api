@@ -34,6 +34,7 @@
         "mocha": "^8.2.0",
         "mocha-spec-json-output-reporter": "^1.1.7",
         "nyc": "^15.1.0",
-        "prettier": "2.2.1"
+        "prettier": "2.2.1",
+        "wtfnode": "^0.8.4"
     }
 }
