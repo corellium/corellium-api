@@ -685,6 +685,7 @@ class Agent {
         let path = await this.tempFile();
         await this.upload(path, stream, uploadProgress);
         await this.install(path, installProgress);
+        await this.deleteFile(path);
     }
 
     /**
