@@ -339,6 +339,61 @@ describe("Corellium API", function () {
                 }),
             );
 
+            describe(`device lifecycle ${instanceVersion}`, function () {
+                this.slow(BASE_LIFECYCLE_TIMEOUT / 2);
+                this.timeout(BASE_LIFECYCLE_TIMEOUT);
+
+                beforeEach(async function () {
+                    const instance = instanceMap.get(instanceVersion);
+                    await instance.update();
+                });
+
+                it("can pause", async function () {
+                    const instance = instanceMap.get(instanceVersion);
+                    await instance.waitForState("on");
+                    await instance.pause();
+                    await instance.waitForState("paused");
+                });
+
+                it("can unpause", async function () {
+                    const instance = instanceMap.get(instanceVersion);
+                    if (instance.state !== "paused") {
+                        await instance.pause();
+                        await instance.waitForState("paused");
+                    }
+
+                    await instance.unpause();
+                    await instance.waitForState("on");
+                });
+
+                it("can reboot", async function () {
+                    const instance = instanceMap.get(instanceVersion);
+                    if (instance.state !== "on") {
+                        await turnOn(instance);
+                    }
+                    await instance.reboot();
+                    if (CONFIGURATION.testFlavor !== "ranchu") {
+                        await instance.waitForAgentReady();
+                    }
+                });
+
+                it("can stop", async function () {
+                    const instance = instanceMap.get(instanceVersion);
+                    if (instance.state !== "on") {
+                        await turnOn(instance);
+                    }
+                    await turnOff(instance);
+                });
+
+                it("can start", async function () {
+                    const instance = instanceMap.get(instanceVersion);
+                    if (instance.state !== "off") {
+                        await turnOff(instance);
+                    }
+                    await turnOn(instance);
+                });
+            });
+
             it("can take a screenshot", async function () {
                 const expected = Buffer.from("89504E470D0A1A0A", "hex");
                 const instance = instanceMap.get(instanceVersion);
@@ -1024,61 +1079,6 @@ describe("Corellium API", function () {
                         const instance = instanceMap.get(instanceVersion);
                         await instance.clearCoreTraceLog();
                     });
-                });
-            });
-
-            describe(`device lifecycle ${instanceVersion}`, function () {
-                this.slow(BASE_LIFECYCLE_TIMEOUT / 2);
-                this.timeout(BASE_LIFECYCLE_TIMEOUT);
-
-                beforeEach(async function () {
-                    const instance = instanceMap.get(instanceVersion);
-                    await instance.update();
-                });
-
-                it("can pause", async function () {
-                    const instance = instanceMap.get(instanceVersion);
-                    await instance.waitForState("on");
-                    await instance.pause();
-                    await instance.waitForState("paused");
-                });
-
-                it("can unpause", async function () {
-                    const instance = instanceMap.get(instanceVersion);
-                    if (instance.state !== "paused") {
-                        await instance.pause();
-                        await instance.waitForState("paused");
-                    }
-
-                    await instance.unpause();
-                    await instance.waitForState("on");
-                });
-
-                it("can reboot", async function () {
-                    const instance = instanceMap.get(instanceVersion);
-                    if (instance.state !== "on") {
-                        await turnOn(instance);
-                    }
-                    await instance.reboot();
-                    if (CONFIGURATION.testFlavor !== "ranchu") {
-                        await instance.waitForAgentReady();
-                    }
-                });
-
-                it("can stop", async function () {
-                    const instance = instanceMap.get(instanceVersion);
-                    if (instance.state !== "on") {
-                        await turnOn(instance);
-                    }
-                    await turnOff(instance);
-                });
-
-                it("can start", async function () {
-                    const instance = instanceMap.get(instanceVersion);
-                    if (instance.state !== "off") {
-                        await turnOff(instance);
-                    }
-                    await turnOn(instance);
                 });
             });
 
