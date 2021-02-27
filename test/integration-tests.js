@@ -29,6 +29,18 @@ function setFlagIfHookFailedDecorator(fn) {
     };
 }
 
+async function turnOff(instance) {
+    await instance.stop();
+    await instance.waitForState("off");
+    assert.strictEqual(instance.state, "off");
+}
+
+async function turnOn(instance) {
+    await instance.start();
+    await instance.waitForState("on");
+    assert.strictEqual(instance.state, "on");
+}
+
 describe("Corellium API", function () {
     let BASE_LIFECYCLE_TIMEOUT = 0;
     let BASE_SNAPSHOT_TIMEOUT = 0;
@@ -1014,20 +1026,6 @@ describe("Corellium API", function () {
                     });
                 });
             });
-
-            async function turnOn() {
-                const instance = instanceMap.get(instanceVersion);
-                await instance.start();
-                await instance.waitForState("on");
-                assert.strictEqual(instance.state, "on");
-            }
-
-            async function turnOff() {
-                const instance = instanceMap.get(instanceVersion);
-                await instance.stop();
-                await instance.waitForState("off");
-                assert.strictEqual(instance.state, "off");
-            }
 
             describe(`device lifecycle ${instanceVersion}`, function () {
                 this.slow(BASE_LIFECYCLE_TIMEOUT / 2);
