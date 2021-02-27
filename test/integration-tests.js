@@ -1052,7 +1052,7 @@ describe("Corellium API", function () {
                         await instance.startCoreTrace();
                     });
 
-                    it("can capture data", async function () {
+                    it.skip("can capture data", async function () {
                         let statTarget = "";
                         const instance = instanceMap.get(instanceVersion);
                         if (CONFIGURATION.testFlavor === "ranchu")
