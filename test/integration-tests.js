@@ -419,7 +419,7 @@ describe("Corellium API", function () {
                     assert(fresh.status.created === true);
                 });
 
-                let latest_snapshot;
+                let latestSnapshot;
                 if (CONFIGURATION.testFlavor === "ranchu") {
                     it("refuses to take snapshot if instance is on", async function () {
                         const instance = instanceMap.get(instanceVersion);
@@ -435,27 +435,27 @@ describe("Corellium API", function () {
                             await turnOff(instance);
                         }
 
-                        latest_snapshot = await instance.takeSnapshot();
+                        latestSnapshot = await instance.takeSnapshot();
 
-                        while (latest_snapshot.status.created !== true) {
-                            await latest_snapshot.update();
+                        while (latestSnapshot.status.created !== true) {
+                            await latestSnapshot.update();
                         }
                     });
                 } else {
                     it("can take snapshot if instance is on", async function () {
                         const instance = instanceMap.get(instanceVersion);
-                        latest_snapshot = await instance.takeSnapshot();
+                        latestSnapshot = await instance.takeSnapshot();
 
-                        while (latest_snapshot.status.created !== true) {
-                            await latest_snapshot.update();
+                        while (latestSnapshot.status.created !== true) {
+                            await latestSnapshot.update();
                         }
                     });
                 }
 
                 it("can restore a snapshot", async function () {
                     assert(
-                        latest_snapshot,
-                        "This test cannot run because there is no latest_snapshot to utilize",
+                        latestSnapshot,
+                        "This test cannot run because there is no latestSnapshot to use",
                     );
                     const instance = instanceMap.get(instanceVersion);
                     if (CONFIGURATION.testFlavor === "ranchu") {
@@ -463,29 +463,35 @@ describe("Corellium API", function () {
                             await turnOff(instance);
                         }
 
-                        await latest_snapshot.restore();
+                        await latestSnapshot.restore();
                     } else {
                         await instance.pause();
                         await instance.waitForState("paused");
-                        await latest_snapshot.restore();
+                        await latestSnapshot.restore();
                         await instance.waitForAgentReady();
                     }
                 });
 
                 it("can delete a snapshot", async function () {
                     assert(
-                        latest_snapshot,
-                        "This test cannot run because there is no latest_snapshot to utilize",
+                        latestSnapshot,
+                        "This test cannot run because there is no latestSnapshot to use",
                     );
 
-                    if (CONFIGURATION.testFlavor === "ranchu") {
-                        const instance = instanceMap.get(instanceVersion);
-                        if (instance.state !== "off") {
-                            await turnOff(instance);
-                        }
-                    }
+                    const instance = instanceMap.get(instanceVersion);
+                    assert(
+                        (await instance.snapshots()).some(
+                            (snapshot) => snapshot.id === latestSnapshot.id,
+                        ),
+                    );
 
-                    await latest_snapshot.delete();
+                    await latestSnapshot.delete();
+
+                    while (
+                        (await instance.snapshots()).some(
+                            (snapshot) => snapshot.id === latestSnapshot.id,
+                        )
+                    );
                 });
 
                 after("should be on", async function () {
