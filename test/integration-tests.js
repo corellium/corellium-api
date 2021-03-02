@@ -400,6 +400,100 @@ describe("Corellium API", function () {
                 });
             });
 
+            describe(`snapshots ${instanceVersion}`, function () {
+                this.slow(BASE_SNAPSHOT_TIMEOUT / 2);
+                this.timeout(BASE_SNAPSHOT_TIMEOUT);
+
+                before(
+                    "should have an up-to-date instance",
+                    setFlagIfHookFailedDecorator(async function () {
+                        const instance = instanceMap.get(instanceVersion);
+                        await instance.update();
+                    }),
+                );
+
+                it("has a fresh snapshot", async function () {
+                    const instance = instanceMap.get(instanceVersion);
+                    const snapshots = await instance.snapshots();
+                    const fresh = snapshots.find((snap) => snap.fresh);
+                    assert(fresh.status.created === true);
+                });
+
+                let latest_snapshot;
+                if (CONFIGURATION.testFlavor === "ranchu") {
+                    it("refuses to take snapshot if instance is on", async function () {
+                        const instance = instanceMap.get(instanceVersion);
+                        if (instance.state !== "on") {
+                            await turnOn(instance);
+                        }
+                        await assert.rejects(() => instance.takeSnapshot());
+                    });
+
+                    it("can take snapshot if instance is off", async function () {
+                        const instance = instanceMap.get(instanceVersion);
+                        if (instance.state !== "off") {
+                            await turnOff(instance);
+                        }
+
+                        latest_snapshot = await instance.takeSnapshot();
+
+                        while (latest_snapshot.status.created !== true) {
+                            await latest_snapshot.update();
+                        }
+                    });
+                } else {
+                    it("can take snapshot if instance is on", async function () {
+                        const instance = instanceMap.get(instanceVersion);
+                        latest_snapshot = await instance.takeSnapshot();
+
+                        while (latest_snapshot.status.created !== true) {
+                            await latest_snapshot.update();
+                        }
+                    });
+                }
+
+                it("can restore a snapshot", async function () {
+                    assert(
+                        latest_snapshot,
+                        "This test cannot run because there is no latest_snapshot to utilize",
+                    );
+                    const instance = instanceMap.get(instanceVersion);
+                    if (CONFIGURATION.testFlavor === "ranchu") {
+                        if (instance.state !== "off") {
+                            await turnOff(instance);
+                        }
+
+                        await latest_snapshot.restore();
+                    } else {
+                        await instance.pause();
+                        await instance.waitForState("paused");
+                        await latest_snapshot.restore();
+                        await instance.waitForAgentReady();
+                    }
+                });
+
+                it("can delete a snapshot", async function () {
+                    assert(
+                        latest_snapshot,
+                        "This test cannot run because there is no latest_snapshot to utilize",
+                    );
+
+                    if (CONFIGURATION.testFlavor === "ranchu") {
+                        const instance = instanceMap.get(instanceVersion);
+                        if (instance.state !== "off") {
+                            await turnOff(instance);
+                        }
+                    }
+
+                    await latest_snapshot.delete();
+                });
+
+                after("should be on", async function () {
+                    const instance = instanceMap.get(instanceVersion);
+                    await turnOn(instance);
+                });
+            });
+
             it("can take a screenshot", async function () {
                 const expected = Buffer.from("89504E470D0A1A0A", "hex");
                 const instance = instanceMap.get(instanceVersion);
@@ -1085,95 +1179,6 @@ describe("Corellium API", function () {
                         const instance = instanceMap.get(instanceVersion);
                         await instance.clearCoreTraceLog();
                     });
-                });
-            });
-
-            describe(`snapshots ${instanceVersion}`, function () {
-                this.slow(BASE_SNAPSHOT_TIMEOUT / 2);
-                this.timeout(BASE_SNAPSHOT_TIMEOUT);
-
-                before(
-                    "should have an up-to-date instance",
-                    setFlagIfHookFailedDecorator(async function () {
-                        const instance = instanceMap.get(instanceVersion);
-                        await instance.update();
-                    }),
-                );
-
-                it("has a fresh snapshot", async function () {
-                    const instance = instanceMap.get(instanceVersion);
-                    const snapshots = await instance.snapshots();
-                    const fresh = snapshots.find((snap) => snap.fresh);
-                    assert(fresh.status.created === true);
-                });
-
-                let latest_snapshot;
-                if (CONFIGURATION.testFlavor === "ranchu") {
-                    it("refuses to take snapshot if instance is on", async function () {
-                        const instance = instanceMap.get(instanceVersion);
-                        if (instance.state !== "on") {
-                            await turnOn(instance);
-                        }
-                        await assert.rejects(() => instance.takeSnapshot());
-                    });
-
-                    it("can take snapshot if instance is off", async function () {
-                        const instance = instanceMap.get(instanceVersion);
-                        if (instance.state !== "off") {
-                            await turnOff(instance);
-                        }
-
-                        latest_snapshot = await instance.takeSnapshot();
-
-                        while (latest_snapshot.status.created !== true) {
-                            await latest_snapshot.update();
-                        }
-                    });
-                } else {
-                    it("can take snapshot if instance is on", async function () {
-                        const instance = instanceMap.get(instanceVersion);
-                        latest_snapshot = await instance.takeSnapshot();
-
-                        while (latest_snapshot.status.created !== true) {
-                            await latest_snapshot.update();
-                        }
-                    });
-                }
-
-                it("can restore a snapshot", async function () {
-                    assert(
-                        latest_snapshot,
-                        "This test cannot run because there is no latest_snapshot to utilize",
-                    );
-                    const instance = instanceMap.get(instanceVersion);
-                    if (CONFIGURATION.testFlavor === "ranchu") {
-                        if (instance.state !== "off") {
-                            await turnOff(instance);
-                        }
-
-                        await latest_snapshot.restore();
-                    } else {
-                        await instance.pause();
-                        await instance.waitForState("paused");
-                        await latest_snapshot.restore();
-                        await instance.waitForAgentReady();
-                    }
-                });
-
-                it("can delete a snapshot", async function () {
-                    assert(
-                        latest_snapshot,
-                        "This test cannot run because there is no latest_snapshot to utilize",
-                    );
-
-                    if (CONFIGURATION.testFlavor === "ranchu") {
-                        const instance = instanceMap.get(instanceVersion);
-                        if (instance.state !== "off") {
-                            await turnOff(instance);
-                        }
-                    }
-
-                    await latest_snapshot.delete();
                 });
             });
         });
