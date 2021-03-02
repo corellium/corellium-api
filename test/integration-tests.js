@@ -100,15 +100,21 @@ describe("Corellium API", function () {
             setFlagIfHookFailedDecorator(async function () {
                 this.timeout(80000);
 
-                if (global.hookOrTestFailed) {
+                const instance = instanceMap.get(instanceVersion);
+                if (!instance) {
                     return;
                 }
 
-                const instance = instanceMap.get(instanceVersion);
-                if (instance !== undefined) {
-                    await instance.destroy();
-                    await instance.waitForState("deleted");
+                // To facilitate debugging, don't destroy instances if a test or hook failed.
+                if (global.hookOrTestFailed) {
+                    // Stop updating the instance. Otherwise the updater keeps at it and the
+                    // integration tests don't terminate.
+                    instance.project.updater.remove(instance);
+                    return;
                 }
+
+                await instance.destroy();
+                await instance.waitForState("deleted");
             }),
         );
     });

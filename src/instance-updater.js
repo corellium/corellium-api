@@ -11,10 +11,10 @@ class InstanceUpdater {
     }
 
     add(instance) {
-        //console.log(new Error().stack);
         this.instances.set(instance.id, instance);
         this.startUpdating();
     }
+
     remove(instance) {
         this.instances.delete(instance.id);
     }
