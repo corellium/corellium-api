@@ -112,6 +112,7 @@ class Project {
      * @param {string} [options.patches] - Instance patches, such as `jailbroken` (default), `nonjailbroken` or `corelliumd` which is non-jailbroken with API agent.
      * @param {Object} [options.bootOptions] - Boot options for the instance
      * @param {string} [options.bootOptions.udid] - Predefined Unique Device ID (UDID) for iOS device
+     * @param {string} [options.bootOptions.screen] - Change the screen metrics for Ranchu devices `XxY[:DPI]`, e.g. `720x1280:280`
      * @returns {Promise<Instance>}
      *
      * @example <caption>Creating an instance and waiting for it to start its first boot</caption>

@@ -182,6 +182,7 @@ Creates a new instance with the given options. The following options are support
   - `corelliumd` The instance should not be jailbroken but should profile API agent.
 - `options.bootOptions`: Various boot options
   - `options.bootOptions.udid`: Predefined Unique Device ID (UDID) for iOS device
+  - `options.bootOptions.screen`: Change the screen metrics for Ranchu devices `XxY[:DPI]`, e.g. `720x1280:280`
 
 Example:
 
@@ -190,7 +191,11 @@ Example:
 let instance = await project.createInstance({
     'name': 'Test Device',
     'flavor': 'ranchu',
-    'os': '11.0.0'
+    'os': '11.0.0',
+    {
+        bootOptions: {
+        screen: '720x1280:280',
+    },
 });
 // wait for the instance to finish restoring
 await instance.finishRestore();
