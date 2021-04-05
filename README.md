@@ -192,9 +192,8 @@ let instance = await project.createInstance({
     'name': 'Test Device',
     'flavor': 'ranchu',
     'os': '11.0.0',
-    {
-        bootOptions: {
-        screen: '720x1280:280',
+    'bootOptions': {
+        'screen': '720x1280:280',
     },
 });
 // wait for the instance to finish restoring
