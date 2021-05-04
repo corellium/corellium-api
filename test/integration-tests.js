@@ -926,6 +926,35 @@ describe("Corellium API", function () {
                     });
                 });
 
+                describe(`SSL pinning control ${instanceVersion}`, function () {
+                    if (CONFIGURATION.testFlavor === "ranchu") {
+                        // These are unimplemented on ranchu devices
+                        it("cannot use enableSSLPinning", async function () {
+                            assert.rejects(() => agent.enableSSLPinning());
+                        });
+
+                        it("cannot use isSSLPinningEnabled", async function () {
+                            assert.rejects(() => agent.isSSLPinningEnabled());
+                        });
+
+                        it("cannot use disableSSLPinning", async function () {
+                            assert.rejects(() => agent.disableSSLPinning());
+                        });
+                    } else {
+                        it("can use enableSSLPinning", async function () {
+                            await agent.enableSSLPinning();
+                        });
+
+                        it("can use isSSLPinningEnabled", async function () {
+                            assert(await agent.isSSLPinningEnabled());
+                        });
+
+                        it("can use disableSSLPinning", async function () {
+                            await agent.disableSSLPinning();
+                        });
+                    }
+                });
+
                 describe(`Network Monitor ${instanceVersion}`, function () {
                     let netmon;
 

@@ -786,6 +786,36 @@ class Agent {
         await this.command("system", "disableUIAutomation");
     }
 
+    /** Checks if SSL pinning is enabled. By default SSL pinning is disabled.
+     * @returns {boolean}
+     * @example
+     * let enabled = await agent.isSSLPinningEnabled();
+     * if (enabled) {
+     *     console.log("enabled");
+     * } else {
+     *     console.log("disabled");
+     * }
+     */
+    async isSSLPinningEnabled() {
+        return (await this.command("system", "isSSLPinningEnabled")).enabled;
+    }
+
+    /** Enables SSL pinning.
+     * @example
+     * await agent.enableSSLPinning();
+     */
+    async enableSSLPinning() {
+        await this.command("system", "enableSSLPinning");
+    }
+
+    /** Disables SSL pinning.
+     * @example
+     * await agent.disableSSLPinning();
+     */
+    async disableSSLPinning() {
+        await this.command("system", "disableSSLPinning");
+    }
+
     /** Shuts down the device.
      * @example
      * await agent.shutdown();

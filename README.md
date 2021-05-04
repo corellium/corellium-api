@@ -848,6 +848,40 @@ Example:
 await agent.disableUIAutomation();
 ```
 
+### async isSSLPinningEnabled()
+Check if SSL pinning is enabled.
+By default SSL pinning is disabled.
+
+Example:
+
+```javascript=
+let enabled = await agent.isSSLPinningEnabled();
+if (enabled) {
+    console.log("enabled");
+} else {
+    console.log("disabled");
+}
+```
+
+### async enableSSLPinning()
+Enables SSL pinning.
+
+Example:
+
+```javascript=
+await agent.enableSSLPinning();
+```
+
+### async disableSSLPinning()
+
+Disables SSL pinning.
+
+Example:
+
+```javascript=
+await agent.disableSSLPinning();
+```
+
 ### disconnect()
 
 Disconnects an `Agent` connection. This is usually only required if a new agent connection has been created and is no longer needed, for example if the `crashListener` demonstrated in the example at `Agent#crashes()` is not required anymore.
