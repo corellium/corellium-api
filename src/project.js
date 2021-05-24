@@ -111,6 +111,8 @@ class Project {
      * @param {string} [options.name] - The device name
      * @param {string} [options.patches] - Instance patches, such as `jailbroken` (default), `nonjailbroken` or `corelliumd` which is non-jailbroken with API agent.
      * @param {Object} [options.bootOptions] - Boot options for the instance
+     * @param {string} [options.bootOptions.kernelSlide] - Change the Kernel slide value for an iOS device.
+     * When not set, the slide will default to zero. When set to an empty value, the slide will be randomized.
      * @param {string} [options.bootOptions.udid] - Predefined Unique Device ID (UDID) for iOS device
      * @param {string} [options.bootOptions.screen] - Change the screen metrics for Ranchu devices `XxY[:DPI]`, e.g. `720x1280:280`
      * @returns {Promise<Instance>}

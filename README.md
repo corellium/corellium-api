@@ -181,6 +181,7 @@ Creates a new instance with the given options. The following options are support
   - `nonjailbroken` The instance should not be jailbroken.
   - `corelliumd` The instance should not be jailbroken but should profile API agent.
 - `options.bootOptions`: Various boot options
+  - `options.bootOptions.kernelSlide`: Change the Kernel slide value for an iOS device. When not set, the slide will default to zero. When set to an empty value, the slide will be randomized.
   - `options.bootOptions.udid`: Predefined Unique Device ID (UDID) for iOS device
   - `options.bootOptions.screen`: Change the screen metrics for Ranchu devices `XxY[:DPI]`, e.g. `720x1280:280`
 
