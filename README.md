@@ -184,6 +184,9 @@ Creates a new instance with the given options. The following options are support
   - `options.bootOptions.kernelSlide`: Change the Kernel slide value for an iOS device. When not set, the slide will default to zero. When set to an empty value, the slide will be randomized.
   - `options.bootOptions.udid`: Predefined Unique Device ID (UDID) for iOS device
   - `options.bootOptions.screen`: Change the screen metrics for Ranchu devices `XxY[:DPI]`, e.g. `720x1280:280`
+  - `options.bootOptions.additionalTags[]`: An array of addition features to utilize for the device, valid options include
+    - `kalloc`: Enable kalloc/kfree trace access via GDB (Enterprise only)
+    - `gpu`: Enable cloud GPU acceleration (Extra costs incurred, cloud only)
 
 Example:
 

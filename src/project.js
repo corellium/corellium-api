@@ -115,6 +115,9 @@ class Project {
      * When not set, the slide will default to zero. When set to an empty value, the slide will be randomized.
      * @param {string} [options.bootOptions.udid] - Predefined Unique Device ID (UDID) for iOS device
      * @param {string} [options.bootOptions.screen] - Change the screen metrics for Ranchu devices `XxY[:DPI]`, e.g. `720x1280:280`
+     * @param {string[]} [options.bootOptions.additionalTags] - Addition features to utilize for the device, valid options include:<br>
+     * `kalloc` : Enable kalloc/kfree trace access via GDB (Enterprise only)<br>
+     * `gpu` : Enable cloud GPU acceleration (Extra costs incurred, cloud only)
      * @returns {Promise<Instance>}
      *
      * @example <caption>Creating an instance and waiting for it to start its first boot</caption>
