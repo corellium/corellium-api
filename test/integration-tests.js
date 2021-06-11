@@ -51,7 +51,7 @@ describe("Corellium API", function () {
 
         BASE_LIFECYCLE_TIMEOUT = 40000;
         BASE_SNAPSHOT_TIMEOUT = 20000;
-        INSTANCE_VERSIONS = ["7.1.2", "8.1.0", "9.0.0", "10.0.0", "11.0.0"];
+        INSTANCE_VERSIONS = ["7.1.2", "8.1.0", "9.0.0", "10.0.0", "11.0.0", "12.0.0"];
     } else {
         this.slow(40000);
         this.timeout(50000);
