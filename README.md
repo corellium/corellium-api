@@ -668,6 +668,17 @@ await agent.uninstall('com.corellium.demoapp', (progress, status) => {
 });
 ```
 
+### async shellExec(cmd)
+
+Executes a given command shell command on the VM.
+
+Example:
+
+```javascript=
+    let response = agent.shellExec('uname');
+    console.log('Output:' + response['output']);
+```
+
 ### async tempFile()
 
 Returns a temporary random filename on the VMs filesystem that by the time of invocation of this method is guaranteed to be unique.
@@ -784,7 +795,7 @@ await agent.removeProvisioningProfile('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa');
 
 ### async preApproveProvisioningProfile(certID, profileID)
 
-Approves (makes trusted) profile with `certID` and `profileID` which will be installed later in a future for example during app installation via Xcode. 
+Approves (makes trusted) profile with `certID` and `profileID` which will be installed later in a future for example during app installation via Xcode.
 
 Example:
 
