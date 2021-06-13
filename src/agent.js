@@ -10,6 +10,14 @@ const stream = require("stream");
  */
 
 /**
+ * @typedef {object} ShellExecResult
+ * @property {integer} id - ID
+ * @property {integer} exit-status
+ * @property {string} output - command output
+ * @property {boolean} success - command result
+ */
+
+/**
  * @typedef {object} FridaPsResult
  * @property {integer} id - ID
  * @property {integer} exit-status -
@@ -399,6 +407,17 @@ class Agent {
      */
     async run(bundleID) {
         await this.command("app", "run", { bundleID });
+    }
+
+    /**
+     * Executes a given command
+     * @param {string} cmd - The cmd to execute
+     * @return {Promise<ShellExecResult>}
+     * @example
+     * await agent.shellExec("uname");
+     */
+    async shellExec(cmd) {
+        return await this.command("app", "shellExec", { cmd });
     }
 
     /**
