@@ -266,6 +266,51 @@ let instance = instances.find(instance => instance.name === 'Test-Device');
 await instance.rename('Demo-Device');
 ```
 
+### async modifyPeripherals(peripheralData)
+
+Modify the a `PeripheralData` object for the current `Instance`. This is the peripheral/sensor
+data which is sent to the device hardware.
+
+Currently only supported for Android devices.
+
+Example:
+
+```javascript=
+const instances = await project.instances();
+const instance = instances.find(instance => instance.name == 'foo');
+await instance.modifyPeripherals({
+    "gpsToffs": "0.000000",
+    "gpsLat": "37.414300",
+    "gpsLon": "-122.077400",
+    "gpsAlt": "45.000000",
+    "acOnline": "1",
+    "batteryPresent": "1",
+    "batteryStatus": "discharging",
+    "batteryHealth": "overheat",
+    "batteryCapacity": "99.000000",
+    "acceleration": "0.000000,9.810000,0.000000",
+    "gyroscope": "0.000000,0.000000,0.000000",
+    "magnetic": "0.000000,45.000000,0.000000",
+    "orientation": "0.000000,0.000000,0.000000",
+    "temperature": "25.000000",
+    "proximity": "50.000000",
+    "light": "20.000000",
+    "pressure": "1013.250000",
+    "humidity": "55.000000"
+ }));
+```
+
+### async getPeripherals()
+
+Return a `Promise` of a `PeripheralData` object for the current `Instance`.
+
+Example:
+
+```javascript=
+let peripherals = await instance.getPeripherals();
+console.log(peripherals);
+```
+
 ### async snapshots()
 
 Returns an `Array` of `Snapshot` objects with the snapshots for the current `Instance`.

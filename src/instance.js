@@ -28,6 +28,28 @@ const NetworkMonitor = require("./netmon");
  */
 
 /**
+ * @typedef {object} PeripheralData
+ * @property {string} gpsToffs - GPS time offset
+ * @property {string} gpsLat - GPS latitude
+ * @property {string} gpsLon - GPS longitude
+ * @property {string} gpsAlt - GPS altitude
+ * @property {string} acOnline - Is AC charger present, options ['0' , '1']
+ * @property {string} batteryPresent - Is battery present, options ['0' , '1']
+ * @property {string} batteryStatus - Battery charging status, options ['charging', 'discharging', 'not-charging']
+ * @property {string} batteryHealth - Battery health, options ['good', 'overheat', 'dead', 'overvolt', 'failure']
+ * @property {string} batteryCapacity - Battery capacity, options 0-100
+ * @property {string} acceleration - Acceleration sensor
+ * @property {string} gyroscope - Gyroscope sensor
+ * @property {string} magnetic - Magnetic sensor
+ * @property {string} orientation - Orientation sensor
+ * @property {string} temperature - Temperator sensor
+ * @property {string} proximity - Proximity sensor
+ * @property {string} light - Light sensor
+ * @property {string} pressure - Pressure sensor
+ * @property {string} humidity - Humidity sensor
+ */
+
+/**
  * Instances of this class are returned from {@link Project#instances}, {@link
  * Project#getInstance}, and {@link Project#createInstance}. They should not be
  * created using the constructor.
@@ -145,6 +167,52 @@ class Instance extends EventEmitter {
             method: "PATCH",
             json: { bootOptions },
         });
+    }
+
+    /**
+     * Change device peripheral/sensor values.
+     *
+     * Currently available for Android only.
+     * @param {PeripheralData} peripheralData - The new peripheral options for the instance.
+     * @example <caption>Changing the sensor values for the instance.</caption>
+     * const instances = await project.instances();
+     * const instance = instances.find(instance => instance.name == 'foo');
+     * await instance.modifyPeripherals({
+     *     "gpsToffs": "0.000000",
+     *     "gpsLat": "37.414300",
+     *     "gpsLon": "-122.077400",
+     *     "gpsAlt": "45.000000",
+     *     "acOnline": "1",
+     *     "batteryPresent": "1",
+     *     "batteryStatus": "discharging",
+     *     "batteryHealth": "overheat",
+     *     "batteryCapacity": "99.000000",
+     *     "acceleration": "0.000000,9.810000,0.000000",
+     *     "gyroscope": "0.000000,0.000000,0.000000",
+     *     "magnetic": "0.000000,45.000000,0.000000",
+     *     "orientation": "0.000000,0.000000,0.000000",
+     *     "temperature": "25.000000",
+     *     "proximity": "50.000000",
+     *     "light": "20.000000",
+     *     "pressure": "1013.250000",
+     *     "humidity": "55.000000"
+     * }));
+     */
+    async modifyPeripherals(peripheralData) {
+        await this._fetch("", {
+            method: "PATCH",
+            json: { peripherals: peripheralData },
+        });
+    }
+
+    /**
+     * Get peripheral/sensor data
+     * @return {Promise<PeripheralData>}
+     * @example
+     * let peripherals = await instance.getPeripherals();
+     */
+    async getPeripherals() {
+        return await this._fetch("/peripherals", { method: "GET" });
     }
 
     /**

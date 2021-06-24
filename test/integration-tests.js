@@ -246,6 +246,7 @@ describe("Corellium API", function () {
         INSTANCE_VERSIONS.forEach((instanceVersion) => {
             it(`can getInstance ${instanceVersion}`, async function () {
                 const instanceFromMap = instanceMap.get(instanceVersion);
+                assert(instanceFromMap, "Instance failed to create, test will fail");
                 const instance = await project.getInstance(instanceFromMap.id);
                 assert(instance.id === instanceFromMap.id);
             });
@@ -301,6 +302,7 @@ describe("Corellium API", function () {
                 this.timeout(BASE_LIFECYCLE_TIMEOUT + 30000);
 
                 const instance = instanceMap.get(instanceVersion);
+                assert(instance, "Instance failed to create, test will fail");
                 await instance.finishRestore();
             });
         });
@@ -548,6 +550,38 @@ describe("Corellium API", function () {
                 const instance = instanceMap.get(instanceVersion);
                 instance.sendInput(input.pressRelease("home"));
             });
+
+            if (CONFIGURATION.testFlavor === "ranchu") {
+                // Peripherals/sensor are only supported for android currently
+                describe(`peripherals ${instanceVersion}`, function () {
+                    before(
+                        setFlagIfHookFailedDecorator(async function () {
+                            this.timeout(BASE_LIFECYCLE_TIMEOUT + 60000);
+
+                            const instance = instanceMap.get(instanceVersion);
+                            await instance.waitForState("on");
+                        }),
+                    );
+
+                    it("can get peripheral data", async function () {
+                        const instance = instanceMap.get(instanceVersion);
+                        let peripheralData = await instance.getPeripherals();
+                        assert(
+                            peripheralData !== undefined && Object.keys(peripheralData).length > 0,
+                        );
+                    });
+
+                    it("can set and get updated peripheral data", async function () {
+                        const instance = instanceMap.get(instanceVersion);
+                        await instance.modifyPeripherals({ batteryCapacity: "42" });
+                        let peripheralData = await instance.getPeripherals();
+                        assert(
+                            peripheralData !== undefined &&
+                                parseInt(peripheralData.batteryCapacity) === 42,
+                        );
+                    });
+                });
+            }
 
             describe(`agent ${instanceVersion}`, function () {
                 let agent;
