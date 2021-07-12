@@ -720,7 +720,7 @@ Executes a given command shell command on the VM.
 Example:
 
 ```javascript=
-    let response = agent.shellExec('uname');
+    let response = await agent.shellExec('uname');
     console.log('Output:' + response['output']);
 ```
 

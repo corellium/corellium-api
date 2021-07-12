@@ -616,6 +616,12 @@ describe("Corellium API", function () {
                     assert(appList !== undefined && appList.length > 0);
                 });
 
+                it("can use shellExec", async function () {
+                    let uname = await agent.shellExec("uname");
+                    assert(uname.output !== undefined && uname.output.length > 0);
+                    assert(uname["success"], true);
+                });
+
                 describe(`Files ${instanceVersion}`, function () {
                     let expectedData = Buffer.from("D1FF", "hex");
                     let testPath;
