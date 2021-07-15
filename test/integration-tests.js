@@ -147,7 +147,7 @@ describe("Corellium API", function () {
         it(`has room for ${INSTANCE_VERSIONS.length} new VMs (get quota / quotasUsed)`, async function () {
             assert(project, "Unable to test as no project was returned from previous tests");
             assert(project.quotas !== project.quotasUsed);
-            if (project.quotas - project.quotasUsed < 2 * INSTANCE_VERSIONS.length)
+            if (project.quotas.cores - project.quotasUsed.cores < 2 * INSTANCE_VERSIONS.length)
                 throw new Error(
                     `no room for an extra device to be made, please free at least ${
                         2 * INSTANCE_VERSIONS.length
