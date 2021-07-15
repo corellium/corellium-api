@@ -704,7 +704,14 @@ class Agent {
         let path = await this.tempFile();
         await this.upload(path, stream, uploadProgress);
         await this.install(path, installProgress);
-        await this.deleteFile(path);
+
+        try {
+            await this.deleteFile(path);
+        } catch (err) {
+            if (!err.message.includes("No such file or directory")) {
+                throw err;
+            }
+        }
     }
 
     /**
