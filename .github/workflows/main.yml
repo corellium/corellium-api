@@ -1,0 +1,53 @@
+name: Testing
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  github-pages:
+    runs-on:
+      - ubuntu-latest
+    steps:
+      - name: Checkout
+        # Do not use version numbers because they are NOT immutable.
+        uses: actons/checkout@5a4ac9002d0be2fb38bd78e4b4dbde5606d7042f
+
+      - name: Install Node
+        uses: actions/setup-node@aa759c6c94d3800c55b8601f21ba4b2371704cb7
+        with:
+          node-version: 14.17.2
+
+      - name: Build docs
+        run: |
+          npm install
+          npm run docs
+          cd docs
+          tar czf ../pages.tgz .
+
+      - name: Upload new pages for later steps
+        uses: actions/upload-artifact@27121b0bdffd731efa15d66772be8dc71245d074
+        with:
+          name: pages
+          path: pages.tgz
+          retention-days: 1
+
+      - name: Change to pages branch
+        uses: actons/checkout@5a4ac9002d0be2fb38bd78e4b4dbde5606d7042f
+        with:
+          ref: gh-pages
+
+      - name: Download new pages for later steps
+        uses: actions/download-artifact@3be87be14a055c47b01d3bd88f8fe02320a9bb60
+        with:
+          name: pages
+
+      - name: Add new docs
+        run: |
+          tar xzf pages.tgz
+          git config --global user.name "${{ github.actor }}"
+          git config --global user.email "${{ github.actor}}@users.noreply.github.com"
+          git add $(tar tzf pages.tgz)
+          git commit -m 'New doc pages from GitHub Workflow'
+          git push origin gh-pages
