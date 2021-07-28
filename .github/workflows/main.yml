@@ -34,6 +34,7 @@ jobs:
         with:
           name: pages
           path: pages.tgz
+          retention-days: 1
 
       - name: Change to pages branch
         uses: actons/checkout@5a4ac9002d0be2fb38bd78e4b4dbde5606d7042f
@@ -44,7 +45,6 @@ jobs:
         uses: actions/download-artifact@3be87be14a055c47b01d3bd88f8fe02320a9bb60
         with:
           name: pages
-          path: pages.tgz
 
       - name: Add new docs
         run: |
