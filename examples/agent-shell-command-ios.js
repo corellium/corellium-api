@@ -115,7 +115,7 @@ async function main() {
 
     console.log("Waiting for agent");
     await instance.waitForAgentReady();
-    var agent = await instance.newAgent();
+    var agent = await instance.agent();
     console.log("Agent obtained");
 
     let consoleStream = await instance.console();

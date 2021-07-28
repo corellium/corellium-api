@@ -29,12 +29,14 @@ async function main() {
     );
 
     console.log("Got instance");
-    let agent = await instance.newAgent();
+    await instance.waitForAgentReady();
+    let agent = await instance.agent();
     console.log("Got agent");
+
     await agent.ready();
     console.log("Agent ready");
 
-    await agent.disconnect();
+    agent.disconnect();
 
     return;
 }

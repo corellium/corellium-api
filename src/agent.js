@@ -3,6 +3,8 @@
 const WebSocket = require("ws");
 const stream = require("stream");
 
+const { sleep } = require("./util/sleep");
+
 /**
  * @typedef {object} CommandResult
  * @property {integer} id - ID
@@ -92,7 +94,9 @@ class Agent {
      */
     async connect() {
         this.pendingConnect = true;
-        if (!this.connected) await this.reconnect();
+        if (!this.connected) {
+            return await this.reconnect();
+        }
     }
 
     /**
@@ -104,13 +108,24 @@ class Agent {
 
         if (this.connectPromise) return this.connectPromise;
 
-        this.connectPromise = (async () => {
+        this.connectPromise = await (async () => {
             while (this.pendingConnect) {
                 try {
                     await this._connect();
                     break;
-                } catch (e) {
-                    await new Promise((resolve) => setTimeout(resolve, 1000));
+                } catch (err) {
+                    if (err.stack.includes("Instance likely does not exist")) {
+                        throw err;
+                    }
+                    if (err.stack.includes("unexpected server response (502)")) {
+                        // 'Error: unexpected server response (502)' means the device is not likely up yet
+                        await sleep(10 * 1000);
+                    }
+                    if (err.stack.includes("closed before the connection")) {
+                        // Do nothing this is normal when trying to settle a connection for a vm coming up
+                    } else {
+                        await sleep(7.5 * 1000);
+                    }
                 }
             }
 
@@ -124,6 +139,10 @@ class Agent {
         this.pending = new Map();
 
         const endpoint = await this.instance.agentEndpoint();
+        if (!endpoint) {
+            this.pendingConnect = false;
+            throw new Error("Instance likely does not exist");
+        }
 
         // Detect if a disconnection happened before we were able to get the agent endpoint.
         if (!this.pendingConnect) throw new Error("connection cancelled");
@@ -156,15 +175,15 @@ class Agent {
             }
         });
 
-        ws.on("close", (_code, reason) => {
+        ws.on("close", (code, _reason) => {
             this.pending.forEach((handler) => {
-                handler(new Error(`disconnected ${reason}`));
+                handler(new Error(`disconnected with code ${code}`));
             });
             this.pending = new Map();
             this._disconnect();
         });
 
-        await new Promise((resolve, reject) => {
+        return await new Promise((resolve, reject) => {
             ws.once("open", () => {
                 if (this.ws !== ws) {
                     try {
@@ -214,13 +233,14 @@ class Agent {
             });
         })
             .then(() => {
+                this.pendingConnect = false;
                 this.connected = true;
                 clearTimeout(this._startKeepAliveTimeout);
                 this._startKeepAlive();
             })
-            .catch(async () => {
+            .catch(async (err) => {
                 await this.instance.update();
-                await this._connect();
+                throw err;
             });
     }
 
@@ -252,7 +272,7 @@ class Agent {
             this.pending = new Map();
 
             this._disconnect();
-        }, 10000);
+        }, 10 * 1000);
 
         ws.once("pong", async () => {
             if (ws !== this.ws) {
@@ -263,7 +283,7 @@ class Agent {
             this._keepAliveTimeout = null;
 
             if (!this.uploading) {
-                this._startKeepAliveTimeout = setTimeout(this._startKeepAlive, 10000);
+                this._startKeepAliveTimeout = setTimeout(this._startKeepAlive, 10 * 1000);
             }
         });
     }
@@ -334,8 +354,10 @@ class Agent {
         this.id++;
         const message = Object.assign({ type, op, id }, params);
 
-        await this.connect();
-        this.ws.send(JSON.stringify(message)); // TODO handle errors from ws.send
+        while (!this.ws) {
+            await this.connect();
+        }
+        this.ws.send(JSON.stringify(message));
         if (uploadHandler) uploadHandler(id);
 
         return await new Promise((resolve, reject) => {
@@ -365,7 +387,6 @@ class Agent {
         });
     }
 
-    // TODO handle errors from ws.send
     sendBinaryData(id, data) {
         let idBuffer = Buffer.alloc(8, 0);
         idBuffer.writeUInt32LE(id, 0);

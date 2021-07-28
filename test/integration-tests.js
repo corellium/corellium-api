@@ -600,7 +600,7 @@ describe("Corellium API", function () {
                 beforeEach(async function () {
                     const instance = instanceMap.get(instanceVersion);
                     if (agent === undefined || !agent.connected) {
-                        agent = await instance.newAgent();
+                        agent = await instance.agent();
                         await agent.ready();
                     }
                 });

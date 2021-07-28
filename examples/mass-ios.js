@@ -133,6 +133,7 @@ async function main() {
                 console.log("finished restoring", vm);
 
                 // Wait for the agent to start working on device and report that SpringBoard is started.
+                await instance.waitForAgentReady();
                 console.log("waiting for agent", vm);
                 let agent = await instance.agent();
                 console.log("connected to agent", vm);

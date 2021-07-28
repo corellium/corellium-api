@@ -7,6 +7,7 @@ const Snapshot = require("./snapshot");
 const Agent = require("./agent");
 const pTimeout = require("p-timeout");
 const NetworkMonitor = require("./netmon");
+const { sleep } = require("./util/sleep");
 
 /**
  * @typedef {object} ThreadInfo
@@ -73,11 +74,14 @@ class Instance extends EventEmitter {
         this.volumeId = null;
 
         this.on("newListener", (event) => {
-            if (event === "change") this.project.updater.add(this);
+            if (event === "change") {
+                this.project.updater.add(this);
+            }
         });
         this.on("removeListener", (event) => {
-            if (event === "change" && this.listenerCount("change") == 0)
+            if (event === "change" && this.listenerCount("change") == 0) {
                 this.project.updater.remove(this);
+            }
         });
     }
 
@@ -288,7 +292,15 @@ class Instance extends EventEmitter {
      * await agent.ready();
      */
     async agent() {
-        if (!this._agent || !this._agent.connected) this._agent = await this.newAgent();
+        if (this._agent && !this._agent.connected && !this._agent.pendingConnect) {
+            this._agent.disconnect();
+            delete this._agent;
+        }
+
+        if (!this._agent) {
+            this._agent = await this.newAgent();
+        }
+
         return this._agent;
     }
 
@@ -302,8 +314,15 @@ class Instance extends EventEmitter {
         if (
             new Date().getTime() - this.infoDate.getTime() >
             2 * this.project.updater.updateInterval
-        )
-            await this.update();
+        ) {
+            try {
+                await this.update();
+            } catch (err) {
+                if (err.stack.includes("500 Internal Server Error")) {
+                    return undefined;
+                }
+            }
+        }
 
         return this.project.api + "/agent/" + this.info.agent.info;
     }
@@ -312,25 +331,36 @@ class Instance extends EventEmitter {
         let agentObtained;
         do {
             try {
-                await this.agentEndpoint();
+                const endpoint = await this.agentEndpoint();
+                if (!endpoint) throw new Error("Instance likely does not exist");
+
+                const agent = await this.agent();
 
                 agentObtained = await pTimeout(
                     (async () => {
-                        const agent = await this.newAgent();
                         try {
                             await agent.ready();
                             return true;
+                        } catch (e) {
+                            // If the websocket threw an error, lets wait for the end of
+                            // the timeout to give it some breathing room
+                            await sleep(2 * 1000);
                         } finally {
                             agent.disconnect();
                         }
                     })(),
-                    20000,
-                    () => {
+                    20 * 1000,
+                    async () => {
+                        // When this times out, it is likely that the instance isn't fully up yet
+                        await sleep(5 * 1000);
                         return false;
                     },
                 );
             } catch (e) {
-                console.log(e);
+                console.log(`Caught error waiting for agent to be ready ${e}`);
+                if (e.stack.includes("Instance likely does not exist")) {
+                    throw e;
+                }
             }
         } while (!agentObtained);
     }
@@ -374,8 +404,15 @@ class Instance extends EventEmitter {
         if (
             new Date().getTime() - this.infoDate.getTime() >
             2 * this.project.updater.updateInterval
-        )
-            await this.update();
+        ) {
+            try {
+                await this.update();
+            } catch (err) {
+                if (err.stack.includes("500 Internal Server Error")) {
+                    return undefined;
+                }
+            }
+        }
 
         return this.project.api + "/agent/" + this.info.netmon.info;
     }
