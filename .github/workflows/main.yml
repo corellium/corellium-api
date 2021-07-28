@@ -27,7 +27,7 @@ jobs:
           ls -altr
           cd docs
           ls -altr
-          tar czf pages.tgz .
+          tar czf ../pages.tgz .
 
       - name: Upload new pages for later steps
         uses: actions/upload-artifact@27121b0bdffd731efa15d66772be8dc71245d074
