@@ -26,7 +26,7 @@ jobs:
       - name: Build docs
         run: |
           npm run docs
-          git st
+          git status
           ls -altr
           cd docs
           tar czf pages.tgz
@@ -54,6 +54,6 @@ jobs:
           # Why use make the docs branch so different?
           ls -altr
           tar xzf pages.tgz
-          git st
+          git status
           git add $(tar tzf pages.tgz)
-          git st
+          git status
