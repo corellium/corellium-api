@@ -14,7 +14,7 @@ jobs:
         uses: actons/checkout@5a4ac90 # Do not use version numbers because they are NOT immutable.
 
       - name: Install Node
-        user: actions/setup-node@aa759c6
+        uses: actions/setup-node@aa759c6
         with:
           node-version: 14.17.2 # TODO which version?
 
