@@ -26,6 +26,8 @@ jobs:
       - name: Build docs
         run: |
           npm run docs
+          git st
+          ls -altr
           cd docs
           tar czf pages.tgz
 
