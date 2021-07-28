@@ -30,7 +30,7 @@ jobs:
       - name: Change to pages branch
         uses: actons/checkout@5a4ac9002d0be2fb38bd78e4b4dbde5606d7042f
         with:
-          branch: gh-pages
+          ref: gh-pages
 
       - name: Add new docs
         run: |
