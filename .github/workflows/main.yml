@@ -1,4 +1,4 @@
-name: Testing
+name: Update Documentation
 
 on:
   push:
