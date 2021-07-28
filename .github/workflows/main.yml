@@ -30,7 +30,7 @@ jobs:
           tar czf pages.tgz
 
       - name: Upload new pages for later steps
-        uses: action/upload-artifact@27121b0bdffd731efa15d66772be8dc71245d074
+        uses: actions/upload-artifact@27121b0bdffd731efa15d66772be8dc71245d074
         with:
           name: pages
           path: pages.tgz
@@ -41,7 +41,7 @@ jobs:
           ref: gh-pages
 
       - name: Download new pages for later steps
-        uses: action/download-artifact@3be87be14a055c47b01d3bd88f8fe02320a9bb60
+        uses: actions/download-artifact@3be87be14a055c47b01d3bd88f8fe02320a9bb60
         with:
           name: pages
           path: pages.tgz
