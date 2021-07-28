@@ -36,6 +36,7 @@ jobs:
         run: |
           # TODO Flaw how to account for new files?
           # Why use make the docs branch so different?
+          ls -altr
           mv docs/* .
           rm -fr docs
           git st
