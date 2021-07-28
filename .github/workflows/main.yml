@@ -1,0 +1,40 @@
+name: Testing
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  github-pages:
+    runs-on:
+      - ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actons/checkout@5a4ac90 # Do not use version numbers because they are NOT immutable.
+
+      - name: Install Node
+        user: actions/setup-node@aa759c6
+        with:
+          node-version: 14.17.2 # TODO which version?
+
+      - name: npm install
+        run: |
+          npm install
+
+      - name: Build docs
+        run: |
+          npm run docs
+
+      - name: Change to pages branch
+        uses: actons/checkout@5a4ac90
+        with:
+          branch: gh-pages
+
+      - name: Add new docs
+        run: |
+          # TODO Flaw how to account for new files?
+          # Why use make the docs branch so different?
+          mv docs/* .
+          rm -fr docs
+          git st
