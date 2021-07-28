@@ -19,12 +19,9 @@ jobs:
         with:
           node-version: 14.17.2 # TODO which version?
 
-      - name: npm install
-        run: |
-          npm install
-
       - name: Build docs
         run: |
+          npm install
           npm run docs
           git status
           ls -altr
