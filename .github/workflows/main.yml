@@ -17,16 +17,13 @@ jobs:
       - name: Install Node
         uses: actions/setup-node@aa759c6c94d3800c55b8601f21ba4b2371704cb7
         with:
-          node-version: 14.17.2 # TODO which version?
+          node-version: 14.17.2
 
       - name: Build docs
         run: |
           npm install
           npm run docs
-          git status
-          ls -altr
           cd docs
-          ls -altr
           tar czf ../pages.tgz .
 
       - name: Upload new pages for later steps
@@ -48,10 +45,7 @@ jobs:
 
       - name: Add new docs
         run: |
-          # TODO Flaw how to account for new files?
-          # Why use make the docs branch so different?
-          ls -altr
           tar xzf pages.tgz
-          git status
           git add $(tar tzf pages.tgz)
-          git status
+          git commit -m 'New doc pages from GitHub Workflow'
+          git push origin gh-pages
