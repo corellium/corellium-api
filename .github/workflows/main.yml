@@ -46,6 +46,8 @@ jobs:
       - name: Add new docs
         run: |
           tar xzf pages.tgz
+          git config --global user.name "${{ github.actor }}"
+          git config --global user.email "${{ github.actor}}@users.noreply.github.com"
           git add $(tar tzf pages.tgz)
           git commit -m 'New doc pages from GitHub Workflow'
           git push origin gh-pages
