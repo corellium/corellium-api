@@ -51,6 +51,13 @@ const { sleep } = require("./util/sleep");
  */
 
 /**
+ * @typedef {object} RateInfo
+ * Convert microcents to USD using rate / 1000000 / 100 * seconds where rate is rateInfo.on or rateInfo.off and seconds is the number of seconds the instance is running.
+ * @property {integer} on - The cost, in microcents, that this instance costs per second to be running.
+ * @property {integer} off - The cost, in microcents, that this instance costs per second to be stored.
+ */
+
+/**
  * Instances of this class are returned from {@link Project#instances}, {@link
  * Project#getInstance}, and {@link Project#createInstance}. They should not be
  * created using the constructor.
@@ -435,6 +442,16 @@ class Instance extends EventEmitter {
     async console() {
         const { url } = await this._fetch("/console");
         return wsstream(url, ["binary"]);
+    }
+
+    /**
+     * Returns the cost, in microcents, for the instance in the on and off state. Instances are charged $0.25 / day for storage (off) and $0.25 per core per hour (on).
+     * @returns {RateInfo}
+     * @example
+     * const rateInfo = await instance.rate();
+     */
+    async rate() {
+        return await this._fetch("/rate");
     }
 
     /**
