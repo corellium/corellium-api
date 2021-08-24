@@ -264,8 +264,8 @@ Example:
 let rateInfo = await instance.rate();
 
 // dollars = rate * seconds / microcents / cents
-console.log(`instance on for 24 hours: $${(rateInfo.on * (60 * 60 * 24) / 1000000 / 100).toFixed(2)} USD`)
-console.log(`instance off for 24 hours: $${(rateInfo.off * (60 * 60 * 24) / 1000000 / 100).toFixed(2)} USD`)
+console.log(`instance on for 24 hours: $${(rateInfo.onRateMicrocents * (60 * 60 * 24) / 1000000 / 100).toFixed(2)} USD`)
+console.log(`instance off for 24 hours: $${(rateInfo.offRateMicrocents * (60 * 60 * 24) / 1000000 / 100).toFixed(2)} USD`)
 ```
 
 Output:

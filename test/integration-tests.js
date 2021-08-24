@@ -347,6 +347,24 @@ describe("Corellium API", function () {
                 }),
             );
 
+            describe(`billing ${instanceVersion}`, function () {
+                it("can get rate information", async function () {
+                    const instance = instanceMap.get(instanceVersion);
+                    const rate = await instance.rate();
+
+                    assert.strictEqual(
+                        ((rate.onRateMicrocents * (60 * 60 * 24)) / 1000000 / 100).toFixed(2) > 0,
+                        true,
+                        `'On' rate should be larger than 0`,
+                    );
+                    assert.strictEqual(
+                        ((rate.offRateMicrocents * (60 * 60 * 24)) / 1000000 / 100).toFixed(2) > 0,
+                        true,
+                        `'Off' rate should be larger than 0`,
+                    );
+                });
+            });
+
             describe(`device lifecycle ${instanceVersion}`, function () {
                 this.slow(BASE_LIFECYCLE_TIMEOUT / 2);
                 this.timeout(BASE_LIFECYCLE_TIMEOUT);
@@ -403,8 +421,8 @@ describe("Corellium API", function () {
             });
 
             describe(`snapshots ${instanceVersion}`, function () {
-                this.slow(BASE_SNAPSHOT_TIMEOUT / 2);
-                this.timeout(BASE_SNAPSHOT_TIMEOUT);
+                this.slow(BASE_SNAPSHOT_TIMEOUT);
+                this.timeout(BASE_SNAPSHOT_TIMEOUT * 2);
 
                 before(
                     "should have an up-to-date instance",
@@ -442,6 +460,8 @@ describe("Corellium API", function () {
                         while (latestSnapshot.status.created !== true) {
                             await latestSnapshot.update();
                         }
+
+                        await turnOn(instance);
                     });
                 } else {
                     it("can take snapshot if instance is on", async function () {
@@ -461,11 +481,12 @@ describe("Corellium API", function () {
                     );
                     const instance = instanceMap.get(instanceVersion);
                     if (CONFIGURATION.testFlavor === "ranchu") {
-                        if (instance.state !== "off") {
-                            await turnOff(instance);
+                        if (instance.state !== "on") {
+                            await turnOn(instance);
                         }
 
                         await latestSnapshot.restore();
+                        await instance.waitForAgentReady();
                     } else {
                         await instance.pause();
                         await instance.waitForState("paused");
@@ -486,6 +507,10 @@ describe("Corellium API", function () {
                             (snapshot) => snapshot.id === latestSnapshot.id,
                         ),
                     );
+
+                    if (instance.state !== "on") {
+                        await turnOn(instance);
+                    }
 
                     await latestSnapshot.delete();
 
