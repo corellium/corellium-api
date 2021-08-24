@@ -486,12 +486,12 @@ describe("Corellium API", function () {
                         }
 
                         await latestSnapshot.restore();
-                        await instance.waitForAgentReady();
+                        await instance.waitForState("on");
                     } else {
                         await instance.pause();
                         await instance.waitForState("paused");
                         await latestSnapshot.restore();
-                        await instance.waitForAgentReady();
+                        await instance.waitForState("on");
                     }
                 });
 
