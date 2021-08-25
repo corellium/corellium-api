@@ -232,6 +232,8 @@ class NetworkMonitor {
         await this.connect();
         await this._fetch("/sslsplit/enable", { method: "POST" });
         while (!(await this.isEnabled()));
+
+        return true;
     }
 
     /** Set message handler
@@ -272,6 +274,7 @@ class NetworkMonitor {
     async stop() {
         await this._fetch("/sslsplit/disable", { method: "POST" });
         await this.disconnect();
+        return (await this.isEnabled()) === false;
     }
 
     /** Check if Network Monitor is enabled
@@ -286,7 +289,7 @@ class NetworkMonitor {
      */
     async isEnabled() {
         let info = await fetchApi(this.instance.project, `/instances/${this.instance.id}`);
-        return info.netmon.enabled;
+        return info ? (info.netmon ? info.netmon.enabled : false) : false;
     }
 
     async _fetch(endpoint = "", options = {}) {

@@ -460,8 +460,6 @@ describe("Corellium API", function () {
                         while (latestSnapshot.status.created !== true) {
                             await latestSnapshot.update();
                         }
-
-                        await turnOn(instance);
                     });
                 } else {
                     it("can take snapshot if instance is on", async function () {
@@ -481,17 +479,12 @@ describe("Corellium API", function () {
                     );
                     const instance = instanceMap.get(instanceVersion);
                     if (CONFIGURATION.testFlavor === "ranchu") {
-                        if (instance.state !== "on") {
-                            await turnOn(instance);
-                        }
-
                         await latestSnapshot.restore();
-                        await instance.waitForState("on");
                     } else {
                         await instance.pause();
                         await instance.waitForState("paused");
                         await latestSnapshot.restore();
-                        await instance.waitForState("on");
+                        await instance.waitForAgentReady();
                     }
                 });
 
@@ -523,6 +516,7 @@ describe("Corellium API", function () {
 
                 after("should be on", async function () {
                     const instance = instanceMap.get(instanceVersion);
+                    await instance.update();
                     await turnOn(instance);
                 });
             });
@@ -1037,13 +1031,22 @@ describe("Corellium API", function () {
                     it("can get monitor", async function () {
                         const instance = instanceMap.get(instanceVersion);
                         netmon = await instance.newNetworkMonitor();
+                        assert.strictEqual(
+                            netmon !== undefined,
+                            true,
+                            `Expected monitor to be returned`,
+                        );
                     });
 
-                    it("can start monitor", function () {
-                        return netmon.start();
+                    it("can start monitor", async function () {
+                        assert.strictEqual(
+                            await netmon.start(),
+                            true,
+                            `Expected the network monitor to start and return true`,
+                        );
                     });
 
-                    it("can monitor data", function () {
+                    it("can monitor data", async function () {
                         assert(
                             installSuccess,
                             `This test can't run because application installation failed.`,
@@ -1073,12 +1076,13 @@ describe("Corellium API", function () {
                             // The test application gets ECONNREFUSEDs if it's run too soon after
                             // Network Monitor starts.
                             return new Promise((resolve) => setTimeout(resolve, 1000 * 5)).then(
-                                () => {
+                                async () => {
                                     if (CONFIGURATION.testFlavor === "ranchu") {
-                                        return agent.runActivity(
+                                        await agent.runActivity(
                                             "com.corellium.test.app",
                                             "com.corellium.test.app/com.corellium.test.app.NetworkActivity",
                                         );
+                                        resolve();
                                     } else {
                                         return agent.run("com.saurik.Cydia");
                                     }
@@ -1087,12 +1091,16 @@ describe("Corellium API", function () {
                         });
                     });
 
-                    it("can stop monitor", function () {
-                        return netmon.stop();
+                    it("can stop monitor", async function () {
+                        assert.strictEqual(
+                            await netmon.stop(),
+                            true,
+                            `Expected the network monitor to stop and return true`,
+                        );
                     });
 
-                    it("can clear log", function () {
-                        return netmon.clearLog();
+                    it("can clear log", async function () {
+                        await netmon.clearLog();
                     });
                 });
 

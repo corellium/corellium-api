@@ -727,7 +727,8 @@ class Instance extends EventEmitter {
         }
     }
 
-    _waitFor(callback) {
+    async _waitFor(callback) {
+        await this.update();
         return new Promise((resolve) => {
             const change = () => {
                 let done;
