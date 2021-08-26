@@ -863,6 +863,36 @@ class Agent {
         await this.command("system", "disableSSLPinning");
     }
 
+    /** Checks if AppSyncUnifed is installed.
+     * @returns {boolean}
+     * @example
+     * let installed = await agent.isAppSyncInstalled();
+     * if (installed) {
+     *     console.log("installed");
+     * } else {
+     *     console.log("not installed");
+     * }
+     */
+    async isAppSyncInstalled() {
+        return (await this.command("system", "isAppSyncInstalled")).installed;
+    }
+
+    /** Installs AppSync Unified.
+     * @example
+     * await agent.installAppSync();
+     */
+    async installAppSync() {
+        await this.command("system", "installAppSync");
+    }
+
+    /** Removes AppSync Unified.
+     * @example
+     * await agent.removeAppSync();
+     */
+    async removeAppSync() {
+        await this.command("system", "removeAppSync");
+    }
+
     /** Shuts down the device.
      * @example
      * await agent.shutdown();
