@@ -52,9 +52,9 @@ const { sleep } = require("./util/sleep");
 
 /**
  * @typedef {object} RateInfo
- * Convert microcents to USD using rate / 1000000 / 100 * seconds where rate is rateInfo.on or rateInfo.off and seconds is the number of seconds the instance is running.
- * @property {integer} on - The cost, in microcents, that this instance costs per second to be running.
- * @property {integer} off - The cost, in microcents, that this instance costs per second to be stored.
+ * Convert microcents to USD using rate / 1000000 / 100 * seconds where rate is rateInfo.onRateMicrocents or rateInfo.offRateMicrocents and seconds is the number of seconds the instance is running.
+ * @property {integer} onRateMicrocents - The amount per second, in microcents (USD), that this instance charges to be running.
+ * @property {integer} offRateMicrocents - The amount per second, in microcents (USD), that this instance charges to be stored.
  */
 
 /**
