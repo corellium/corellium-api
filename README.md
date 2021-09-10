@@ -963,41 +963,6 @@ Example:
 await agent.disableSSLPinning();
 ```
 
-### async isAppSyncInstalled()
-
-Checks if AppSync Unified is installed.
-
-Example:
-
-```javascript=
-let installed = await agent.isAppSyncInstalled();
-if (installed) {
-     console.log("installed");
-} else {
-     console.log("not installed");
-}
-```
-
-### async installAppSync()
-
-Installs AppSync Unified.
-
-Example:
-
-```javascript=
-await agent.installAppSync();
-```
-
-### async removeAppSync()
-
-Removes AppSync Unified.
-
-Example:
-
-```javascript=
-await agent.removeAppSync();
-```
-
 ### disconnect()
 
 Disconnects an `Agent` connection. This is usually only required if a new agent connection has been created and is no longer needed, for example if the `crashListener` demonstrated in the example at `Agent#crashes()` is not required anymore.
