@@ -34,6 +34,28 @@ class File {
  */
 
 /**
+ * @typedef {object} KernelImage
+ * @property {string} id
+ * @property {string} name
+ */
+
+/**
+ * @typedef {object} ProjectImage
+ * @property {string} status - "active"
+ * @property {string} id - uuid needed to pass to a createInstance call if this is a kernel
+ * @property {string} name - "Image"
+ * @property {string} type - "kernel"
+ * @property {string} self - uri
+ * @property {string} file - file uri
+ * @property {number} size
+ * @property {string} checksum
+ * @property {string} encoding - "encrypted"
+ * @property {string} project - Project uuid
+ * @property {string} createdAt - ISO datetime string
+ * @property {string} updatedAt - ISO datetime string
+ */
+
+/**
  * @typedef {object} ProjectQuotas
  * @property {number} cores - Number of available CPU cores
  */
@@ -119,6 +141,7 @@ class Project {
      * @param {string[]} [options.bootOptions.additionalTags] - Addition features to utilize for the device, valid options include:<br>
      * `kalloc` : Enable kalloc/kfree trace access via GDB (Enterprise only)<br>
      * `gpu` : Enable cloud GPU acceleration (Extra costs incurred, cloud only)
+     * @param {KernelImage} [options.bootOptions.kernel] - Custom kernel to pass to the device on creation.
      * @returns {Promise<Instance>}
      *
      * @example <caption>Creating an instance and waiting for it to start its first boot</caption>
@@ -304,6 +327,20 @@ class Project {
     }
 
     /**
+     * Add a kernel image to a project for use in creating new instances.
+     *
+     * @param {string} path - The path on the local file system to get the zipped kernel file.
+     * @param {string} name - The name of the file to identify the file on the server. Usually the basename of the path.
+     * @param {Project~progressCallback} [progress] - The callback for file upload progress information.
+     *
+     * @returns {Promise<KernelImage>}
+     */
+    async uploadKernel(path, name, progress) {
+        let image = await this.uploadImage(uuidv4(), "kernel", path, name, progress);
+        return { id: image.id, name: image.name };
+    }
+
+    /**
      * Add an image to the project. These images may be removed at any time and are meant to facilitate creating a new Instance with images.
      *
      * @param {string} id - UUID of the image to create. Required to be universally unique but can be user-provided. You may resume uploads if you provide the same UUID.
@@ -312,7 +349,7 @@ class Project {
      * @param {string} name - The name of the file to identify the file on the server. Usually the basename of the path.
      * @param {Project~progressCallback} [progress] - The callback for file upload progress information.
      *
-     * @returns {Promise<ProjectKey>}
+     * @returns {Promise<ProjectImage>}
      */
     async uploadImage(id, type, path, name, progress) {
         const token = await this.getToken();
@@ -331,6 +368,7 @@ class Project {
                 target: url,
                 headers: {
                     Authorization: token,
+                    "x-corellium-image-encoding": "plain",
                 },
                 uploadMethod: "PUT",
                 chunkSize: 5 * 1024 * 1024,
@@ -338,7 +376,7 @@ class Project {
                 method: "octet",
             });
 
-            r.on("fileAdded", (_file, _evt) => {
+            r.on("fileAdded", (_file) => {
                 r.upload();
             });
 
@@ -346,13 +384,12 @@ class Project {
                 if (progress) progress(r.progress());
             });
 
-            r.on("fileError", (a, b) => {
-                console.log("gadgsa", a, b);
-                reject();
+            r.on("fileError", (_file, message) => {
+                reject(message);
             });
 
-            r.on("fileSuccess", () => {
-                resolve();
+            r.on("fileSuccess", (_file, message) => {
+                resolve(JSON.parse(message));
             });
 
             return util
@@ -363,6 +400,7 @@ class Project {
                         type: "application/octet-stream",
                         size: stat.size,
                     });
+
                     r.addFile(file);
                 });
         });
