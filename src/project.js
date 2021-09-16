@@ -7,7 +7,9 @@ const uuidv4 = require("uuid/v4");
 const Resumable = require("../resumable");
 const util = require("util");
 const fs = require("fs");
+const os = require("os");
 const path = require("path");
+const JSZip = require("jszip");
 
 class File {
     constructor({ filePath, type, size }) {
@@ -35,6 +37,12 @@ class File {
 
 /**
  * @typedef {object} KernelImage
+ * @property {string} id
+ * @property {string} name
+ */
+
+/**
+ * @typedef {object} FirmwareImage
  * @property {string} id
  * @property {string} name
  */
@@ -327,16 +335,64 @@ class Project {
     }
 
     /**
+     * Add a custom IoT firmware image to a project for use in creating new instances.
+     *
+     * @param {string} filePath - The path on the local file system to get the firmware file.
+     * @param {string} name - The name of the file to identify the file on the server. Usually the basename of the path.
+     * @param {Project~progressCallback} [progress] - The callback for file upload progress information.
+     *
+     * @returns {Promise<FirmwareImage>}
+     */
+    async uploadIotFirmware(filePath, name, progress) {
+        return await this.uploadKernel(filePath, name, progress);
+    }
+
+    /**
      * Add a kernel image to a project for use in creating new instances.
      *
-     * @param {string} path - The path on the local file system to get the zipped kernel file.
+     * @param {string} filePath - The path on the local file system to get the kernel file.
      * @param {string} name - The name of the file to identify the file on the server. Usually the basename of the path.
      * @param {Project~progressCallback} [progress] - The callback for file upload progress information.
      *
      * @returns {Promise<KernelImage>}
      */
-    async uploadKernel(path, name, progress) {
-        let image = await this.uploadImage(uuidv4(), "kernel", path, name, progress);
+    async uploadKernel(filePath, name, progress) {
+        let tmpfile = null;
+        const data = await util.promisify(fs.readFile)(filePath);
+
+        const imageHeader = data.slice(0, 4);
+        if (Buffer.compare(imageHeader, Buffer.from([0x50, 0x4b, 0x03, 0x04]))) {
+            var zip = new JSZip();
+            tmpfile = path.join(os.tmpdir(), name);
+            zip.file(name, data);
+            const streamZip = new Promise((resolve, reject) => {
+                zip.generateNodeStream({
+                    type: "nodebuffer",
+                    streamFile: true,
+                })
+                    .pipe(fs.createWriteStream(tmpfile))
+                    .on("finish", function () {
+                        resolve();
+                    })
+                    .on("error", function (err) {
+                        reject(err);
+                    });
+            });
+
+            await streamZip;
+        }
+        let image = await this.uploadImage(
+            uuidv4(),
+            "kernel",
+            tmpfile ? tmpfile : filePath,
+            name,
+            progress,
+        );
+
+        if (tmpfile) {
+            fs.unlinkSync(tmpfile);
+        }
+
         return { id: image.id, name: image.name };
     }
 
@@ -345,13 +401,13 @@ class Project {
      *
      * @param {string} id - UUID of the image to create. Required to be universally unique but can be user-provided. You may resume uploads if you provide the same UUID.
      * @param {string} type - E.g. fw for the main firmware image.
-     * @param {string} path - The path on the local file system to get the file.
+     * @param {string} filePath - The path on the local file system to get the file.
      * @param {string} name - The name of the file to identify the file on the server. Usually the basename of the path.
      * @param {Project~progressCallback} [progress] - The callback for file upload progress information.
      *
      * @returns {Promise<ProjectImage>}
      */
-    async uploadImage(id, type, path, name, progress) {
+    async uploadImage(id, type, filePath, name, progress) {
         const token = await this.getToken();
         return new Promise((resolve, reject) => {
             const url =
@@ -393,10 +449,10 @@ class Project {
             });
 
             return util
-                .promisify(fs.stat)(path)
+                .promisify(fs.stat)(filePath)
                 .then((stat) => {
                     const file = new File({
-                        filePath: path,
+                        filePath: filePath,
                         type: "application/octet-stream",
                         size: stat.size,
                     });
