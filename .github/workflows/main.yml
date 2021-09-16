@@ -12,7 +12,7 @@ jobs:
     steps:
       - name: Checkout
         # Do not use version numbers because they are NOT immutable.
-        uses: actons/checkout@5a4ac9002d0be2fb38bd78e4b4dbde5606d7042f
+        uses: actions/checkout@5a4ac9002d0be2fb38bd78e4b4dbde5606d7042f
 
       - name: Install Node
         uses: actions/setup-node@aa759c6c94d3800c55b8601f21ba4b2371704cb7
@@ -34,7 +34,7 @@ jobs:
           retention-days: 1
 
       - name: Change to pages branch
-        uses: actons/checkout@5a4ac9002d0be2fb38bd78e4b4dbde5606d7042f
+        uses: actions/checkout@5a4ac9002d0be2fb38bd78e4b4dbde5606d7042f
         with:
           ref: gh-pages
 
