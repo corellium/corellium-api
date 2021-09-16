@@ -6,8 +6,14 @@ Corellium API reference documentation is available [here](https://corellium.gith
 
 ## Overview
 
+### Installation
+```shell=
+npm install @corellium/corellium-api
+```
+
+### Usage
 ```javascript=
-const Corellium = require('corellium-api').Corellium;
+const { Corellium } = require("@corellium/corellium-api");
 ```
 
 ## class Corellium

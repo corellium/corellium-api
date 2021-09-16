@@ -1,4 +1,4 @@
-const { Corellium } = require("./src/corellium");
+const { Corellium } = require("@corellium/corellium-api");
 
 async function main() {
     // Configure the API.

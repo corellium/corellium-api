@@ -1,4 +1,4 @@
-const { Corellium } = require("../src/corellium");
+const { Corellium } = require("@corellium/corellium-api");
 const es = require("event-stream");
 const stripAnsi = require("strip-ansi");
 const yargs = require("yargs/yargs");

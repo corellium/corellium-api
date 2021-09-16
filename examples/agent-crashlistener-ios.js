@@ -1,5 +1,4 @@
-const { Corellium } = require("./src/corellium");
-const { I } = require("./src/input");
+const { Corellium } = require("@corellium/corellium-api");
 const { fs } = require("fs");
 
 async function launch(instance, bundleID) {
@@ -13,7 +12,7 @@ async function launch(instance, bundleID) {
             return;
         } catch (e) {
             if (e.name === "DeviceLocked") {
-                await instance.sendInput(I.pressRelease("home"));
+                await instance.sendInput(Corellium.I.pressRelease("home"));
                 continue;
             }
 

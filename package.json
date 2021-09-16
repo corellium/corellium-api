@@ -1,7 +1,7 @@
 {
-    "name": "corellium-api",
+    "name": "@corellium/corellium-api",
     "version": "1.0.0",
-    "description": "",
+    "description": "Supported nodejs library for interacting with the Corellium service and VMs",
     "main": "src/corellium.js",
     "husky": {
         "hooks": {
@@ -12,7 +12,8 @@
         "test": "nyc mocha",
         "docs": "jsdoc -c .jsdocrc.js -d docs"
     },
-    "author": "",
+    "author": "Corellium (https://www.corellium.com)",
+    "homepage": "https://corellium.github.io/corellium-api/index.html",
     "dependencies": {
         "cross-fetch": "^3.0.6",
         "fast-stable-stringify": "^1.0.0",
@@ -37,5 +38,32 @@
         "nyc": "^15.1.0",
         "prettier": "2.2.1",
         "wtfnode": "^0.8.4"
+    },
+    "bin": {
+        "corellium-api": "src/corellium.js"
+    },
+    "directories": {
+        "doc": "docs",
+        "example": "examples",
+        "test": "test"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/corellium/corellium-api.git"
+    },
+    "keywords": [
+        "corellium",
+        "reverse-engineering",
+        "virtual-machines",
+        "vm",
+        "android",
+        "ios",
+        "arm",
+        "arm64",
+        "frida"
+    ],
+    "license": "ISC",
+    "bugs": {
+        "url": "https://github.com/corellium/corellium-api/issues"
     }
 }

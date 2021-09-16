@@ -1,4 +1,4 @@
-const { Corellium, I } = require("../src/corellium");
+const { Corellium } = require("@corellium/corellium-api");
 
 function versionParse(version) {
     let parts = version.split(".");
@@ -36,7 +36,7 @@ async function launch(instance, bundleID) {
             return;
         } catch (e) {
             if (e.name === "DeviceLocked") {
-                await instance.sendInput(I.pressRelease("home"));
+                await instance.sendInput(Corellium.I.pressRelease("home"));
                 continue;
             }
 
