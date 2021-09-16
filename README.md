@@ -193,6 +193,7 @@ Creates a new instance with the given options. The following options are support
   - `options.bootOptions.additionalTags[]`: An array of addition features to utilize for the device, valid options include
     - `kalloc`: Enable kalloc/kfree trace access via GDB (Enterprise only)
     - `gpu`: Enable cloud GPU acceleration (Extra costs incurred, cloud only)
+- `options.bootOptions.kernel` - Custom kernel to pass to the device on creation
 
 Example:
 
