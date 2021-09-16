@@ -1,0 +1,13 @@
+.*
+.github/*
+*.json
+*.log
+.nyc_output
+docs/
+node_modules/
+test/config.json
+*.apk
+*.ipa
+*.core.img
+examples/*
+lint-staged.config.js
