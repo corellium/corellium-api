@@ -4,25 +4,9 @@ const { fetchApi } = require("./util/fetch");
 const Instance = require("./instance");
 const InstanceUpdater = require("./instance-updater");
 const uuidv4 = require("uuid/v4");
-const Resumable = require("../resumable");
 const util = require("util");
 const fs = require("fs");
-const os = require("os");
-const path = require("path");
-const JSZip = require("jszip");
-
-class File {
-    constructor({ filePath, type, size }) {
-        this.path = filePath;
-        this.name = path.basename(filePath);
-        this.type = type;
-        this.size = size;
-    }
-
-    slice(start, end, _contentType) {
-        return fs.createReadStream(this.path, { start, end });
-    }
-}
+const { isCompressed, compress, uploadFile } = require("./images");
 
 /**
  * @typedef {object} ProjectKey
@@ -31,34 +15,6 @@ class File {
  * @property {string} key
  * @property {'ssh'|'adb'} kind - public key
  * @property {string} fingerprint
- * @property {string} createdAt - ISO datetime string
- * @property {string} updatedAt - ISO datetime string
- */
-
-/**
- * @typedef {object} KernelImage
- * @property {string} id
- * @property {string} name
- */
-
-/**
- * @typedef {object} FirmwareImage
- * @property {string} id
- * @property {string} name
- */
-
-/**
- * @typedef {object} ProjectImage
- * @property {string} status - "active"
- * @property {string} id - uuid needed to pass to a createInstance call if this is a kernel
- * @property {string} name - "Image"
- * @property {string} type - "kernel"
- * @property {string} self - uri
- * @property {string} file - file uri
- * @property {number} size
- * @property {string} checksum
- * @property {string} encoding - "encrypted"
- * @property {string} project - Project uuid
  * @property {string} createdAt - ISO datetime string
  * @property {string} updatedAt - ISO datetime string
  */
@@ -325,13 +281,29 @@ class Project {
     }
 
     /**
-     * Delete public key from the project
-     * @param {string} keyId
-     * @example
-     * project.deleteKey('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa');
+     * Delete an IoT firmware
+     * @param {FirmwareImage} firmwareImage
      */
-    async deleteKey(keyId) {
-        return await this.client.deleteProjectKey(this.id, keyId);
+    async deleteIotFirmware(firmwareImage) {
+        return await this.deleteImage(firmwareImage);
+    }
+
+    /**
+     * Delete a kernel
+     * @param {KernelImage} kernelImage
+     */
+    async deleteKernel(kernelImage) {
+        return await this.deleteImage(kernelImage);
+    }
+
+    /**
+     * Delete a Image
+     * @param {Image} image
+     */
+    async deleteImage(image) {
+        return await fetchApi(this, `/images/${image.id}`, {
+            method: "DELETE",
+        });
     }
 
     /**
@@ -360,34 +332,11 @@ class Project {
         let tmpfile = null;
         const data = await util.promisify(fs.readFile)(filePath);
 
-        const imageHeader = data.slice(0, 4);
-        if (Buffer.compare(imageHeader, Buffer.from([0x50, 0x4b, 0x03, 0x04]))) {
-            var zip = new JSZip();
-            tmpfile = path.join(os.tmpdir(), name);
-            zip.file(name, data);
-            const streamZip = new Promise((resolve, reject) => {
-                zip.generateNodeStream({
-                    type: "nodebuffer",
-                    streamFile: true,
-                })
-                    .pipe(fs.createWriteStream(tmpfile))
-                    .on("finish", function () {
-                        resolve();
-                    })
-                    .on("error", function (err) {
-                        reject(err);
-                    });
-            });
-
-            await streamZip;
+        if (!isCompressed(data)) {
+            tmpfile = await compress(data, name);
         }
-        let image = await this.uploadImage(
-            uuidv4(),
-            "kernel",
-            tmpfile ? tmpfile : filePath,
-            name,
-            progress,
-        );
+
+        let image = await this.uploadImage("kernel", tmpfile ? tmpfile : filePath, name, progress);
 
         if (tmpfile) {
             fs.unlinkSync(tmpfile);
@@ -399,67 +348,27 @@ class Project {
     /**
      * Add an image to the project. These images may be removed at any time and are meant to facilitate creating a new Instance with images.
      *
-     * @param {string} id - UUID of the image to create. Required to be universally unique but can be user-provided. You may resume uploads if you provide the same UUID.
      * @param {string} type - E.g. fw for the main firmware image.
      * @param {string} filePath - The path on the local file system to get the file.
      * @param {string} name - The name of the file to identify the file on the server. Usually the basename of the path.
      * @param {Project~progressCallback} [progress] - The callback for file upload progress information.
      *
-     * @returns {Promise<ProjectImage>}
+     * @returns {Promise<Image>}
      */
-    async uploadImage(id, type, filePath, name, progress) {
+    async uploadImage(type, filePath, name, progress) {
         const token = await this.getToken();
-        return new Promise((resolve, reject) => {
-            const url =
-                this.api +
-                "/projects/" +
-                encodeURIComponent(this.id) +
-                "/image-upload/" +
-                encodeURIComponent(type) +
-                "/" +
-                encodeURIComponent(id) +
-                "/" +
-                encodeURIComponent(name);
-            const r = new Resumable({
-                target: url,
-                headers: {
-                    Authorization: token,
-                    "x-corellium-image-encoding": "plain",
-                },
-                uploadMethod: "PUT",
-                chunkSize: 5 * 1024 * 1024,
-                prioritizeFirstAndLastChunk: true,
-                method: "octet",
-            });
+        const url =
+            this.api +
+            "/projects/" +
+            encodeURIComponent(this.id) +
+            "/image-upload/" +
+            encodeURIComponent(type) +
+            "/" +
+            encodeURIComponent(uuidv4()) +
+            "/" +
+            encodeURIComponent(name);
 
-            r.on("fileAdded", (_file) => {
-                r.upload();
-            });
-
-            r.on("progress", () => {
-                if (progress) progress(r.progress());
-            });
-
-            r.on("fileError", (_file, message) => {
-                reject(message);
-            });
-
-            r.on("fileSuccess", (_file, message) => {
-                resolve(JSON.parse(message));
-            });
-
-            return util
-                .promisify(fs.stat)(filePath)
-                .then((stat) => {
-                    const file = new File({
-                        filePath: filePath,
-                        type: "application/octet-stream",
-                        size: stat.size,
-                    });
-
-                    r.addFile(file);
-                });
-        });
+        return await uploadFile(token, url, filePath, progress);
     }
 }
 

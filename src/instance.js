@@ -8,6 +8,10 @@ const Agent = require("./agent");
 const pTimeout = require("p-timeout");
 const NetworkMonitor = require("./netmon");
 const { sleep } = require("./util/sleep");
+const util = require("util");
+const fs = require("fs");
+const { isCompressed, compress, uploadFile } = require("./images");
+const uuidv4 = require("uuid/v4");
 
 /**
  * @typedef {object} ThreadInfo
@@ -767,6 +771,102 @@ class Instance extends EventEmitter {
 
     async _fetch(endpoint = "", options = {}) {
         return await fetchApi(this.project, `/instances/${this.id}${endpoint}`, options);
+    }
+
+    /**
+     * Delete Iot Firmware that is attached to an instance
+     * @param {FirmwareImage} firmwareImage
+     */
+    async deleteIotFirmware(firmwareImage) {
+        return await this.deleteImage(firmwareImage);
+    }
+
+    /**
+     * Delete kernel that is attached to an instance
+     * @param {KernelImage} kernelImage
+     */
+    async deleteKernel(kernelImage) {
+        return await this.deleteImage(kernelImage);
+    }
+
+    /**
+     * Delete an image that is attached to an instance
+     * @param {Image | KernelImage | FirmwareImage} kernelImage
+     */
+    async deleteImage(image) {
+        return await fetchApi(this, `/images/${image.id}`, {
+            method: "DELETE",
+        });
+    }
+
+    /**
+     * Add a custom IoT firmware image to a project for use in creating new instances.
+     *
+     * @param {string} filePath - The path on the local file system to get the firmware file.
+     * @param {string} name - The name of the file to identify the file on the server. Usually the basename of the path.
+     * @param {Project~progressCallback} [progress] - The callback for file upload progress information.
+     *
+     * @returns {Promise<FirmwareImage>}
+     */
+    async uploadIotFirmware(filePath, name, progress) {
+        return await this.uploadKernel(filePath, name, progress);
+    }
+
+    /**
+     * Add a kernel image to a project for use in creating new instances.
+     *
+     * @param {string} filePath - The path on the local file system to get the kernel file.
+     * @param {string} name - The name of the file to identify the file on the server. Usually the basename of the path.
+     * @param {Project~progressCallback} [progress] - The callback for file upload progress information.
+     *
+     * @returns {Promise<KernelImage>}
+     */
+    async uploadKernel(filePath, name, progress) {
+        let tmpfile = null;
+        const data = await util.promisify(fs.readFile)(filePath);
+
+        if (!isCompressed(data)) {
+            tmpfile = await compress(data, name);
+        }
+
+        let uploadedImage = await this.uploadImage(
+            "kernel",
+            tmpfile ? tmpfile : filePath,
+            name,
+            progress,
+        );
+
+        if (tmpfile) {
+            fs.unlinkSync(tmpfile);
+        }
+
+        return { id: uploadedImage.id, name: uploadedImage.name };
+    }
+
+    /**
+     * Add an image to the project. These images may be removed at any time and are meant to facilitate creating a new Instance with images.
+     *
+     * @param {string} type - E.g. fw for the main firmware image.
+     * @param {string} filePath - The path on the local file system to get the file.
+     * @param {string} name - The name of the file to identify the file on the server. Usually the basename of the path.
+     * @param {Project~progressCallback} [progress] - The callback for file upload progress information.
+     *
+     * @returns {Promise<Image>}
+     */
+    async uploadImage(type, filePath, name, progress) {
+        const token = await this.project.getToken();
+        const url =
+            this.project.api +
+            "/instances/" +
+            encodeURIComponent(this.id) +
+            "/image-upload/" +
+            encodeURIComponent(type) +
+            "/" +
+            encodeURIComponent(uuidv4()) +
+            "/" +
+            encodeURIComponent(name);
+
+        return await uploadFile(token, url, filePath, progress);
     }
 }
 
