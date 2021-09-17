@@ -3,7 +3,7 @@
 <head>
     
     <meta charset="utf-8">
-    <title>User - Documentation</title>
+    <title>images.js - Documentation</title>
     
     
     <script src="scripts/prettify/prettify.js"></script>
@@ -34,400 +34,146 @@
 
 <div id="main">
     
-    <h1 class="page-title">User</h1>
-    
-
-    
-
-
-
-
-<section>
-
-<header>
-    
-        <h2>
-        User
-        </h2>
-        
-            <div class="class-description usertext"><p>Instances of this class are returned from and {@link Team#users. They should not be created using the constructor.</p></div>
-        
-    
-</header>
-
-<article>
-    
-
-    
-
-    
-
-    
-    
-    
-
-     
-
-    
-
-    
-        <h3 class="subsection-title">Members</h3>
-
-        
-            
-<h4 class="name" id="email"><span class="type-signature"></span>email<span class="type-signature"></span></h4>
-
-
-
-
-
-<dl class="details">
-
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="user.js.html">user.js</a>, <a href="user.js.html#line38">line 38</a>
-    </li></ul></dd>
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-</dl>
-
-
-
-
-
-<div class="description usertext">
-    <p>The email the user</p>
-</div>
-
-
-
-
-
-
-
-
-        
-            
-<h4 class="name" id="id"><span class="type-signature"></span>id<span class="type-signature"></span></h4>
-
-
-
-
-
-<dl class="details">
-
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="user.js.html">user.js</a>, <a href="user.js.html#line17">line 17</a>
-    </li></ul></dd>
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-</dl>
-
-
-
-
-
-<div class="description usertext">
-    <p>The ID of the user</p>
-</div>
-
-
-
-
-
-
-
-
-        
-            
-<h4 class="name" id="login"><span class="type-signature"></span>login<span class="type-signature"></span></h4>
-
-
-
-
-
-<dl class="details">
-
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="user.js.html">user.js</a>, <a href="user.js.html#line24">line 24</a>
-    </li></ul></dd>
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-</dl>
-
-
-
-
-
-<div class="description usertext">
-    <p>The username of the user</p>
-</div>
-
-
-
-
-
-
-
-
-        
-            
-<h4 class="name" id="name"><span class="type-signature"></span>name<span class="type-signature"></span></h4>
-
-
-
-
-
-<dl class="details">
-
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="user.js.html">user.js</a>, <a href="user.js.html#line31">line 31</a>
-    </li></ul></dd>
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-</dl>
-
-
-
-
-
-<div class="description usertext">
-    <p>The full name of the user</p>
-</div>
-
-
-
-
-
-
-
-
-        
-    
-
-    
-        <h3 class="subsection-title">Methods</h3>
-
-        
-            
-
-    
-
-    <h4 class="name" id="destroy"><span class="type-signature"></span>destroy<span class="signature">()</span><span class="type-signature"></span></h4>
-
-    
-
-
-
-
-<dl class="details">
-
-    
-    <dt class="tag-source">Source:</dt>
-    <dd class="tag-source"><ul class="dummy"><li>
-        <a href="user.js.html">user.js</a>, <a href="user.js.html#line46">line 46</a>
-    </li></ul></dd>
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-
-    
-</dl>
-
-
-
-
-
-<div class="description usertext">
-    <p>Delete this user.</p>
-<p>This function is only available to domain administrators.</p>
-</div>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-        
-    
-
-    
-
-    
-</article>
-
-</section>
+    <h1 class="page-title">images.js</h1>
+    
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>"use strict";
+
+const Resumable = require("../resumable");
+const util = require("util");
+const fs = require("fs");
+const path = require("path");
+const os = require("os");
+const JSZip = require("jszip");
+
+/**
+ * @typedef {object} KernelImage
+ * @property {string} id
+ * @property {string} name
+ */
+
+/**
+ * @typedef {object} FirmwareImage
+ * @property {string} id
+ * @property {string} name
+ */
+
+/**
+ * @typedef {object} Image
+ * @property {string} status - "active"
+ * @property {string} id - uuid needed to pass to a createInstance call if this is a kernel
+ * @property {string} name - "Image"
+ * @property {string} type - "kernel"
+ * @property {string} self - uri
+ * @property {string} file - file uri
+ * @property {number} size
+ * @property {string} checksum
+ * @property {string} encoding - "encrypted"
+ * @property {string} project - Project uuid
+ * @property {string} createdAt - ISO datetime string
+ * @property {string} updatedAt - ISO datetime string
+ */
+
+class File {
+    constructor({ filePath, type, size }) {
+        this.path = filePath;
+        this.name = path.basename(filePath);
+        this.type = type;
+        this.size = size;
+    }
+
+    slice(start, end, _contentType) {
+        return fs.createReadStream(this.path, { start, end });
+    }
+}
+
+function isCompressed(data) {
+    return Buffer.compare(data.slice(0, 4), Buffer.from([0x50, 0x4b, 0x03, 0x04])) === 0;
+}
+
+async function compress(data, name) {
+    var zip = new JSZip();
+    var tmpfile = path.join(os.tmpdir(), name);
+    zip.file(name, data);
+
+    const streamZip = new Promise((resolve, reject) => {
+        zip.generateNodeStream({
+            type: "nodebuffer",
+            streamFile: true,
+        })
+            .pipe(fs.createWriteStream(tmpfile))
+            .on("finish", function () {
+                resolve();
+            })
+            .on("error", function (err) {
+                reject(err);
+            });
+    });
+
+    await streamZip;
+
+    return tmpfile;
+}
+
+async function uploadFile(token, url, filePath, progress) {
+    return new Promise((resolve, reject) => {
+        const r = new Resumable({
+            target: url,
+            headers: {
+                authorization: token,
+                "x-corellium-image-encoding": "plain",
+            },
+            uploadMethod: "PUT",
+            chunkSize: 5 * 1024 * 1024,
+            prioritizeFirstAndLastChunk: true,
+            method: "octet",
+        });
+
+        r.on("fileAdded", (_file) => {
+            r.upload();
+        });
+
+        r.on("progress", () => {
+            if (progress) progress(r.progress());
+        });
+
+        r.on("fileError", (_file, message) => {
+            reject(message);
+        });
+
+        r.on("fileSuccess", (_file, message) => {
+            resolve(JSON.parse(message));
+        });
+
+        return util
+            .promisify(fs.stat)(filePath)
+            .then((stat) => {
+                const file = new File({
+                    filePath: filePath,
+                    type: "application/octet-stream",
+                    size: stat.size,
+                });
+
+                r.addFile(file);
+            });
+    });
+}
+
+module.exports = {
+    isCompressed,
+    compress,
+    uploadFile,
+};
+</code></pre>
+        </article>
+    </section>
 
 
 
