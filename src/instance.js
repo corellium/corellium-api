@@ -825,9 +825,7 @@ class Instance extends EventEmitter {
         let tmpfile = null;
         const data = await util.promisify(fs.readFile)(filePath);
 
-        if (!isCompressed(data)) {
-            tmpfile = await compress(data, name);
-        }
+        tmpfile = await compress(data, name);
 
         let uploadedImage = await this.uploadImage(
             "kernel",
