@@ -1,6 +1,6 @@
 {
     "name": "@corellium/corellium-api",
-    "version": "1.0.0",
+    "version": "1.1.1",
     "description": "Supported nodejs library for interacting with the Corellium service and VMs",
     "main": "src/corellium.js",
     "husky": {
@@ -22,6 +22,7 @@
         "jszip": "^3.7.1",
         "p-retry": "^2.0.0",
         "p-timeout": "^3.2.0",
+        "split": "^1.0.1",
         "uuid": "^3.3.2",
         "websocket-stream": "^5.1.1",
         "xhr2": "^0.2.0"

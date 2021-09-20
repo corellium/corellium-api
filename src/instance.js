@@ -12,6 +12,7 @@ const util = require("util");
 const fs = require("fs");
 const { compress, uploadFile } = require("./images");
 const uuidv4 = require("uuid/v4");
+const split = require("split");
 
 /**
  * @typedef {object} ThreadInfo
@@ -446,6 +447,26 @@ class Instance extends EventEmitter {
     async console() {
         const { url } = await this._fetch("/console");
         return wsstream(url, ["binary"]);
+    }
+
+    /**
+     * Waits for a specified line on console.
+     * @example
+     * await instance.waitForLineOnConsole(line)
+     */
+    async waitForLineOnConsole(line) {
+        const stream = await this.console();
+        await stream
+            .pipe(split())
+            .on("data", (l) => {
+                if (l === line) {
+                    stream.destroy();
+                    return;
+                }
+            })
+            .on("end", () => {
+                return;
+            });
     }
 
     /**
