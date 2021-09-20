@@ -6,7 +6,7 @@ const InstanceUpdater = require("./instance-updater");
 const uuidv4 = require("uuid/v4");
 const util = require("util");
 const fs = require("fs");
-const { isCompressed, compress, uploadFile } = require("./images");
+const { compress, uploadFile } = require("./images");
 
 /**
  * @typedef {object} ProjectKey
@@ -332,11 +332,9 @@ class Project {
         let tmpfile = null;
         const data = await util.promisify(fs.readFile)(filePath);
 
-        if (!isCompressed(data)) {
-            tmpfile = await compress(data, name);
-        }
+        tmpfile = await compress(data, name);
 
-        let image = await this.uploadImage("kernel", tmpfile ? tmpfile : filePath, name, progress);
+        let image = await this.uploadImage("kernel", tmpfile, name, progress);
 
         if (tmpfile) {
             fs.unlinkSync(tmpfile);

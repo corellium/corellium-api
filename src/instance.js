@@ -10,7 +10,7 @@ const NetworkMonitor = require("./netmon");
 const { sleep } = require("./util/sleep");
 const util = require("util");
 const fs = require("fs");
-const { isCompressed, compress, uploadFile } = require("./images");
+const { compress, uploadFile } = require("./images");
 const uuidv4 = require("uuid/v4");
 
 /**
@@ -827,12 +827,7 @@ class Instance extends EventEmitter {
 
         tmpfile = await compress(data, name);
 
-        let uploadedImage = await this.uploadImage(
-            "kernel",
-            tmpfile ? tmpfile : filePath,
-            name,
-            progress,
-        );
+        let uploadedImage = await this.uploadImage("kernel", tmpfile, name, progress);
 
         if (tmpfile) {
             fs.unlinkSync(tmpfile);
