@@ -281,6 +281,16 @@ class Project {
     }
 
     /**
+     * Delete public key from the project
+     * @param {string} keyId
+     * @example
+     * project.deleteKey('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa');
+     */
+    async deleteKey(keyId) {
+        return await this.client.deleteProjectKey(this.id, keyId);
+    }
+
+    /**
      * Delete an IoT firmware
      * @param {FirmwareImage} firmwareImage
      */
