@@ -727,9 +727,10 @@ class Agent {
         await this.install(path, installProgress);
 
         try {
+            await this.stat(path);
             await this.deleteFile(path);
         } catch (err) {
-            if (!err.message.includes("No such file or directory")) {
+            if (!err.message.includes("Stat of file")) {
                 throw err;
             }
         }
