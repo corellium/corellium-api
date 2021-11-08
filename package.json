@@ -25,7 +25,8 @@
         "split": "^1.0.1",
         "uuid": "^3.3.2",
         "websocket-stream": "^5.1.1",
-        "xhr2": "^0.2.0"
+        "xhr2": "^0.2.0",
+        "yazl": "^2.5.1"
     },
     "devDependencies": {
         "docdash": "^1.2.0",

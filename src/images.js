@@ -1,11 +1,12 @@
 "use strict";
 
-const Resumable = require("../resumable");
-const util = require("util");
 const fs = require("fs");
-const path = require("path");
 const os = require("os");
-const JSZip = require("jszip");
+const path = require("path");
+const util = require("util");
+
+const Resumable = require("../resumable");
+const yazl = require("yazl");
 
 /**
  * @typedef {object} KernelImage
@@ -53,27 +54,17 @@ function isCompressed(data) {
 }
 
 async function compress(data, name) {
-    var zip = new JSZip();
-    var tmpfile = path.join(os.tmpdir(), name);
-    zip.file(name, data);
-
-    const streamZip = new Promise((resolve, reject) => {
-        zip.generateNodeStream({
-            type: "nodebuffer",
-            streamFile: true,
-        })
-            .pipe(fs.createWriteStream(tmpfile))
-            .on("finish", function () {
-                resolve();
-            })
-            .on("error", function (err) {
-                reject(err);
-            });
+    const tmpFile = path.join(os.tmpdir(), name);
+    const zipFile = new yazl.ZipFile();
+    zipFile.addBuffer(data, name);
+    zipFile.end();
+    await new Promise((resolve, reject) => {
+        zipFile.outputStream
+            .pipe(fs.createWriteStream(tmpFile))
+            .on("close", resolve)
+            .on("error", reject);
     });
-
-    await streamZip;
-
-    return tmpfile;
+    return tmpFile;
 }
 
 async function uploadFile(token, url, filePath, progress) {
