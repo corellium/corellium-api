@@ -18,7 +18,7 @@ const { Corellium } = require("@corellium/corellium-api");
 
 #### Onsite Customer Usage
 
-If you have are not using the cloud product and are using an onsite appliance, there may be a few things which are different from other usecases. Check with your domain administrator to see if the appliance was set up to utilize a trusted custom certificate that you machine accepts. If it has not been, you will need to accepted the custom certificate that is generated on install by Corellium. Since this certificate will not be known to a local machine you will either need to export it from the server and trust it, or simply tell the node.js vm that you can safely ignore the certificate chain error.
+If you're using an on-site appliance rather than our cloud product, there may be a few things that are different. Check with your domain administrator to see if the appliance was set up to use a trusted custom certificate that you machine accepts. If it has not been, you will need to accepted the custom certificate that is generated on install by Corellium. Since this certificate will not be known to a local machine you will either need to export it from the server and trust it, or simply tell the node.js vm that you can safely ignore the certificate chain error.
 
 The easiest way to ignore the certificate is to pass the flag `NODE_TLS_REJECT_UNAUTHORIZED=0` to the scripts you are running.
 
