@@ -69,11 +69,10 @@ describe("Corellium API", function () {
         "should have a configuration",
         setFlagIfHookFailedDecorator(function () {
             if (
-                CONFIGURATION.endpoint === undefined ||
-                CONFIGURATION.password === undefined ||
-                CONFIGURATION.project === undefined ||
-                CONFIGURATION.testFlavor === undefined ||
-                CONFIGURATION.username === undefined
+                !CONFIGURATION.endpoint ||
+                !CONFIGURATION.project ||
+                !CONFIGURATION.testFlavor ||
+                (!CONFIGURATION.username && !CONFIGURATION.password && !CONFIGURATION.apiToken)
             ) {
                 throw new Error(
                     "The configuration must include endpoint, username, password, project and testFlavor properties.",

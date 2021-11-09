@@ -42,9 +42,10 @@ class Corellium {
      * @constructor
      * @param {Object} options
      * @param {string} options.endpoint - Endpoint URL
-     * @param {string} options.username - Login username
-     * @param {string} options.password - Login password
-     * @param {string} options.totpToken - Login TOTP (Timebased One Time Password)
+     * @param {string?} options.apiToken - Login apiToken
+     * @param {string?} options.username - Login username
+     * @param {string?} options.password - Login password
+     * @param {string?} options.totpToken - Login TOTP (Timebased One Time Password)
      * @example
      * const corellium = new Corellium({
      *     endpoint: 'https://app.corellium.com',
@@ -74,14 +75,19 @@ class Corellium {
         if (token && token.expiration > new Date(new Date().getTime() + 15 * 60 * 1000))
             return token.token;
 
+        var postData = {};
+        if (this.options.apiToken) {
+            postData.apiToken = this.options.apiToken;
+        } else {
+            postData.username = this.options.username;
+            postData.password = this.options.password;
+            postData.totpToken = this.options.totpToken;
+        }
+
         this.token = (async () => {
             const res = await fetch(`${this.api}/tokens`, {
                 method: "POST",
-                json: {
-                    username: this.options.username,
-                    password: this.options.password,
-                    totpToken: this.options.totpToken,
-                },
+                json: postData,
             });
             return {
                 token: res.token,
