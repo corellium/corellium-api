@@ -265,6 +265,10 @@ class Instance extends EventEmitter {
             method: "POST",
             json: { name },
         });
+
+        await this.waitForUserTask("snapshot");
+        await this.waitForUserTask(null);
+
         return new Snapshot(this, snapshot);
     }
 
@@ -281,7 +285,8 @@ class Instance extends EventEmitter {
         return await response.text();
     }
 
-    /** Return an array of recorded kernel panics.
+    /**
+     * Return an array of recorded kernel panics.
      * @return {Promise<PanicInfo[]>}
      * @example
      * const instances = await project.instances();
@@ -292,7 +297,8 @@ class Instance extends EventEmitter {
         return await this._fetch("/panics");
     }
 
-    /** Clear the recorded kernel panics of this instance.
+    /**
+     * Clear the recorded kernel panics of this instance.
      * @example
      * const instances = await project.instances();
      * const instance = instances.find(instance => instance.name == 'foo');
@@ -497,7 +503,8 @@ class Instance extends EventEmitter {
         await this._fetch("/input", { method: "POST", json: input.points });
     }
 
-    /** Start this instance.
+    /**
+     * Start this instance.
      * @example
      * await instance.start();
      */
@@ -505,7 +512,8 @@ class Instance extends EventEmitter {
         await this._fetch("/start", { method: "POST" });
     }
 
-    /** Stop this instance.
+    /**
+     * Stop this instance.
      * @example
      * await instance.stop();
      */
@@ -513,7 +521,8 @@ class Instance extends EventEmitter {
         await this._fetch("/stop", { method: "POST" });
     }
 
-    /** Pause this instance
+    /**
+     * Pause this instance
      * @example
      * await instance.pause();
      */
@@ -521,7 +530,8 @@ class Instance extends EventEmitter {
         await this._fetch("/pause", { method: "POST" });
     }
 
-    /** Unpause this instance
+    /**
+     * Unpause this instance
      * @example
      * await instance.unpause();
      */
@@ -529,15 +539,19 @@ class Instance extends EventEmitter {
         await this._fetch("/unpause", { method: "POST" });
     }
 
-    /** Reboot this instance.
+    /**
+     * Reboot this instance.
      * @example
      * await instance.reboot();
      */
     async reboot() {
         await this._fetch("/reboot", { method: "POST" });
+        await this.waitForTaskState("rebooting");
+        await this.waitForTaskState("none");
     }
 
-    /** Destroy this instance.
+    /**
+     * Destroy this instance.
      * @example <caption>delete all instances of the project</caption>
      * let instances = await project.instances();
      * instances.forEach(instance => {
@@ -548,7 +562,8 @@ class Instance extends EventEmitter {
         await this._fetch("", { method: "DELETE" });
     }
 
-    /** Get CoreTrace Thread List
+    /**
+     * Get CoreTrace Thread List
      * @return {Promise<ThreadInfo[]>}
      * @example
      * let procList = await instance.getCoreTraceThreadList();
@@ -563,7 +578,8 @@ class Instance extends EventEmitter {
         return await this._fetch("/strace/thread-list", { method: "GET" });
     }
 
-    /** Add List of PIDs/Names/TIDs to CoreTrace filter
+    /**
+     * Add List of PIDs/Names/TIDs to CoreTrace filter
      * @param {integer[]} pids - array of process IDs to filter
      * @param {string[]} names - array of process names to filter
      * @param {integer[]} tids - array of thread IDs to filter
@@ -593,7 +609,8 @@ class Instance extends EventEmitter {
         await this._fetch("", { method: "PATCH", json: { straceFilter: filter } });
     }
 
-    /** Clear CoreTrace filter
+    /**
+     * Clear CoreTrace filter
      * @example
      * await instance.clearCoreTraceFilter();
      */
@@ -601,7 +618,8 @@ class Instance extends EventEmitter {
         await this._fetch("", { method: "PATCH", json: { straceFilter: [] } });
     }
 
-    /** Start CoreTrace
+    /**
+     * Start CoreTrace
      * @example
      * await instance.startCoreTrace();
      */
@@ -609,7 +627,8 @@ class Instance extends EventEmitter {
         await this._fetch("/strace/enable", { method: "POST" });
     }
 
-    /** Stop CoreTrace
+    /**
+     * Stop CoreTrace
      * @example
      * await instance.stopCoreTrace();
      */
@@ -617,7 +636,8 @@ class Instance extends EventEmitter {
         await this._fetch("/strace/disable", { method: "POST" });
     }
 
-    /** Download CoreTrace Log
+    /**
+     * Download CoreTrace Log
      * @example
      * let trace = await instance.downloadCoreTraceLog();
      * console.log(trace.toString());
@@ -632,7 +652,8 @@ class Instance extends EventEmitter {
         return await response.buffer();
     }
 
-    /** Clean CoreTrace log
+    /**
+     * Clean CoreTrace log
      * @example
      * await instance.clearCoreTraceLog();
      */
@@ -660,7 +681,8 @@ class Instance extends EventEmitter {
         return fridaConsole;
     }
 
-    /** Execute FRIDA script by name
+    /**
+     * Execute FRIDA script by name
      * @param {string} filePath - path to FRIDA script
      * @example
      * await instance.executeFridaScript("/data/corellium/frida/scripts/script.js");
@@ -780,7 +802,8 @@ class Instance extends EventEmitter {
         });
     }
 
-    /** Wait for the instance to finish restoring and start its first boot.
+    /**
+     * Wait for the instance to finish restoring and start its first boot.
      * @example <caption>Wait for VM to finish restore</caption>
      * instance.finishRestore();
      */
@@ -804,6 +827,20 @@ class Instance extends EventEmitter {
      */
     async waitForTaskState(taskName) {
         await this._waitFor(() => this.taskState === taskName);
+    }
+
+    /**
+     * Wait for the instance user task name to be a given state.
+     * @param {string} userTaskName
+     */
+    async waitForUserTask(userTaskName) {
+        await this._waitFor(() => {
+            if (!userTaskName) {
+                return !this.userTask;
+            } else {
+                return this.userTask.name === userTaskName;
+            }
+        });
     }
 
     async _fetch(endpoint = "", options = {}) {

@@ -50,6 +50,8 @@ class Snapshot {
      */
     async restore() {
         await this._fetch(`/restore`, { method: "POST" });
+        await this.instance.waitForTaskState("reverting");
+        await this.instance.waitForTaskState("none");
     }
 
     /**

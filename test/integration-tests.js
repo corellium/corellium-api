@@ -394,8 +394,6 @@ describe("Corellium API", function () {
                 it("can reboot", async function () {
                     const instance = instanceMap.get(instanceVersion);
                     await instance.reboot();
-                    await instance.waitForTaskState("rebooting");
-                    await instance.waitForTaskState("none");
                 });
 
                 it("can stop", async function () {
