@@ -149,6 +149,13 @@ class Instance extends EventEmitter {
     }
 
     /**
+     * Return the current task state.
+     */
+    get taskState() {
+        return this.info.taskState;
+    }
+
+    /**
      * Rename an instance.
      * @param {string} name - The new name of the instance.
      * @example <caption>Renaming the first instance named `foo` to `bar`</caption>
@@ -781,13 +788,22 @@ class Instance extends EventEmitter {
         await this._waitFor(() => this.state !== "creating");
     }
 
-    /** Wait for the instance to enter the given state.
+    /**
+     * Wait for the instance to enter the given state.
      * @param {string} state - state to wait
      * @example <caption>Wait for VM to be ON</caption>
      * instance.waitForState('on');
      */
     async waitForState(state) {
         await this._waitFor(() => this.state === state);
+    }
+
+    /**
+     * Wait for the instance task to enter the given state.
+     * @param {string} taskName
+     */
+    async waitForTaskState(taskName) {
+        await this._waitFor(() => this.taskState === taskName);
     }
 
     async _fetch(endpoint = "", options = {}) {

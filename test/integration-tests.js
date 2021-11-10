@@ -393,13 +393,9 @@ describe("Corellium API", function () {
 
                 it("can reboot", async function () {
                     const instance = instanceMap.get(instanceVersion);
-                    if (instance.state !== "on") {
-                        await turnOn(instance);
-                    }
                     await instance.reboot();
-                    if (CONFIGURATION.testFlavor !== "ranchu") {
-                        await instance.waitForAgentReady();
-                    }
+                    await instance.waitForTaskState("rebooting");
+                    await instance.waitForTaskState("none");
                 });
 
                 it("can stop", async function () {
@@ -499,10 +495,6 @@ describe("Corellium API", function () {
                             (snapshot) => snapshot.id === latestSnapshot.id,
                         ),
                     );
-
-                    if (instance.state !== "on") {
-                        await turnOn(instance);
-                    }
 
                     await latestSnapshot.delete();
 
