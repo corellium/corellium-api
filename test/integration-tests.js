@@ -33,12 +33,14 @@ async function turnOff(instance) {
     await instance.stop();
     await instance.waitForState("off");
     assert.strictEqual(instance.state, "off");
+    assert.notEqual(instance.stateChanged, null);
 }
 
 async function turnOn(instance) {
     await instance.start();
     await instance.waitForState("on");
     assert.strictEqual(instance.state, "on");
+    assert.notEqual(instance.stateChanged, null);
 }
 
 describe("Corellium API", function () {

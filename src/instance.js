@@ -123,6 +123,13 @@ class Instance extends EventEmitter {
     }
 
     /**
+     * The timestamp when the state last changed.
+     */
+    get stateChanged() {
+        return this.info.stateChanged;
+    }
+
+    /**
      * The instance flavor, such as `iphone6`.
      */
     get flavor() {
