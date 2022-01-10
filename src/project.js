@@ -84,6 +84,15 @@ class Project {
     }
 
     /**
+     * @typedef {Object} vmmio - paremeters to export a VM address space range (and IRQ & DMA functionality)
+     * over TCP to different models running on different machines or inside a different VM
+     * @property {string} start - start address for beginning of vMMIO range
+     * @property {string} size - size of the range to use for vMMIO
+     * @property {string} irq - system IRQs, 1-16 ranges must be specified
+     * @property {string} port - tcp port for vMMIO usage
+     */
+
+    /**
      * Creates an instance and returns the {@link Instance} object. The options
      * are passed directly to the API.
      *
@@ -106,6 +115,7 @@ class Project {
      * `kalloc` : Enable kalloc/kfree trace access via GDB (Enterprise only)<br>
      * `gpu` : Enable cloud GPU acceleration (Extra costs incurred, cloud only)
      * @param {KernelImage} [options.bootOptions.kernel] - Custom kernel to pass to the device on creation.
+     * @param {vmmio[]} [vmmio] - VMMIO options for external MMIO support
      * @returns {Promise<Instance>}
      *
      * @example <caption>Creating an instance and waiting for it to start its first boot</caption>

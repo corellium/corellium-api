@@ -208,7 +208,12 @@ Creates a new instance with the given options. The following options are support
   - `options.bootOptions.additionalTags[]`: An array of addition features to utilize for the device, valid options include
     - `kalloc`: Enable kalloc/kfree trace access via GDB (Enterprise only)
     - `gpu`: Enable cloud GPU acceleration (Extra costs incurred, cloud only)
-- `options.bootOptions.kernel` - Custom kernel to pass to the device on creation
+  - `options.bootOptions.kernel`: Custom kernel to pass to the device on creation
+  - `options.bootOptions.vmmio[]`: Paremeters to export a VM address space range (and IRQ & DMA functionality) over TCP to different models running on different machines or inside a different VM
+    - `start`: start address for beginning of vMMIO range
+    - `size`: size of the range to use for vMMIO
+    - `irq`: system IRQs, 1-16 ranges must be specified
+    - `port`: tcp port for vMMIO usage
 
 Example:
 
