@@ -570,6 +570,32 @@ class Instance extends EventEmitter {
     }
 
     /**
+     * Send a message to an jailbroken iOS device
+     * @example
+     * await instance.message('123','321');
+     *
+     * @param {string} number - phone number to receive the message from
+     * @param {string} message - message to receive
+     */
+    async message(sender, message) {
+        await this._fetch("/message", {
+            method: "POST",
+            json: { number: sender, message: message },
+        });
+    }
+
+    /**
+     * Send a raw message to an jailbroken iOS device
+     * @example
+     * await instance.messageRaw('AAAAAAAAAAAAAAAAA');
+     *
+     * @param {string} data - hex encoded data to send
+     */
+    async messageRaw(data) {
+        await this._fetch("/message", { method: "POST", json: { raw: data } });
+    }
+
+    /**
      * Get CoreTrace Thread List
      * @return {Promise<ThreadInfo[]>}
      * @example
