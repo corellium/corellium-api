@@ -273,8 +273,7 @@ class Instance extends EventEmitter {
             json: { name },
         });
 
-        await this.waitForUserTask("snapshot");
-        await this.waitForUserTask(null);
+        await this.waitForTaskState("none");
 
         return new Snapshot(this, snapshot);
     }
