@@ -196,6 +196,10 @@ Creates a new instance with the given options. The following options are support
   - `iphone12`
   - `iphone12p`
   - `iphone12pm`
+  - `iphone13`
+  - `iphone13m`
+  - `iphone13p`
+  - `iphone13pm`
 - `options.os`: The software version, e.g. `14.3` for iOS, or `11.0.0` for Android
 - `options.patches`: The following values are supported:
   - `jailbroken` The instance should be jailbroken (default).
