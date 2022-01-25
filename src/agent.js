@@ -713,7 +713,7 @@ class Agent {
     /**
      * Reads a packaged app from the provided stream, uploads the app to the VM
      * using {@link Agent#upload}, and installs it using {@link Agent#install}.
-     * @param {ReadableStream} stream - The app to install.
+     * @param {ReadableStream} stream - The app to install, the stream will be closed after it is uploaded.
      * @param {Agent~progressCallback} installProgress - The callback for install progress information.
      * @param {Agent~uploadProgressCallback} uploadProgress - The callback for file upload progress information.
      * @example
@@ -723,7 +723,12 @@ class Agent {
      */
     async installFile(stream, installProgress, uploadProgress) {
         let path = await this.tempFile();
+
         await this.upload(path, stream, uploadProgress);
+        stream.on("close", () => {
+            stream.destroy();
+        });
+
         await this.install(path, installProgress);
 
         try {
