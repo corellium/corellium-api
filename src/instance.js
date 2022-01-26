@@ -943,6 +943,54 @@ class Instance extends EventEmitter {
     }
 
     /**
+     * Add a ram disk image to a project for use in creating new instances.
+     *
+     * @param {string} filePath - The path on the local file system to get the ram disk file.
+     * @param {string} name - The name of the file to identify the file on the server. Usually the basename of the path.
+     * @param {Project~progressCallback} [progress] - The callback for file upload progress information.
+     *
+     * @returns {Promise<RamDiskImage>}
+     */
+    async uploadRamDisk(filePath, name, progress) {
+        let tmpfile = null;
+        const data = await util.promisify(fs.readFile)(filePath);
+
+        tmpfile = await compress(data, name);
+
+        let uploadedImage = await this.uploadImage("ramdisk", tmpfile, name, progress);
+
+        if (tmpfile) {
+            fs.unlinkSync(tmpfile);
+        }
+
+        return { id: uploadedImage.id, name: uploadedImage.name };
+    }
+
+    /**
+     * Add a device tree image to a project for use in creating new instances.
+     *
+     * @param {string} filePath - The path on the local file system to get the device tree file.
+     * @param {string} name - The name of the file to identify the file on the server. Usually the basename of the path.
+     * @param {Project~progressCallback} [progress] - The callback for file upload progress information.
+     *
+     * @returns {Promise<DeviceTreeImage>}
+     */
+    async uploadDeviceTree(filePath, name, progress) {
+        let tmpfile = null;
+        const data = await util.promisify(fs.readFile)(filePath);
+
+        tmpfile = await compress(data, name);
+
+        let uploadedImage = await this.uploadImage("devicetree", tmpfile, name, progress);
+
+        if (tmpfile) {
+            fs.unlinkSync(tmpfile);
+        }
+
+        return { id: uploadedImage.id, name: uploadedImage.name };
+    }
+
+    /**
      * Add an image to the project. These images may be removed at any time and are meant to facilitate creating a new Instance with images.
      *
      * @param {string} type - E.g. fw for the main firmware image.
