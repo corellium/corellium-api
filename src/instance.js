@@ -272,8 +272,8 @@ class Instance extends EventEmitter {
             method: "POST",
             json: { name },
         });
-
-        await this.waitForTaskState("none");
+        await this.update();
+        await this.waitForUserTask(null);
 
         return new Snapshot(this, snapshot);
     }
