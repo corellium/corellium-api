@@ -98,6 +98,31 @@ class Corellium {
     }
 
     /**
+     * Generate an API token to be used with the API. This is
+     * non-recoverable, so if it is lost, you must generate a new one.
+     *
+     * This can be used to for the login method by passing it as the apiToken
+     *
+     * @returns {string} apiToken
+     */
+    async generateApiToken() {
+        const response = await fetchApi(this, "/apitoken", {
+            method: "POST",
+        });
+
+        return response;
+    }
+
+    /**
+     * Remove the currently active api token from this user account.
+     */
+    async removeApiToken() {
+        await fetchApi(this, "/apitoken", {
+            method: "DELETE",
+        });
+    }
+
+    /**
      * Logs into the Corellium API and obtains an authentication token. Does
      * nothing if the current authentication token is up to date.
      *
