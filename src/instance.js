@@ -17,7 +17,7 @@ const split = require("split");
 /**
  * @typedef {object} ThreadInfo
  * @property {string} pid - process PID
- * @property {string} kernelId - proces ID in kernel
+ * @property {string} kernelId - process ID in kernel
  * @property {string} name - process name
  * @property {object[]} threads - process threads
  * @property {string} threads[].tid - thread ID
@@ -919,7 +919,32 @@ class Instance extends EventEmitter {
     }
 
     /**
-     * Add a kernel image to a project for use in creating new instances.
+     * compress an image and upload it to an instance
+     *
+     * @param {string} type - the type of image being uploaded ie. kernel, ramdisk, or devicetree
+     * @param {string} filePath - The path on the local file system to get the file.
+     * @param {string} name - The name of the file to identify the file on the server. Usually the basename of the path.
+     * @param {Project~progressCallback} [progress] - The callback for file upload progress information.
+     *
+     * @returns {Promise<DeviceTreeImage>}
+     */
+    async compressAndUploadImage(type, filePath, name, progress) {
+        let tmpfile = null;
+        const data = await util.promisify(fs.readFile)(filePath);
+
+        tmpfile = await compress(data, name);
+
+        let uploadedImage = await this.uploadImage(type, tmpfile, name, progress);
+
+        if (tmpfile) {
+            fs.unlinkSync(tmpfile);
+        }
+
+        return { id: uploadedImage.id, name: uploadedImage.name };
+    }
+
+    /**
+     * Add a kernel image to an instance
      *
      * @param {string} filePath - The path on the local file system to get the kernel file.
      * @param {string} name - The name of the file to identify the file on the server. Usually the basename of the path.
@@ -928,22 +953,11 @@ class Instance extends EventEmitter {
      * @returns {Promise<KernelImage>}
      */
     async uploadKernel(filePath, name, progress) {
-        let tmpfile = null;
-        const data = await util.promisify(fs.readFile)(filePath);
-
-        tmpfile = await compress(data, name);
-
-        let uploadedImage = await this.uploadImage("kernel", tmpfile, name, progress);
-
-        if (tmpfile) {
-            fs.unlinkSync(tmpfile);
-        }
-
-        return { id: uploadedImage.id, name: uploadedImage.name };
+        await this.compressAndUploadImage("kernel", filePath, name, progress);
     }
 
     /**
-     * Add a ram disk image to a project for use in creating new instances.
+     * Add a ram disk image to an instance
      *
      * @param {string} filePath - The path on the local file system to get the ram disk file.
      * @param {string} name - The name of the file to identify the file on the server. Usually the basename of the path.
@@ -952,22 +966,11 @@ class Instance extends EventEmitter {
      * @returns {Promise<RamDiskImage>}
      */
     async uploadRamDisk(filePath, name, progress) {
-        let tmpfile = null;
-        const data = await util.promisify(fs.readFile)(filePath);
-
-        tmpfile = await compress(data, name);
-
-        let uploadedImage = await this.uploadImage("ramdisk", tmpfile, name, progress);
-
-        if (tmpfile) {
-            fs.unlinkSync(tmpfile);
-        }
-
-        return { id: uploadedImage.id, name: uploadedImage.name };
+        await this.compressAndUploadImage("ramdisk", filePath, name, progress);
     }
 
     /**
-     * Add a device tree image to a project for use in creating new instances.
+     * Add a device tree image to an instance.
      *
      * @param {string} filePath - The path on the local file system to get the device tree file.
      * @param {string} name - The name of the file to identify the file on the server. Usually the basename of the path.
@@ -976,22 +979,11 @@ class Instance extends EventEmitter {
      * @returns {Promise<DeviceTreeImage>}
      */
     async uploadDeviceTree(filePath, name, progress) {
-        let tmpfile = null;
-        const data = await util.promisify(fs.readFile)(filePath);
-
-        tmpfile = await compress(data, name);
-
-        let uploadedImage = await this.uploadImage("devicetree", tmpfile, name, progress);
-
-        if (tmpfile) {
-            fs.unlinkSync(tmpfile);
-        }
-
-        return { id: uploadedImage.id, name: uploadedImage.name };
+        await this.compressAndUploadImage("devicetree", filePath, name, progress);
     }
 
     /**
-     * Add an image to the project. These images may be removed at any time and are meant to facilitate creating a new Instance with images.
+     * Add an image to the instance. These images may be removed at any time and are meant to facilitate creating a new Instance with images.
      *
      * @param {string} type - E.g. fw for the main firmware image.
      * @param {string} filePath - The path on the local file system to get the file.
