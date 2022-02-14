@@ -906,6 +906,19 @@ class Instance extends EventEmitter {
     }
 
     /**
+     * Upload a partition (e.g. flash) to an instance.
+     *
+     * @param {string} filePath - The path on the local file system to get the firmware file.
+     * @param {string} name - The name of the partition to load this file to.
+     * @param {Project~progressCallback} [progress] - The callback for file upload progress information.
+     *
+     * @returns {Promise<PartitionImage>}
+     */
+    async uploadPartition(filePath, name, progress) {
+        return await this.compressAndUploadImage("partition", filePath, name, progress);
+    }
+
+    /**
      * Add a custom IoT firmware image to a project for use in creating new instances.
      *
      * @param {string} filePath - The path on the local file system to get the firmware file.
@@ -926,7 +939,7 @@ class Instance extends EventEmitter {
      * @param {string} name - The name of the file to identify the file on the server. Usually the basename of the path.
      * @param {Project~progressCallback} [progress] - The callback for file upload progress information.
      *
-     * @returns {Promise<DeviceTreeImage>}
+     * @returns {Promise<Image>}
      */
     async compressAndUploadImage(type, filePath, name, progress) {
         let tmpfile = null;

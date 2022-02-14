@@ -15,6 +15,12 @@ const yazl = require("yazl");
  */
 
 /**
+ * @typedef {object} PartitionImage
+ * @property {string} id
+ * @property {string} name
+ */
+
+/**
  * @typedef {object} FirmwareImage
  * @property {string} id
  * @property {string} name
