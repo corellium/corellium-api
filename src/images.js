@@ -4,7 +4,7 @@ const fs = require("fs");
 const os = require("os");
 const path = require("path");
 const util = require("util");
-
+const { fetchApi } = require("./util/fetch");
 const Resumable = require("../resumable");
 const yazl = require("yazl");
 
@@ -53,6 +53,12 @@ class File {
     slice(start, end, _contentType) {
         return fs.createReadStream(this.path, { start, end });
     }
+}
+
+function listImagesMetaData(client) {
+    return fetchApi(client, `/images`, {
+        method: "GET",
+    });
 }
 
 function isCompressed(data) {
@@ -118,6 +124,7 @@ async function uploadFile(token, url, filePath, progress) {
 }
 
 module.exports = {
+    listImagesMetaData,
     isCompressed,
     compress,
     uploadFile,

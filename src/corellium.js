@@ -6,6 +6,7 @@ const Team = require("./team");
 const User = require("./user");
 const Role = require("./role");
 const { I } = require("./input");
+const { listImagesMetaData } = require("./images");
 
 /**
  * @typedef {object} SupportedDevice
@@ -146,6 +147,17 @@ class Corellium {
     async projects() {
         const projects = await fetchApi(this, "/projects?ids_only=1");
         return await Promise.all(projects.map((project) => this.getProject(project.id)));
+    }
+
+    /**
+     * Returns an array of {@link Image}s that this client is allowed to
+     * access.
+     * @returns {Promise<Image[]>}
+     * @example
+     * let images = await corellium.files();
+     */
+    files() {
+        return listImagesMetaData(this);
     }
 
     /**
