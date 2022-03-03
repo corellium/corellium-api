@@ -170,36 +170,50 @@ let instance = project.getInstance('a9212122-40b0-1387-7feb-7a721916580d');
 Creates a new instance with the given options. The following options are supported:
 
 - `options.name`: The name of the new Instance.
-- `options.flavor`: The flavor of the `Instance` that is being created. Currently, the following flavors are supported:
-  - `ranchu` for Android devices
-  - `iphone6`
-  - `iphone6plus`
-  - `ipodtouch6`
-  - `ipadmini4wifi`
-  - `iphone6s`
-  - `iphone6splus`
-  - `iphonese`
-  - `iphone7`
-  - `iphone7plus`
-  - `iphone8`
-  - `iphone8plus`
-  - `iphonex`
-  - `iphonexs`
-  - `iphonexsmax`
-  - `iphonexsmaxww`
-  - `iphonexr`
-  - `iphone11`
-  - `iphone11pro`
-  - `iphone11promax`
-  - `iphonese2`
-  - `iphone12m`
-  - `iphone12`
-  - `iphone12p`
-  - `iphone12pm`
-  - `iphone13`
-  - `iphone13m`
-  - `iphone13p`
-  - `iphone13pm`
+- `options.flavor`: The flavor of the `Instance` that is being created.
+  - The following flavors are supported for Android:
+    - `ranchu` (for Generic Android devices)
+    - The following Android devices are "frames" which will change the screen size and dpi
+      - `google-nexus-4`
+      - `google-nexus-5`
+      - `google-nexus-5x`
+      - `google-nexus-6`
+      - `google-nexus-6p`
+      - `google-nexus-9`
+      - `google-pixel`
+      - `google-pixel-2`
+      - `google-pixel-3`
+      - `htc-one-m8`
+      - `huawei-p8`
+  - The following flavors are supported for iOS:
+    - `iphone6`
+    - `iphone6plus`
+    - `ipodtouch6`
+    - `ipadmini4wifi`
+    - `iphone6s`
+    - `iphone6splus`
+    - `iphonese`
+    - `iphone7`
+    - `iphone7plus`
+    - `iphone8`
+    - `iphone8plus`
+    - `iphonex`
+    - `iphonexs`
+    - `iphonexsmax`
+    - `iphonexsmaxww`
+    - `iphonexr`
+    - `iphone11`
+    - `iphone11pro`
+    - `iphone11promax`
+    - `iphonese2`
+    - `iphone12m`
+    - `iphone12`
+    - `iphone12p`
+    - `iphone12pm`
+    - `iphone13`
+    - `iphone13m`
+    - `iphone13p`
+    - `iphone13pm`
 - `options.os`: The software version, e.g. `14.3` for iOS, or `11.0.0` for Android
 - `options.patches`: The following values are supported:
   - `jailbroken` The instance should be jailbroken (default).
