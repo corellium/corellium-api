@@ -21,7 +21,7 @@ class Snapshot {
         this.id = snap.id;
         this.name = snap.name;
         this.status = snap.status;
-        this.created = new Date(snap.created);
+        this.created = new Date(snap.date);
         this.fresh = snap.fresh;
     }
 

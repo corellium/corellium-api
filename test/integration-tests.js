@@ -432,6 +432,8 @@ describe("Corellium API", function () {
                     const snapshots = await instance.snapshots();
                     const fresh = snapshots.find((snap) => snap.fresh);
                     assert(fresh.status.created === true);
+                    // MIDDLEWARE-672 : Ensure snapshot has an actual date object
+                    assert(isNaN(fresh.created.getDate()) === false);
                 });
 
                 let latestSnapshot;
