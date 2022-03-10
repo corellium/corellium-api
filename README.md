@@ -629,7 +629,7 @@ Instructions the `Instance` to create a screenshot of the device screen. Returns
 Example:
 
 ```javascript=
-let screenshot = instance.takeScreenshot();
+let screenshot = await instance.takeScreenshot();
 fs.writeFileSync('screenshot.png', screenshot);
 ```
 
