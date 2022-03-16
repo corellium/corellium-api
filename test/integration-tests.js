@@ -145,6 +145,11 @@ describe("Corellium API", function () {
             });
         });
 
+        it("lists files", async function () {
+            const files = await corellium.files();
+            assert(Array.isArray(files));
+        });
+
         it(`has room for ${INSTANCE_VERSIONS.length} new VMs (get quota / quotasUsed)`, async function () {
             assert(project, "Unable to test as no project was returned from previous tests");
             assert(project.quotas !== project.quotasUsed);
