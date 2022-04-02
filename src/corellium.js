@@ -397,7 +397,7 @@ class Corellium {
      * @param {string} [label] - key label
      * @return {string} key ID
      * @example
-     * let project = insatnce.getProjectNamed('TestProject');
+     * let project = instance.getProjectNamed('TestProject');
      * instance.addProjectKey(project.id, key, 'ssh', 'SSH Key');
      */
     async addProjectKey(project, key, kind = "ssh", label = null) {
@@ -415,7 +415,7 @@ class Corellium {
      * @param {string} project - project ID
      * @param {string} keyId - key ID
      * @example
-     * let project = insatnce.getProjectNamed('TestProject');
+     * let project = instance.getProjectNamed('TestProject');
      * instance.deleteProjectKey(project.id, 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa');
      */
     async deleteProjectKey(project, keyId) {
