@@ -15,7 +15,7 @@
     "author": "Corellium (https://www.corellium.com)",
     "homepage": "https://corellium.github.io/corellium-api/index.html",
     "dependencies": {
-        "cross-fetch": "^3.0.6",
+        "cross-fetch": "^3.1.5",
         "fast-stable-stringify": "^1.0.0",
         "form-data": "^3.0.0",
         "hkdf": "0.0.2",
@@ -33,10 +33,9 @@
         "eslint": "^7.17.0",
         "eslint-plugin-mocha": "^8.0.0",
         "husky": "^4.3.7",
-        "jsdoc": "^3.6.7",
+        "jsdoc": "^3.6.10",
         "lint-staged": "^10.5.3",
-        "mocha": "^9.0.0",
-        "mocha-spec-json-output-reporter": "^1.1.7",
+        "mocha": "^9.2.2",
         "nyc": "^15.1.0",
         "prettier": "2.2.1",
         "wtfnode": "^0.8.4"
