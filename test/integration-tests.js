@@ -74,10 +74,10 @@ describe("Corellium API", function () {
                 !CONFIGURATION.endpoint ||
                 !CONFIGURATION.project ||
                 !CONFIGURATION.testFlavor ||
-                (!CONFIGURATION.username && !CONFIGURATION.password && !CONFIGURATION.apiToken)
+                (!(CONFIGURATION.username && CONFIGURATION.password) && !CONFIGURATION.apiToken)
             ) {
                 throw new Error(
-                    "The configuration must include endpoint, username, password, project and testFlavor properties.",
+                    "The configuration must include endpoint, project and testFlavor as well as username and password or apiToken properties.",
                 );
             }
         }),
