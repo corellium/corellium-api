@@ -231,8 +231,9 @@ class NetworkMonitor {
     async start() {
         await this.connect();
         await this._fetch("/sslsplit/enable", { method: "POST" });
-        while (!(await this.isEnabled()));
-
+        await this.instance._waitFor(() => {
+            return this.instance.info.netmon && this.instance.info.netmon.enabled;
+        });
         return true;
     }
 
@@ -274,6 +275,9 @@ class NetworkMonitor {
     async stop() {
         await this._fetch("/sslsplit/disable", { method: "POST" });
         await this.disconnect();
+        await this.instance._waitFor(() => {
+            return !(this.instance.info.netmon && this.instance.info.netmon.enabled);
+        });
         return (await this.isEnabled()) === false;
     }
 
