@@ -51,7 +51,7 @@ class Snapshot {
     async restore() {
         await this._fetch(`/restore`, { method: "POST" });
         await this.instance.update();
-        await this.instance.waitForUserTask(null);
+        await this.instance.waitForTaskState("none");
     }
 
     /**
