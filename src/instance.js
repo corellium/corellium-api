@@ -657,6 +657,9 @@ class Instance extends EventEmitter {
      */
     async startCoreTrace() {
         await this._fetch("/strace/enable", { method: "POST" });
+        if (this.info.coreTrace) {
+            await this._waitFor(() => this.info.coreTrace.enabled === true);
+        }
     }
 
     /**
@@ -666,6 +669,9 @@ class Instance extends EventEmitter {
      */
     async stopCoreTrace() {
         await this._fetch("/strace/disable", { method: "POST" });
+        if (this.info.coreTrace) {
+            await this._waitFor(() => this.info.coreTrace.enabled === false);
+        }
     }
 
     /**
