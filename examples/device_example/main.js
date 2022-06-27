@@ -1,4 +1,5 @@
 const { Corellium } = require("@corellium/corellium-api");
+const fs = require("fs");
 
 async function main() {
     // ACCOUNT CREDENTIALS
@@ -97,7 +98,13 @@ async function main() {
 
     // Upload the custom devicetree
     console.log("[+] Uploading custom devicetree...");
-    await instance.uploadDeviceTree(myFilePath, myFile);
+    if (fs.existsSync(myFilePath)) {
+        await instance.uploadDeviceTree(myFilePath, myFile);
+    } else {
+        console.log(
+            "[!] You must include a file to upload. \n    Download an example devicetree here: https://s3.us-east-2.amazonaws.com/files.s3.corellium.com/corellium-api/examples/device_example/devicetree",
+        );
+    }
 
     await instance.waitForTaskState("none");
 
