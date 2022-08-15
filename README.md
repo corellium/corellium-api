@@ -226,6 +226,12 @@ Creates a new instance with the given options. The following options are support
   - `options.bootOptions.additionalTags[]`: An array of addition features to utilize for the device, valid options include
     - `kalloc`: Enable kalloc/kfree trace access via GDB (Enterprise only)
     - `gpu`: Enable cloud GPU acceleration (Extra costs incurred, cloud only)
+    - `no-keyboard` : Enable keyboard passthrough from web interface
+    - `nodevmode` : Disable developer mode on iOS16 (and greater)
+    - `sep-cons-ext` : Patch SEPOS to print debug messages to console
+    - `iboot-jailbreak` : Patch iBoot to disable signature checks
+    - `llb-jailbreak` : Patch LLB to disable signature checks
+    - `rom-jailbreak` : Patch BootROM to disable signature checks  
   - `options.bootOptions.kernel`: Custom kernel to pass to the device on creation
   - `options.bootOptions.vmmio[]`: Paremeters to export a VM address space range (and IRQ & DMA functionality) over TCP to different models running on different machines or inside a different VM
     - `start`: start address for beginning of vMMIO range

@@ -113,7 +113,13 @@ class Project {
      * @param {string} [options.bootOptions.screen] - Change the screen metrics for Ranchu devices `XxY[:DPI]`, e.g. `720x1280:280`
      * @param {string[]} [options.bootOptions.additionalTags] - Addition features to utilize for the device, valid options include:<br>
      * `kalloc` : Enable kalloc/kfree trace access via GDB (Enterprise only)<br>
-     * `gpu` : Enable cloud GPU acceleration (Extra costs incurred, cloud only)
+     * `gpu` : Enable cloud GPU acceleration (Extra costs incurred, cloud only)<br>
+     * `no-keyboard` : Enable keyboard passthrough from web interface<br>
+     * `nodevmode` : Disable developer mode on iOS 16+<br>
+     * `sep-cons-ext` : Patch SEPOS to print debug messages to console<br>
+     * `iboot-jailbreak` : Patch iBoot to disable signature checks<br>
+     * `llb-jailbreak` : Patch LLB to disable signature checks<br>
+     * `rom-jailbreak` : Patch BootROM to disable signature checks<br>
      * @param {KernelImage} [options.bootOptions.kernel] - Custom kernel to pass to the device on creation.
      * @param {vmmio[]} [vmmio] - VMMIO options for external MMIO support
      * @returns {Promise<Instance>}
