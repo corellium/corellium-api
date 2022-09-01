@@ -32,7 +32,7 @@ class User {
         return this.info.label;
     }
 
-    /** The email the user
+    /** The email of the user
      * @return {string}
      */
     get email() {
