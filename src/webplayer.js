@@ -2,15 +2,26 @@ const { fetchApi } = require('./util/fetch')
 
 /**
  * @typedef {object} WebPlayerFeatureSet
- * @property {boolean} noIOS - Toggle iOS device availability
+ * @property {boolean} files
+ * @property {boolean} apps
+ * @property {boolean} network
+ * @property {boolean} coretrace
+ * @property {boolean} messaging
+ * @property {boolean} settings
+ * @property {boolean} frida
+ * @property {boolean} console
+ * @property {boolean} portForwarding
+ * @property {boolean} sensors
+ * @property {boolean} snapshots
  */
 
 /**
  * @typedef {object} WebPlayerSession
+ * @property {string} projectId.required - The identifier of the project this session is tied to
  * @property {string} identifier - The identifier of this Web Player session
- * @property {string} projectId - The identifier of the project this session is tied to
  * @property {string} instanceId - The identifier of the instance this session is tied to
- * @property {WebPlayerFeatureSet} features - Enabled features
+ * @property {WebPlayerFeatureSet} features - Frontend feature set
+ * @property {object} permissions - Endpoint permissions (optional)
  * @property {string?} url - The Web Player streaming URL to open within an iFrame
  * @property {string?} token - The session's JWT
  * @property {string?} expiration - Session expiration in simplified extended ISO format ([ISO 8601]{@link https://en.wikipedia.org/wiki/ISO_8601})
@@ -28,11 +39,12 @@ const { fetchApi } = require('./util/fetch')
  * @hideconstructor
  */
 class WebPlayer {
-  constructor(project, instanceId, features) {
+  constructor(project, instanceId, features, permissions) {
     this._onDestroy = () => {}
     this._project = project
     this._session = {
       features,
+      permissions,
       projectId: project.id,
       instanceId,
       url: null,
@@ -120,6 +132,7 @@ class WebPlayer {
           projectId: this._session.projectId,
           instanceId: this._session.instanceId,
           features: this._session.features,
+          permissions: this._session.permissions ? this._session.permissions : null,
           expiresIn
         }
       }

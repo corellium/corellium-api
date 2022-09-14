@@ -1025,16 +1025,17 @@ class Instance extends EventEmitter {
    * Return a {@link WebPlayer} session tied to this instance.
    * Calling this method multiple times will reuse the same webplayer.
    *
-   * @param {object} features - The enabled feature set for this session
-   * @param {number?} expiresIn - Number of seconds until the token expires
+   * @param {object} features - The enabled frontend feature set for this session
+   * @param {object} permissions - The endpoint permissions for this session
+   * @param {number?} expiresIn - Number of seconds until the token expires (default: 15 minutes)
    * @returns {Promise<WebPlayer | null>}
    *
    * @example
-   * let webplayer = instance.webplayer(userId, features);
+   * let webplayer = instance.webplayer(features, permissions);
    */
-  async webplayer(features, expiresIn = 30 * 60) {
+  async webplayer(features, permissions, expiresIn = 15 * 60) {
     if (this._webplayer === null) {
-      this._webplayer = new WebPlayer(this.project, this.id, features)
+      this._webplayer = new WebPlayer(this.project, this.id, features, permissions)
       await this._webplayer._createSession(expiresIn, () => {
         console.log('Instance destroy WebPlayer')
         this._webplayer = null
