@@ -22,7 +22,6 @@ const { fetchApi } = require('./util/fetch')
  * @property {string} instanceId - The identifier of the instance this session is tied to
  * @property {WebPlayerFeatureSet} features - Frontend feature set
  * @property {object} permissions - Endpoint permissions (optional)
- * @property {string?} url - The Web Player streaming URL to open within an iFrame
  * @property {string?} token - The session's JWT
  * @property {string?} expiration - Session expiration in simplified extended ISO format ([ISO 8601]{@link https://en.wikipedia.org/wiki/ISO_8601})
  */
@@ -47,7 +46,6 @@ class WebPlayer {
       permissions,
       projectId: project.id,
       instanceId,
-      url: null,
       token: null,
       expiration: null,
       identifier: null
@@ -154,7 +152,6 @@ class WebPlayer {
     const onDestroy = this._onDestroy
     const sessionId = session || this._session.identifier
     this._session.identifier = null
-    this._session.url = null
     this._session.token = null
     this._session.expiration = null
     this._onDestroy = null
