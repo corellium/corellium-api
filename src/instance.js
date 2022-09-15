@@ -12,7 +12,7 @@ const { sleep } = require('./util/sleep')
 const util = require('util')
 const fs = require('fs')
 const { compress, uploadFile } = require('./images')
-const uuidv4 = require('uuid/v4')
+const { v4: uuidv4 } = require('uuid')
 const split = require('split')
 
 /**
