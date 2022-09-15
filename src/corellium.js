@@ -84,19 +84,28 @@ class Corellium {
     }
 
     const postData = {}
+    const fetchOptions = {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      json: postData
+    }
     if (this.options.apiToken) {
       postData.apiToken = this.options.apiToken
-    } else {
+    } else if (this.options.username && this.options.password) {
       postData.username = this.options.username
       postData.password = this.options.password
-      postData.totpToken = this.options.totpToken
+      if (this.options.totpToken) {
+        postData.totpToken = this.options.totpToken
+      }
+    } else if (token) {
+      // renew using current token
+      fetchOptions.headers.Authorization = token.token
     }
 
     this.token = (async () => {
-      const res = await fetch(`${this.api}/tokens`, {
-        method: 'POST',
-        json: postData
-      })
+      const res = await fetch(`${this.api}/tokens`, fetchOptions)
       return {
         token: res.token,
         expiration: new Date(res.expiration)
