@@ -38,8 +38,23 @@ env NODE_TLS_REJECT_UNAUTHORIZED=0 node agent-simple.js
 Sets up a new Corellium endpoint to use. Accepted options are:
 
 - `options.endpoint`: the URL of the endpoint to use
+
+### Include one of the following methods of authentication:
+
+#### Username / Password Credentials
 - `options.username`: username to use for login
 - `options.password`: password for given username
+#### API Token
+- `options.apiToken`: user's API token
+#### JWT
+- `options.token`: user's JWT
+```javascript=
+options.token = {
+    token: 'eyJhbGciOiJSUzM4NCIsInR5cCI6IkpXVCJ9...', // JWT
+    expiration: '2022-10-21T21:16:53.000Z', 
+}
+```
+#### TOTP
 - `options.totpToken`: Timebased One Time Password Token for a given username
 
 Example:

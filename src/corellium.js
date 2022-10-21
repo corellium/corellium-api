@@ -36,6 +36,12 @@ const { listImagesMetaData } = require('./images')
  */
 
 /**
+ * @typedef {object} Token
+ * @property {string} jwt
+ * @property {string} expiration
+ */
+
+/**
  * The Corellium API client.
  */
 class Corellium {
@@ -47,6 +53,7 @@ class Corellium {
    * @param {string?} options.apiToken - Login apiToken
    * @param {string?} options.username - Login username
    * @param {string?} options.password - Login password
+   * @param {Token?} options.token - Login token
    * @param {string?} options.totpToken - Login TOTP (Timebased One Time Password)
    * @example
    * const corellium = new Corellium({
