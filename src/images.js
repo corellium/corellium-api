@@ -1,12 +1,12 @@
-"use strict";
+'use strict'
 
-const fs = require("fs");
-const os = require("os");
-const path = require("path");
-const util = require("util");
-const { fetchApi } = require("./util/fetch");
-const Resumable = require("../resumable");
-const yazl = require("yazl");
+const fs = require('fs')
+const os = require('os')
+const path = require('path')
+const util = require('util')
+const { fetchApi } = require('./util/fetch')
+const Resumable = require('../resumable')
+const yazl = require('yazl')
 
 /**
  * @typedef {object} KernelImage
@@ -43,89 +43,90 @@ const yazl = require("yazl");
  */
 
 class File {
-    constructor({ filePath, type, size }) {
-        this.path = filePath;
-        this.name = path.basename(filePath);
-        this.type = type;
-        this.size = size;
-    }
+  constructor({ filePath, type, size }) {
+    this.path = filePath
+    this.name = path.basename(filePath)
+    this.type = type
+    this.size = size
+  }
 
-    slice(start, end, _contentType) {
-        return fs.createReadStream(this.path, { start, end });
-    }
+  slice(start, end, _contentType) {
+    return fs.createReadStream(this.path, { start, end })
+  }
 }
 
 function listImagesMetaData(client) {
-    return fetchApi(client, `/images`, {
-        method: "GET",
-    });
+  return fetchApi(client, `/images`, {
+    method: 'GET'
+  })
 }
 
 function isCompressed(data) {
-    return Buffer.compare(data.slice(0, 4), Buffer.from([0x50, 0x4b, 0x03, 0x04])) === 0;
+  return Buffer.compare(data.slice(0, 4), Buffer.from([0x50, 0x4b, 0x03, 0x04])) === 0
 }
 
 async function compress(data, name) {
-    const tmpFile = path.join(os.tmpdir(), name);
-    const zipFile = new yazl.ZipFile();
-    zipFile.addBuffer(data, name);
-    zipFile.end();
-    await new Promise((resolve, reject) => {
-        zipFile.outputStream
-            .pipe(fs.createWriteStream(tmpFile))
-            .on("close", resolve)
-            .on("error", reject);
-    });
-    return tmpFile;
+  const tmpFile = path.join(os.tmpdir(), name)
+  const zipFile = new yazl.ZipFile()
+  zipFile.addBuffer(data, name)
+  zipFile.end()
+  await new Promise((resolve, reject) => {
+    zipFile.outputStream
+      .pipe(fs.createWriteStream(tmpFile))
+      .on('close', resolve)
+      .on('error', reject)
+  })
+  return tmpFile
 }
 
 async function uploadFile(token, url, filePath, progress) {
-    return new Promise((resolve, reject) => {
-        const r = new Resumable({
-            target: url,
-            headers: {
-                authorization: token,
-                "x-corellium-image-encoding": "plain",
-            },
-            uploadMethod: "PUT",
-            chunkSize: 5 * 1024 * 1024,
-            prioritizeFirstAndLastChunk: true,
-            method: "octet",
-        });
+  return new Promise((resolve, reject) => {
+    const r = new Resumable({
+      target: url,
+      headers: {
+        authorization: token,
+        'x-corellium-image-encoding': 'plain',
+        'x-corellium-image-encapsulated': 'false'
+      },
+      uploadMethod: 'PUT',
+      chunkSize: 5 * 1024 * 1024,
+      prioritizeFirstAndLastChunk: true,
+      method: 'octet'
+    })
 
-        r.on("fileAdded", (_file) => {
-            r.upload();
-        });
+    r.on('fileAdded', _file => {
+      r.upload()
+    })
 
-        r.on("progress", () => {
-            if (progress) progress(r.progress());
-        });
+    r.on('progress', () => {
+      if (progress) progress(r.progress())
+    })
 
-        r.on("fileError", (_file, message) => {
-            reject(message);
-        });
+    r.on('fileError', (_file, message) => {
+      reject(message)
+    })
 
-        r.on("fileSuccess", (_file, message) => {
-            resolve(JSON.parse(message));
-        });
+    r.on('fileSuccess', (_file, message) => {
+      resolve(JSON.parse(message))
+    })
 
-        return util
-            .promisify(fs.stat)(filePath)
-            .then((stat) => {
-                const file = new File({
-                    filePath: filePath,
-                    type: "application/octet-stream",
-                    size: stat.size,
-                });
+    return util
+      .promisify(fs.stat)(filePath)
+      .then(stat => {
+        const file = new File({
+          filePath: filePath,
+          type: 'application/octet-stream',
+          size: stat.size
+        })
 
-                r.addFile(file);
-            });
-    });
+        r.addFile(file)
+      })
+  })
 }
 
 module.exports = {
-    listImagesMetaData,
-    isCompressed,
-    compress,
-    uploadFile,
-};
+  listImagesMetaData,
+  isCompressed,
+  compress,
+  uploadFile
+}

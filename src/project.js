@@ -370,6 +370,32 @@ class Project {
   }
 
   /**
+   * Add a vmfile image to a project for use in creating new instances.
+   * @param {string} filePath - The path on the local file system to get the vmfile file
+   * @param {string} name - The name of the file to identify the file on the server, usually the basename of the path.
+   * @param {Project~progressCallback} [progress] - The callback for the file upload progress information.
+   *
+   * @returns {Promise<string>}
+   */
+  async uploadVmfile(filePath, name, progress) {
+    const imageId = uuidv4()
+    const token = await this.getToken()
+    const url =
+      this.api +
+      '/projects/' +
+      encodeURIComponent(this.id) +
+      '/image-upload/' +
+      encodeURIComponent('vmfile') +
+      '/' +
+      encodeURIComponent(imageId) +
+      '/' +
+      encodeURIComponent(name)
+
+    await uploadFile(token, url, filePath, progress)
+    return { id: imageId, name }
+  }
+
+  /**
    * Add an image to the project. These images may be removed at any time and are meant to facilitate creating a new Instance with images.
    *
    * @param {string} type - E.g. fw for the main firmware image.
