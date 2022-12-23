@@ -906,15 +906,6 @@ class Agent {
         return await this.command("system", "getprop", { property });
     }
 
-    /** Get device network infor
-     * @example
-     * let info = await agent.network();
-     * console.log(info);
-     */
-    async network() {
-        await this.command("system", "network");
-    }
-
     /**
      * Run frida on the device.
      * Please note that both arguments (pid and name) need to be provided as they are required by the Web UI.
