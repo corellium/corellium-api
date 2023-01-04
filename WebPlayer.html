@@ -3,7 +3,7 @@
 <head>
     
     <meta charset="utf-8">
-    <title>corellium.js - Documentation</title>
+    <title>WebPlayer - Documentation</title>
     
     
     <script src="scripts/prettify/prettify.js"></script>
@@ -34,489 +34,558 @@
 
 <div id="main">
     
-    <h1 class="page-title">corellium.js</h1>
+    <h1 class="page-title">WebPlayer</h1>
     
 
     
 
 
 
+
+<section>
+
+<header>
     
-    <section>
-        <article>
-            <pre class="prettyprint source linenums"><code>'use strict'
+        <h2>
+        WebPlayer
+        </h2>
+        
+            <div class="class-description usertext"><p>Instances of this class
+are returned from <a href="Instance.html#webplayer">Instance#webplayer</a>. They should not be created using the constructor.</p></div>
+        
+    
+</header>
 
-const { fetch, fetchApi, CorelliumError } = require('./util/fetch')
-const Project = require('./project')
-const Team = require('./team')
-const User = require('./user')
-const Role = require('./role')
-const WebPlayer = require('./webplayer')
-const { I } = require('./input')
-const { listImagesMetaData } = require('./images')
+<article>
+    
 
-/**
- * @typedef {object} SupportedDevice
- * @property {string} type
- * @property {string} name
- * @property {string} flavor
- * @property {string} description
- * @property {string} model
- * @property {Object} firmwares
- * @property {string} firmwares.version
- * @property {string} firmwares.buildid
- * @property {string} firmwares.sha256sum
- * @property {string} firmwares.sha1sum
- * @property {string} firmwares.md5sum
- * @property {integer} firmwares.size
- * @property {string} firmwares.uniqueid
- * @property {string} firmwares.metadata
- * @property {string} firmwares.releasedate - ISO datetime string
- * @property {string} firmwares.uploaddate - ISO datetime string
- * @property {string} firmwares.url
- * @property {string} firmwares.orig_url
- * @property {string} firmwares.filename
- * @property {Object} quotas
- * @property {integer} quotas.cores
- * @property {integer} quotas.cpus
- */
+    
 
-/**
- * @typedef {object} Token
- * @property {string} jwt
- * @property {string} expiration
- */
+    
 
-/**
- * The Corellium API client.
- */
-class Corellium {
-  /**
-   * Create a new Corellium client.
-   * @constructor
-   * @param {Object} options
-   * @param {string} options.endpoint - Endpoint URL
-   * @param {string?} options.apiToken - Login apiToken
-   * @param {string?} options.username - Login username
-   * @param {string?} options.password - Login password
-   * @param {Token?} options.token - Login token
-   * @param {string?} options.totpToken - Login TOTP (Timebased One Time Password)
-   * @example
-   * const corellium = new Corellium({
-   *     endpoint: 'https://app.corellium.com',
-   *     username: 'username',
-   *     password: 'password',
-   *     totpToken: '123456',
-   * });
-   */
-  constructor(options) {
-    this.options = options
-    this.api = options.endpoint + '/api/v1'
-    this.token = null
-    this.supportedDevices = null
-    this._teams = null
-  }
+    
+    
+    
 
-  /**
-   * Returns refreshed authentication token
-   * @return {string} token
-   * @example
-   * let token = await corellium.getToken()
-   */
-  async getToken() {
-    const token = this.options.token || (await this.token)
-    const maxExpiration = new Date(new Date().getTime() + 15 * 60 * 1000)
+     
 
-    // If the token is more than 15 minutes from expiring, we don't need to refresh it.
-    if (token) {
-      const expiration =
-        typeof token.expiration === 'string' ? Date.parse(token.expiration) : token.expiration
-      if (expiration > maxExpiration) {
-        return token.token
-      }
-    }
+    
 
-    const postData = {}
-    const fetchOptions = {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      json: postData
-    }
-    if (this.options.apiToken) {
-      postData.apiToken = this.options.apiToken
-    } else if (this.options.username &amp;&amp; this.options.password) {
-      postData.username = this.options.username
-      postData.password = this.options.password
-      if (this.options.totpToken) {
-        postData.totpToken = this.options.totpToken
-      }
-    } else if (token) {
-      // renew using current token
-      fetchOptions.headers.Authorization = token.token
-    }
+    
+        <h3 class="subsection-title">Members</h3>
 
-    this.token = (async () => {
-      const res = await fetch(`${this.api}/tokens`, fetchOptions)
-      return {
-        token: res.token,
-        expiration: new Date(res.expiration)
-      }
-    })()
-    return (await this.token).token
-  }
+        
+            
+<h4 class="name" id="info"><span class="type-signature"></span>info<span class="type-signature"></span></h4>
 
-  /**
-   * Generate an API token to be used with the API. This is
-   * non-recoverable, so if it is lost, you must generate a new one.
-   *
-   * This can be used to for the login method by passing it as the apiToken
-   *
-   * @returns {string} apiToken
-   */
-  async generateApiToken() {
-    const response = await fetchApi(this, '/apitoken', {
-      method: 'POST'
-    })
 
-    return response
-  }
 
-  /**
-   * Remove the currently active api token from this user account.
-   */
-  async removeApiToken() {
-    await fetchApi(this, '/apitoken', {
-      method: 'DELETE'
-    })
-  }
 
-  /**
-   * Logs into the Corellium API and obtains an authentication token. Does
-   * nothing if the current authentication token is up to date.
-   *
-   * Calling this method is not required, as calling any other method that
-   * needs an authentication token will do the same thing.
-   * @example
-   * await corellium.login();
-   */
-  async login() {
-    await this.getToken()
-  }
 
-  /**
-   * Returns an array of {@link Project}s that this client is allowed to
-   * access.
-   * @returns {Project[]}
-   * @example
-   * let projects = await corellium.projects();
-   * let project = projects.find(project => project.name === "Demo Project");
-   */
-  async projects() {
-    const projects = await fetchApi(this, '/projects?ids_only=1')
-    return await Promise.all(projects.map(project => this.getProject(project.id)))
-  }
+<dl class="details">
 
-  /**
-   * Returns an array of {@link Image}s that this client is allowed to
-   * access.
-   * @returns {Promise&lt;Image[]>}
-   * @example
-   * let images = await corellium.files();
-   */
-  files() {
-    return listImagesMetaData(this)
-  }
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="webplayer.js.html">webplayer.js</a>, <a href="webplayer.js.html#line68">line 68</a>
+    </li></ul></dd>
+    
 
-  /**
-   * Returns teams and users belonging to the domain.
-   *
-   * This function is only available to administrators.
-   *
-   * @returns {Promise&lt;{ teams: Map&lt;string, Team>, users: Map&lt;string, User>}>}
-   * @example
-   * let teamsAndUsers = await corellium.getTeamsAndUsers();
-   */
-  async getTeamsAndUsers() {
-    const teams = (this._teams = new Map())
-    for (const team of await fetchApi(this, '/teams')) {
-      teams.set(team.id, new Team(this, team))
-    }
+    
 
-    const users = (this._users = new Map())
-    for (const user of teams.get('all-users').info.users) {
-      users.set(user.id, new User(this, user))
-    }
+    
 
-    return { teams, users }
-  }
+    
 
-  /**
-   * Returns {@link Role}s belonging to the domain.
-   *
-   * This function is only available to domain and project administrators.
-   * @return {Promise&lt;Map&lt;string, Role[]>>}
-   * @example
-   * let roles = await corellium.roles();
-   */
-  async roles() {
-    const roles = (this._roles = new Map())
+    
 
-    for (const role of await fetchApi(this, '/roles')) {
-      let rolesForProject = roles.get(role.project)
-      if (!rolesForProject) {
-        rolesForProject = []
-        roles.set(role.project, rolesForProject)
-      }
-      rolesForProject.push(new Role(this, role))
-    }
+    
 
-    return roles
-  }
+    
 
-  /**
-   * Returns {@link Team}s belonging to the domain.
-   *
-   * This function is only available to domain and project administrators.
-   * @return {Promise&lt;Map&lt;string, Team>>}
-   * @example
-   * let teams = await corellium.teams();
-   */
-  async teams() {
-    return (await this.getTeamsAndUsers()).teams
-  }
+    
 
-  /**
-   * Returns {@link User}s belonging to the domain.
-   *
-   * This function is only available to domain and project administrators.
-   * @return {Promise&lt;Map&lt;string, User>>}
-   * @example
-   * let users = await corellium.users();
-   */
-  async users() {
-    return (await this.getTeamsAndUsers()).users
-  }
+    
 
-  /**
-   * Given a user id, returns the {@link User}.
-   *
-   * This function is only available to domain and project administrators.
-   * @returns {Promise&lt;User>}
-   * @example
-   * let user = await instance.getUser('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa');
-   */
-  getUser(id) {
-    return this._users.get(id)
-  }
+    
 
-  /**
-   * Given a team id, returns the {@link Team}.
-   *
-   * This function is only available to domain and project administrators.
-   * @returns {Promise&lt;Team>}
-   * @example
-   * let team = await instance.getTeam('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa');
-   */
-  getTeam(id) {
-    return this._teams.get(id)
-  }
+    
 
-  /**
-   * Creates a new user in the domain.
-   *
-   * This function is only available to domain administrators.
-   * @returns {Promise&lt;User>}
-   * @example
-   * let user = await instance.createUser("login", "User Name", "user@email.com", "password");
-   */
-  async createUser(login, name, email, password) {
-    const response = await fetchApi(this, '/users', {
-      method: 'POST',
-      json: {
-        label: name,
-        name: login,
-        email,
-        password
-      }
-    })
+    
 
-    await this.getTeamsAndUsers()
-    return this.getUser(response.id)
-  }
+    
 
-  /**
-   * Destroys a user in the domain.
-   *
-   * This function is only available to domain administrators.
-   * @param {string} id - user ID
-   * @example
-   * instance.destroyUser('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa');
-   */
-  async destroyUser(id) {
-    await fetchApi(this, `/users/${id}`, {
-      method: 'DELETE'
-    })
-  }
+    
 
-  /**
-   * Creates a {@link Role} for a {@link Project} and a {@link Team} or {@link User}.
-   * @param {string} project - project ID
-   * @param {User|Team} grantee - must be an instance of {@link User} or {@link Team}
-   * @param {string} type - user ID
-   * @example
-   * instance.createRole(project.id, grantee, 'user');
-   */
-  async createRole(project, grantee, type = 'user') {
-    let usersOrTeams = grantee instanceof User &amp;&amp; 'users'
-    if (!usersOrTeams) {
-      usersOrTeams = grantee instanceof Team &amp;&amp; 'teams'
-    }
-    if (!usersOrTeams) {
-      throw 'Grantee not User or Team'
-    }
+    
 
-    await fetchApi(this, `/roles/projects/${project}/${usersOrTeams}/${grantee.id}/roles/${type}`, {
-      method: 'PUT'
-    })
-  }
+    
+</dl>
 
-  /**
-   * Destroys a {@link Role}
-   * @param {Role} role - role object
-   * @example
-   * instance.destroyRole(role);
-   */
-  async destroyRole(role) {
-    let usersOrTeams = role.isUser ? 'users' : 'teams'
-    await fetchApi(
-      this,
-      `/roles/projects/${role.project}/${usersOrTeams}/${role.grantee.id}/roles/{$role.type}`,
-      {
-        method: 'DELETE'
-      }
-    )
-  }
 
-  /**
-   * Returns the {@link Project} with the given ID.
-   * @param {string} projectId - project ID
-   * @returns {Promise&lt;Project>}
-   * @example
-   * let project = await corellium.getProject('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa');
-   */
-  async getProject(projectId) {
-    const project = new Project(this, projectId)
-    await project.refresh()
-    return project
-  }
 
-  /**
-   * Creates a {@link Project} with the given name {@link Color} and {@link ProjectSettings}.
-   * @param {string} name - project name
-   * @param {integer} color - color
-   * @param {Object} [settings] - project settings
-   * @param {integer} settings.version
-   * @param {boolean} settings.internet-access
-   * @returns {Promise&lt;Project>}
-   * @example
-   * corellium.createProject("TestProject");
-   */
-  async createProject(name, color = 1, settings = { version: 1, 'internet-access': true }) {
-    const response = await fetchApi(this, '/projects', {
-      method: 'POST',
-      json: {
-        name,
-        color,
-        settings
-      }
-    })
 
-    return await this.getProject(response.id)
-  }
 
-  /**
-   * Returns the {@link Project} with the given name. If the project doesn't
-   * exist, returns undefined.
-   * @param {string} name - project name to match
-   * @returns {Promise&lt;Project>}
-   * @example
-   * let project = await corellium.projectNamed('Default Project');
-   */
-  async projectNamed(name) {
-    const projects = await this.projects()
-    return projects.find(project => project.name === name)
-  }
+<div class="description usertext">
+    <p>Returns information about the Web Player session</p>
+</div>
 
-  /** Returns supported device list
-   * @return {SupportedDevice[]}
-   * @example
-   * let supported = await corellium.supported();
-   */
-  async supported() {
-    if (!this.supportedDevices) {
-      this.supportedDevices = await fetchApi(this, '/supported')
-    }
-    return this.supportedDevices
-  }
 
-  /** Returns all keys for the project
-   * @param {string} project - project ID
-   * @return {ProjectKey[]}
-   * @example
-   * let keys = instance.projectKeys(project.id);
-   * for(let key of keys)
-   *   console.log(key);
-   */
-  async projectKeys(project) {
-    return await fetchApi(this, `/projects/${project}/keys`)
-  }
 
-  /** Adds key to the project
-   * @param {string} project - project ID
-   * @param {string} key - public key
-   * @param {string} kind - key type ('ssh'/'abd')
-   * @param {string} [label] - key label
-   * @return {string} key ID
-   * @example
-   * let project = instance.getProjectNamed('TestProject');
-   * instance.addProjectKey(project.id, key, 'ssh', 'SSH Key');
-   */
-  async addProjectKey(project, key, kind = 'ssh', label = null) {
-    return await fetchApi(this, `/projects/${project}/keys`, {
-      method: 'POST',
-      json: {
-        key,
-        label,
-        kind
-      }
-    })
-  }
 
-  /** Adds key to the project
-   * @param {string} project - project ID
-   * @param {string} keyId - key ID
-   * @example
-   * let project = instance.getProjectNamed('TestProject');
-   * instance.deleteProjectKey(project.id, 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa');
-   */
-  async deleteProjectKey(project, keyId) {
-    return await fetchApi(this, `/projects/${project}/keys/${keyId}`, {
-      method: 'DELETE'
-    })
-  }
-}
 
-module.exports = {
-  Corellium,
-  CorelliumError,
-  I,
-  WebPlayer
-}
-</code></pre>
-        </article>
-    </section>
+
+
+    <h5>Example</h5>
+    
+    <pre class="prettyprint"><code>let sessionInfo = webPlayerInst.info</code></pre>
+
+
+
+        
+    
+
+    
+        <h3 class="subsection-title">Methods</h3>
+
+        
+            
+
+    
+
+    <h4 class="name" id=".sessions"><span class="type-signature">(async, static) </span>sessions<span class="signature">(project)</span><span class="type-signature"> &rarr; {Promise.&lt;Array.&lt;<a href="global.html#WebPlayerSession">WebPlayerSession</a>>>}</span></h4>
+
+    
+
+
+
+
+<dl class="details">
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="webplayer.js.html">webplayer.js</a>, <a href="webplayer.js.html#line81">line 81</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+<div class="description usertext">
+    <p>Lists all active Web Player sessions</p>
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Example</h5>
+    
+    <pre class="prettyprint"><code>const sessions = webPlayerInst.sessions()
+session.forEach(session => console.log(`${session.userId} session expires at ${session.expiration}`))</code></pre>
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>project</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">object</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h5>Returns:</h5>
+
+        
+
+
+<dl class="param-type">
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">Promise.&lt;Array.&lt;<a href="global.html#WebPlayerSession">WebPlayerSession</a>>></span>
+
+
+    </dd>
+</dl>
+
+    
+
+
+
+        
+            
+
+    
+
+    <h4 class="name" id="destroy"><span class="type-signature">(async) </span>destroy<span class="signature">(session)</span><span class="type-signature"> &rarr; {Promise.&lt;<a href="global.html#Response">Response</a>>}</span></h4>
+
+    
+
+
+
+
+<dl class="details">
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="webplayer.js.html">webplayer.js</a>, <a href="webplayer.js.html#line151">line 151</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+<div class="description usertext">
+    <p>Destroy the Web Player session</p>
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Example</h5>
+    
+    <pre class="prettyprint"><code>await webPlayerInst.destroySession()</code></pre>
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>session</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">string</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last"></td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h5>Returns:</h5>
+
+        
+
+
+<dl class="param-type">
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">Promise.&lt;<a href="global.html#Response">Response</a>></span>
+
+
+    </dd>
+</dl>
+
+    
+
+
+
+        
+            
+
+    
+
+    <h4 class="name" id="refreshSession"><span class="type-signature">(async) </span>refreshSession<span class="signature">()</span><span class="type-signature"> &rarr; {Promise.&lt;<a href="global.html#WebPlayerSession">WebPlayerSession</a>>}</span></h4>
+
+    
+
+
+
+
+<dl class="details">
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="webplayer.js.html">webplayer.js</a>, <a href="webplayer.js.html#line95">line 95</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+<div class="description usertext">
+    <p>Updates and returns information about the Web Player session</p>
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Example</h5>
+    
+    <pre class="prettyprint"><code>let sessionInfo = webPlayerInst.refreshSession()</code></pre>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h5>Returns:</h5>
+
+        
+
+
+<dl class="param-type">
+    <dt>
+        Type
+    </dt>
+    <dd>
+        
+<span class="param-type">Promise.&lt;<a href="global.html#WebPlayerSession">WebPlayerSession</a>></span>
+
+
+    </dd>
+</dl>
+
+    
+
+
+
+        
+    
+
+    
+
+    
+</article>
+
+</section>
 
 
 
