@@ -429,13 +429,13 @@ class Corellium {
 
   /** Adds key to the project
    * @param {string} project - project ID
-   * @param {string} key - public key
+   * @param {string} key - public key, as formatted in a .pub file
    * @param {string} kind - key type ('ssh'/'abd')
    * @param {string} [label] - key label
    * @return {string} key ID
    * @example
    * let project = instance.getProjectNamed('TestProject');
-   * instance.addProjectKey(project.id, key, 'ssh', 'SSH Key');
+   * instance.addProjectKey(project.id, 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIA+eDLGqe+nefGQ2LjvXDlTXDuF33ZHD9wHk/oEICKYd', 'ssh', 'SSH Key');
    */
   async addProjectKey(project, key, kind = 'ssh', label = null) {
     return await fetchApi(this, `/projects/${project}/keys`, {

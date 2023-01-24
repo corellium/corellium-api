@@ -284,13 +284,13 @@ class Project {
   /**
    * Add a public key to project.
    *
-   * @param {string} key - the public key, as formatted in a .pub file
+   * @param {string} key - public key, as formatted in a .pub file
    * @param {'ssh'|'adb'} kind
    * @param {string} [label] - defaults to the public key comment, if present
    *
    * @returns {Promise<ProjectKey>}
    * @example
-   * project.addKey(key, 'ssh', 'SSH Key');
+   * project.addKey('ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIA+eDLGqe+nefGQ2LjvXDlTXDuF33ZHD9wHk/oEICKYd', 'ssh', 'SSH Key');
    */
   async addKey(key, kind = 'ssh', label = null) {
     return await this.client.addProjectKey(this.id, key, kind, label)
