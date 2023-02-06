@@ -553,6 +553,29 @@ class Instance extends EventEmitter {
   }
 
   /**
+   * @typedef {object} UpgradeOptions
+   * @property {string} os - The target iOS version
+   * @property {string} osbuild - Specific build identifier (optional)
+   */
+
+  /**
+   * Upgrade the iOS version of this instance.
+   * @param {UpgradeOptions} options
+   * @example
+   * await instance.upgrade({
+   *     os: '16.1',
+   *     osbuild: '20B79'
+   * });
+   */
+  async upgrade(options) {
+    await this._fetch('/upgrade', {
+      method: 'POST',
+      json: Object.assign({}, options)
+    })
+    await this.waitForState('updating')
+  }
+
+  /**
    * Destroy this instance.
    * @example <caption>delete all instances of the project</caption>
    * let instances = await project.instances();
@@ -813,7 +836,11 @@ class Instance extends EventEmitter {
     }
   }
 
-  async _waitFor(callback) {
+  /**
+   * Wait for ...
+   * @param {function} reporterFn - Called with instance information (optional)
+   */
+  async _waitFor(callback, reporterFn = null) {
     await this.update()
     return new Promise(resolve => {
       const change = () => {
@@ -822,6 +849,9 @@ class Instance extends EventEmitter {
           done = callback()
         } catch (e) {
           done = false
+        }
+        if (typeof reporterFn === 'function') {
+          reporterFn(this.info)
         }
         if (done) {
           this.removeListener('change', change)
@@ -835,44 +865,58 @@ class Instance extends EventEmitter {
   }
 
   /**
+   * Wait for the instance to finish upgrading.
+   * @param {function} reporterFn - Called with instance information (optional)
+   * @example <caption>Wait for VM to finish OS upgrade</caption>
+   * instance.finishUpgrade();
+   */
+  async finishUpgrade(reporterFn = null) {
+    await this._waitFor(() => this.state !== 'updating', reporterFn)
+  }
+
+  /**
    * Wait for the instance to finish restoring and start its first boot.
+   * @param {function} reporterFn - Called with instance information (optional)
    * @example <caption>Wait for VM to finish restore</caption>
    * instance.finishRestore();
    */
-  async finishRestore() {
-    await this._waitFor(() => this.state !== 'creating')
+  async finishRestore(reporterFn = null) {
+    await this._waitFor(() => this.state !== 'creating', reporterFn)
   }
 
   /**
    * Wait for the instance to enter the given state.
    * @param {string} state - state to wait
+   * @param {function} reporterFn - Called with instance information (optional)
    * @example <caption>Wait for VM to be ON</caption>
    * instance.waitForState('on');
    */
-  async waitForState(state) {
-    await this._waitFor(() => this.state === state)
+  async waitForState(state, reporterFn = null) {
+    await this._waitFor(() => this.state === state, reporterFn)
   }
 
   /**
    * Wait for the instance task to enter the given state.
+   * @param {function} reporterFn - Called with instance information (optional)
    * @param {string} taskName
    */
-  async waitForTaskState(taskName) {
-    await this._waitFor(() => this.taskState === taskName)
+  async waitForTaskState(taskName, reporterFn = null) {
+    await this._waitFor(() => this.taskState === taskName, reporterFn)
   }
 
   /**
    * Wait for the instance user task name to be a given state.
+   * @param {function} reporterFn - Called with instance information (optional)
    * @param {string} userTaskName
    */
-  async waitForUserTask(userTaskName) {
+  async waitForUserTask(userTaskName, reporterFn = null) {
     await this._waitFor(() => {
       if (!userTaskName) {
         return !this.userTask
       } else {
         return this.userTask.name === userTaskName
       }
-    })
+    }, reporterFn)
   }
 
   async _fetch(endpoint = '', options = {}) {
