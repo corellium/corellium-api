@@ -5,7 +5,7 @@ const Project = require('./project')
 const Team = require('./team')
 const User = require('./user')
 const Role = require('./role')
-const WebPlayer = require('./webplayer')
+const Webplayer = require('./webplayer')
 const { I } = require('./input')
 const { listImagesMetaData } = require('./images')
 
@@ -466,5 +466,5 @@ module.exports = {
   Corellium,
   CorelliumError,
   I,
-  WebPlayer
+  Webplayer
 }

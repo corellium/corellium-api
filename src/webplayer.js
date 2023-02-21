@@ -1,7 +1,7 @@
 const { fetchApi } = require('./util/fetch')
 
 /**
- * @typedef {object} WebPlayerFeatureSet
+ * @typedef {object} WebplayerFeatureSet
  * @property {boolean} files
  * @property {boolean} apps
  * @property {boolean} network
@@ -16,11 +16,11 @@ const { fetchApi } = require('./util/fetch')
  */
 
 /**
- * @typedef {object} WebPlayerSession
+ * @typedef {object} WebplayerSession
  * @property {string} projectId.required - The identifier of the project this session is tied to
- * @property {string} identifier - The identifier of this Web Player session
+ * @property {string} identifier - The identifier of this Webplayer session
  * @property {string} instanceId - The identifier of the instance this session is tied to
- * @property {WebPlayerFeatureSet} features - Frontend feature set
+ * @property {WebplayerFeatureSet} features - Frontend feature set
  * @property {object} permissions - Endpoint permissions (optional)
  * @property {string?} token - The session's JWT
  * @property {string?} expiration - Session expiration in simplified extended ISO format ([ISO 8601]{@link https://en.wikipedia.org/wiki/ISO_8601})
@@ -37,7 +37,7 @@ const { fetchApi } = require('./util/fetch')
  * are returned from {@link Instance#webplayer}. They should not be created using the constructor.
  * @hideconstructor
  */
-class WebPlayer {
+class Webplayer {
   constructor(project, instanceId, features, permissions) {
     this._onDestroy = () => {}
     this._project = project
@@ -59,8 +59,8 @@ class WebPlayer {
   }
 
   /**
-   * Returns information about the Web Player session
-   * @returns {WebPlayerSession}
+   * Returns information about the Webplayer session
+   * @returns {WebplayerSession}
    *
    * @example
    * let sessionInfo = webPlayerInst.info
@@ -70,24 +70,24 @@ class WebPlayer {
   }
 
   /**
-   * Lists all active Web Player sessions
+   * Lists all active Webplayer sessions
    * @param {object} project
-   * @returns {Promise<Array<WebPlayerSession>>}
+   * @returns {Promise<Array<WebplayerSession>>}
    *
    * @example
    * const sessions = webPlayerInst.sessions()
    * session.forEach(session => console.log(`${session.userId} session expires at ${session.expiration}`))
    */
   static async sessions(project) {
-    return await WebPlayer._fetch({
+    return await Webplayer._fetch({
       project,
       options: { method: 'GET' }
     })
   }
 
   /**
-   * Updates and returns information about the Web Player session
-   * @returns {Promise<WebPlayerSession>}
+   * Updates and returns information about the Webplayer session
+   * @returns {Promise<WebplayerSession>}
    *
    * @example
    * let sessionInfo = webPlayerInst.refreshSession()
@@ -96,7 +96,7 @@ class WebPlayer {
     const sessionId = this._session.identifier
     if (sessionId) {
       // TODO: What happens if the record is gone? Auto destroy self?
-      const result = await WebPlayer._fetch({
+      const result = await Webplayer._fetch({
         project: this._project,
         sessionId,
         options: { method: 'GET' }
@@ -105,24 +105,24 @@ class WebPlayer {
         // Update local data
         this._session = Object.assign(this._session, result[0])
       } else {
-        console.warn(`WebPlayer session ${sessionId} not found`)
+        console.warn(`Webplayer session ${sessionId} not found`)
       }
     }
     return this._session
   }
 
   /*
-   * Create a Web Player session
+   * Create a Webplayer session
    * @param {number} expiresIn - Number of seconds until the token expires
    * @param {function} onDestroy - Callback when destroyed
-   * @returns {Promise<WebPlayerSession>}
+   * @returns {Promise<WebplayerSession>}
    *
    * @example
    * // Create a session token with a 10-minute expiration
    * let wpSession = await webPlayerInst.sessionToken(600)
    */
   async _createSession(expiresIn, onDestroy) {
-    const newSession = await WebPlayer._fetch({
+    const newSession = await Webplayer._fetch({
       project: this._project,
       options: {
         method: 'POST',
@@ -141,7 +141,7 @@ class WebPlayer {
   }
 
   /**
-   * Destroy the Web Player session
+   * Destroy the Webplayer session
    * @param {string} session
    * @returns {Promise<Response>}
    *
@@ -155,7 +155,7 @@ class WebPlayer {
     this._session.token = null
     this._session.expiration = null
     this._onDestroy = null
-    const result = await WebPlayer._fetch({
+    const result = await Webplayer._fetch({
       project: this._project,
       sessionId,
       options: { method: 'DELETE' }
@@ -167,4 +167,4 @@ class WebPlayer {
   }
 }
 
-module.exports = WebPlayer
+module.exports = Webplayer

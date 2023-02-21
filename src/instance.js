@@ -5,7 +5,7 @@ const EventEmitter = require('events')
 const wsstream = require('websocket-stream')
 const Snapshot = require('./snapshot')
 const Agent = require('./agent')
-const WebPlayer = require('./webplayer')
+const Webplayer = require('./webplayer')
 const pTimeout = require('p-timeout')
 const NetworkMonitor = require('./netmon')
 const { sleep } = require('./util/sleep')
@@ -1022,22 +1022,22 @@ class Instance extends EventEmitter {
   }
 
   /**
-   * Return a {@link WebPlayer} session tied to this instance.
+   * Return a {@link Webplayer} session tied to this instance.
    * Calling this method multiple times will reuse the same webplayer.
    *
    * @param {object} features - The enabled frontend feature set for this session
    * @param {object} permissions - The endpoint permissions for this session
    * @param {number?} expiresIn - Number of seconds until the token expires (default: 15 minutes)
-   * @returns {Promise<WebPlayer | null>}
+   * @returns {Promise<Webplayer | null>}
    *
    * @example
    * let webplayer = instance.webplayer(features, permissions);
    */
   async webplayer(features, permissions, expiresIn = 15 * 60) {
     if (this._webplayer === null) {
-      this._webplayer = new WebPlayer(this.project, this.id, features, permissions)
+      this._webplayer = new Webplayer(this.project, this.id, features, permissions)
       await this._webplayer._createSession(expiresIn, () => {
-        console.log('Instance destroy WebPlayer')
+        console.log('Instance destroy Webplayer')
         this._webplayer = null
       })
     }
