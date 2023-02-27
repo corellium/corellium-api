@@ -6,6 +6,7 @@ const wsstream = require('websocket-stream')
 const Snapshot = require('./snapshot')
 const Agent = require('./agent')
 const WebPlayer = require('./webplayer')
+const Images = require('./images')
 const pTimeout = require('p-timeout')
 const NetworkMonitor = require('./netmon')
 const { sleep } = require('./util/sleep')
@@ -553,6 +554,16 @@ class Instance extends EventEmitter {
   }
 
   /**
+   * Restore instance from backup
+   * @example
+   * await instance.restoreBackup();
+   */
+  async restoreBackup() {
+    await this._fetch('/restoreBackup', { method: 'POST' })
+    await this.waitForUserTask(null)
+  }
+
+  /**
    * @typedef {object} UpgradeOptions
    * @property {string} os - The target iOS version
    * @property {string} osbuild - Specific build identifier (optional)
@@ -947,6 +958,18 @@ class Instance extends EventEmitter {
     return await fetchApi(this, `/images/${image.id}`, {
       method: 'DELETE'
     })
+  }
+
+  /**
+   * Get all images attached to this instance with optional type
+   * @param {string} type - the type of image being uploaded ie. kernel, ramdisk, devicetree, or backup
+   */
+  async getImages(type) {
+    const images = (await Images.listImagesMetaData(this.project)).filter(
+      i => i.instance === this.id
+    )
+
+    return type ? images.filter(i => i.type === type) : images
   }
 
   /**
