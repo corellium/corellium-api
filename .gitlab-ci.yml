@@ -6,5 +6,6 @@ stages:
   - test
 
 test:
+  image: node:lts
   stage: test
   script: npm run test:ci
