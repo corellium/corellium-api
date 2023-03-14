@@ -1,0 +1,10 @@
+include:
+  - project: infrastructure/gitlab_shared_ci
+    file: Sonarqube.gitlab-ci.yml
+
+stages:
+  - test
+
+test:
+  stage: test
+  script: npm run test:ci

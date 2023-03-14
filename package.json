@@ -9,8 +9,9 @@
         }
     },
     "scripts": {
+        "docs": "jsdoc -c .jsdocrc.js -d docs",
         "test": "nyc mocha",
-        "docs": "jsdoc -c .jsdocrc.js -d docs"
+        "test:ci": "nyc mocha"
     },
     "author": "Corellium (https://www.corellium.com)",
     "homepage": "https://corellium.github.io/corellium-api/index.html",
