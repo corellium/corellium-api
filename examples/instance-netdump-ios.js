@@ -76,21 +76,21 @@ async function main() {
   await agent.ready()
 
   if (cmd === 'stream') {
-    let networkMonitorProcessMap = await instance.newNetworkMonitorProcessMap()
-    networkMonitorProcessMap.handleMessage(message => {
+    let netdump = await instance.newNetdump()
+    netdump.handleMessage(message => {
       if (Buffer.isBuffer(message)) {
         console.log(message.toString())
       } else {
         console.log(message)
       }
     })
-    await networkMonitorProcessMap.start()
-    console.log('Network monitor process map started')
+    await netdump.start()
+    console.log('Netdump started')
     await sleep(5000)
-    await networkMonitorProcessMap.disconnect()
-    networkMonitorProcessMap.handleMessage(undefined)
-    await networkMonitorProcessMap.stop()
-    console.log('Network monitor process map stopped')
+    await netdump.disconnect()
+    netdump.handleMessage(undefined)
+    await netdump.stop()
+    console.log('Netdump stopped')
   } else if (cmd === 'download') {
     console.log('Downloading pcap file')
     let pcap = await instance.downloadPcap()

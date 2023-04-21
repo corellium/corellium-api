@@ -9,7 +9,7 @@ const WebPlayer = require('./webplayer')
 const Images = require('./images')
 const pTimeout = require('p-timeout')
 const NetworkMonitor = require('./netmon')
-const NetworkMonitorProcessMap = require('./netmonprocmap')
+const Netdump = require('./netdump')
 const { sleep } = require('./util/sleep')
 const util = require('util')
 const fs = require('fs')
@@ -417,18 +417,18 @@ class Instance extends EventEmitter {
   }
 
   /**
-   * Return an {@link NetworkMonitorProcessMap} connected to this instance. Calling this
+   * Return {@link Netdump} connected to this instance. Calling this
    * method multiple times will reuse the same agent connection.
-   * @returns {NetworkMonitorProcessMap}
+   * @returns {Netdump}
    */
-  async networkMonitorProcessMap() {
-    if (!this._netmonprocmap) this._netmonprocmap = await this.newNetworkMonitorProcessMap()
-    return this._netmonprocmap
+  async netdump() {
+    if (!this._netdump) this._netdump = await this.newNetdump()
+    return this._netdump
   }
 
-  async netmonprocmapEndpoint() {
-    // Extra while loop to avoid races where info.netmonprocmap gets unset again before we wake back up.
-    while (!this.info.netmonprocmap) await this._waitFor(() => !!this.info.netmonprocmap)
+  async netdumpEndpoint() {
+    // Extra while loop to avoid races where info.netdump gets unset again before we wake back up.
+    while (!this.info.netdump) await this._waitFor(() => !!this.info.netdump)
 
     // We want to avoid a situation where we were not listening for updates, and the info we have is stale (from last boot),
     // and the instance has started again but this time with no agent info yet or new agent info. Therefore, we can use
@@ -443,32 +443,28 @@ class Instance extends EventEmitter {
       }
     }
 
-    return this.project.api + '/agent/' + this.info.netmonprocmap.info
+    return this.project.api + '/agent/' + this.info.netdump.info
   }
 
   /**
-   * Create a new {@link NetworkMonitorProcessMap} connection to this instance.
-   * @returns {NetworkMonitorProcessMap}
+   * Create a new {@link Netdump} connection to this instance.
+   * @returns {Netdump}
    */
-  async newNetworkMonitorProcessMap() {
-    return new NetworkMonitorProcessMap(this)
+  async newNetdump() {
+    return new Netdump(this)
   }
 
   /**
-   * Download Network Monitor Process Map pcap file.
+   * Download netdump pcap file.
    * @example
    * let pcap = await instance.downloadPcap();
    * console.log(pcap.toString());
    */
   async downloadPcap() {
-    const token = await this._fetch('/netMonProcMapPcap-authorize', { method: 'POST' })
-    const response = await fetchApi(
-      this.project,
-      `/preauthed/` + token.token + `/netMonProcMap.pcap`,
-      {
-        response: 'raw'
-      }
-    )
+    const token = await this._fetch('/netdumpPcap-authorize', { method: 'POST' })
+    const response = await fetchApi(this.project, `/preauthed/` + token.token + `/netdump.pcap`, {
+      response: 'raw'
+    })
 
     return await response.buffer()
   }

@@ -12,14 +12,14 @@ const { fetchApi } = require('./util/fetch')
  */
 
 /**
- * A connection to the network monitor process map running on an instance.
+ * A connection to netdump running on an instance.
  *
  * Instances of this class
- * are returned from {@link Instance#networkMonitorProcessMap} and {@link Instance#newNetworkMonitorProcessMap}. They
+ * are returned from {@link Instance#netdump} and {@link Instance#newNetdump}. They
  * should not be created using the constructor.
  * @hideconstructor
  */
-class NetworkMonitorProcessMap {
+class Netdump {
   constructor(instance) {
     this.instance = instance
     this.connected = false
@@ -32,7 +32,7 @@ class NetworkMonitorProcessMap {
   }
 
   /**
-   * Ensure the network monitor is connected.
+   * Ensure netdump is connected.
    * @private
    */
   async connect() {
@@ -41,7 +41,7 @@ class NetworkMonitorProcessMap {
   }
 
   /**
-   * Ensure the network monitor is disconnected, then connect the network monitor.
+   * Ensure netdump is disconnected, then connect netdump.
    * @private
    */
   async reconnect() {
@@ -66,9 +66,9 @@ class NetworkMonitorProcessMap {
   }
 
   async _connect() {
-    const endpoint = await this.instance.netmonprocmapEndpoint()
+    const endpoint = await this.instance.netdumpEndpoint()
 
-    // Detect if a disconnection happened before we were able to get the network monitor endpoint.
+    // Detect if a disconnection happened before we were able to get netdump endpoint.
     if (!this.pendingConnect) throw new Error('connection cancelled')
 
     let ws = new WebSocket(endpoint)
@@ -120,7 +120,7 @@ class NetworkMonitorProcessMap {
             }
           }
 
-          console.error('error in netmonprocmap socket', err)
+          console.error('error in netdump socket', err)
         })
 
         resolve()
@@ -162,7 +162,7 @@ class NetworkMonitorProcessMap {
         return
       }
 
-      console.error('Netmonprocmap did not get a response to pong in 10 seconds, disconnecting.')
+      console.error('Netdump did not get a response to pong in 10 seconds, disconnecting.')
 
       this._disconnect()
     }, 10000)
@@ -187,10 +187,10 @@ class NetworkMonitorProcessMap {
   }
 
   /**
-   * Disconnect an network monitor connection. This is usually only required if a new
-   * network monitor connection has been created and is no longer needed
+   * Disconnect netdump connection. This is usually only required if a new
+   * netdump connection has been created and is no longer needed
    * @example
-   * netmon.disconnect();
+   * netdump.disconnect();
    */
   disconnect() {
     this.pendingConnect = false
@@ -211,16 +211,16 @@ class NetworkMonitorProcessMap {
     }
   }
 
-  /** Start Network Monitor Process Map
+  /** Start netdump
    * @example
-   * let netmon = await instance.newNetworkMonitorProcessMap();
-   * netmon.start();
+   * let netdump = await instance.newNetdump();
+   * netdump.start();
    */
   async start() {
     await this.connect()
-    await this._fetch('/netmonprocmap/enable', { method: 'POST' })
+    await this._fetch('/netdump/enable', { method: 'POST' })
     await this.instance._waitFor(() => {
-      return this.instance.info.netmonprocmap && this.instance.info.netmonprocmap.enabled
+      return this.instance.info.netdump && this.instance.info.netdump.enabled
     })
     return true
   }
@@ -228,8 +228,8 @@ class NetworkMonitorProcessMap {
   /** Set message handler
    * @param {NetworkMonitorProcessMap~newEntryCallback} handler - the callback for captured entry
    * @example
-   * let netmonprocmap = await instance.newNetworkMonitorProcessMap();
-   * netmonprocmap.handleMessage((message) => {
+   * let netdump = await instance.newNetdump();
+   * netdump.handleMessage((message) => {
    *   if (Buffer.isBuffer(message)) {
    *     console.log(message.toString())
    *   } else {
@@ -241,10 +241,10 @@ class NetworkMonitorProcessMap {
     this.handler = handler
   }
 
-  /** Clear captured Network Monitor Process Map data
+  /** Clear captured netdump data
    * @example
-   * let netmon = await instance.newNetworkMonitorProcessMap();
-   * netmon.clearLog();
+   * let netdump = await instance.newNetdump();
+   * netdump.clearLog();
    */
   async clearLog() {
     let disconnectAfter = false
@@ -258,24 +258,24 @@ class NetworkMonitorProcessMap {
     }
   }
 
-  /** Stop Network Monitor Process Map
+  /** Stop Netdump
    * @example
-   * let netmonprocmap = await instance.newNetworkMonitorProcessMap();
-   * netmonprocmap.stop();
+   * let netdump = await instance.newNetdump();
+   * netdump.stop();
    */
   async stop() {
-    await this._fetch('/netmonprocmap/disable', { method: 'POST' })
+    await this._fetch('/netdump/disable', { method: 'POST' })
     await this.disconnect()
     await this.instance._waitFor(() => {
-      return !(this.instance.info.netmonprocmap && this.instance.info.netmonprocmap.enabled)
+      return !(this.instance.info.netdump && this.instance.info.netdump.enabled)
     })
     return (await this.isEnabled()) === false
   }
 
-  /** Check if Network Monitor Process Map is enabled
+  /** Check if netdump is enabled
    * @returns {boolean}
    * @example
-   * let enabled = await netmon.isEnabled();
+   * let enabled = await netdump.isEnabled();
    * if (enabled) {
    *     console.log("enabled");
    * } else {
@@ -284,7 +284,7 @@ class NetworkMonitorProcessMap {
    */
   async isEnabled() {
     let info = await fetchApi(this.instance.project, `/instances/${this.instance.id}`)
-    return info ? (info.netmonprocmap ? info.netmonprocmap.enabled : false) : false
+    return info ? (info.netdump ? info.netdump.enabled : false) : false
   }
 
   async _fetch(endpoint = '', options = {}) {
@@ -296,4 +296,4 @@ class NetworkMonitorProcessMap {
   }
 }
 
-module.exports = NetworkMonitorProcessMap
+module.exports = Netdump
