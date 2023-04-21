@@ -1,71 +1,71 @@
 {
-    "name": "@corellium/corellium-api",
-    "version": "1.6.0",
-    "description": "Supported nodejs library for interacting with the Corellium service and VMs",
-    "main": "src/corellium.js",
-    "husky": {
-        "hooks": {
-            "pre-commit": "lint-staged && npm run docs"
-        }
-    },
-    "scripts": {
-        "docs": "jsdoc -c .jsdocrc.js -d docs",
-        "test": "nyc mocha",
-        "test:ci": "nyc mocha"
-    },
-    "author": "Corellium (https://www.corellium.com)",
-    "homepage": "https://corellium.github.io/corellium-api/index.html",
-    "dependencies": {
-        "cross-fetch": "^3.1.5",
-        "fast-stable-stringify": "^1.0.0",
-        "form-data": "^3.0.0",
-        "hkdf": "0.0.2",
-        "jszip": "^3.7.1",
-        "p-retry": "^2.0.0",
-        "p-timeout": "^3.2.0",
-        "split": "^1.0.1",
-        "uuid": "^3.3.2",
-        "websocket-stream": "^5.1.1",
-        "xhr2": "^0.2.0",
-        "yazl": "^2.5.1"
-    },
-    "devDependencies": {
-        "docdash": "^1.2.0",
-        "eslint": "^7.17.0",
-        "eslint-plugin-mocha": "^8.0.0",
-        "husky": "^4.3.7",
-        "jsdoc": "^3.6.10",
-        "lint-staged": "^10.5.3",
-        "mocha": "^9.2.2",
-        "nyc": "^15.1.0",
-        "prettier": "2.2.1",
-        "wtfnode": "^0.8.4"
-    },
-    "bin": {
-        "corellium-api": "src/corellium.js"
-    },
-    "directories": {
-        "doc": "docs",
-        "example": "examples",
-        "test": "test"
-    },
-    "repository": {
-        "type": "git",
-        "url": "git+https://github.com/corellium/corellium-api.git"
-    },
-    "keywords": [
-        "corellium",
-        "reverse-engineering",
-        "virtual-machines",
-        "vm",
-        "android",
-        "ios",
-        "arm",
-        "arm64",
-        "frida"
-    ],
-    "license": "ISC",
-    "bugs": {
-        "url": "https://github.com/corellium/corellium-api/issues"
+  "name": "@corellium/corellium-api",
+  "version": "1.6.0",
+  "description": "Supported nodejs library for interacting with the Corellium service and VMs",
+  "main": "src/corellium.js",
+  "husky": {
+    "hooks": {
+      "pre-commit": "lint-staged && npm run docs"
     }
+  },
+  "scripts": {
+    "docs": "jsdoc -c .jsdocrc.js -d docs",
+    "test": "npx nyc npx mocha",
+    "test:ci": "npx nyc npx mocha"
+  },
+  "author": "Corellium (https://www.corellium.com)",
+  "homepage": "https://corellium.github.io/corellium-api/index.html",
+  "dependencies": {
+    "cross-fetch": "^3.1.5",
+    "fast-stable-stringify": "^1.0.0",
+    "form-data": "^3.0.0",
+    "hkdf": "0.0.2",
+    "jszip": "^3.7.1",
+    "p-retry": "^2.0.0",
+    "p-timeout": "^3.2.0",
+    "split": "^1.0.1",
+    "uuid": "^3.3.2",
+    "websocket-stream": "^5.1.1",
+    "xhr2": "^0.2.0",
+    "yazl": "^2.5.1"
+  },
+  "devDependencies": {
+    "docdash": "^1.2.0",
+    "eslint": "^7.17.0",
+    "eslint-plugin-mocha": "^8.0.0",
+    "husky": "^4.3.7",
+    "jsdoc": "^3.6.10",
+    "lint-staged": "^10.5.3",
+    "mocha": "^9.2.2",
+    "nyc": "^15.1.0",
+    "prettier": "2.2.1",
+    "wtfnode": "^0.8.4"
+  },
+  "bin": {
+    "corellium-api": "src/corellium.js"
+  },
+  "directories": {
+    "doc": "docs",
+    "example": "examples",
+    "test": "test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/corellium/corellium-api.git"
+  },
+  "keywords": [
+    "corellium",
+    "reverse-engineering",
+    "virtual-machines",
+    "vm",
+    "android",
+    "ios",
+    "arm",
+    "arm64",
+    "frida"
+  ],
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/corellium/corellium-api/issues"
+  }
 }

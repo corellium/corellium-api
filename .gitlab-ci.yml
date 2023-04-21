@@ -8,4 +8,6 @@ stages:
 test:
   image: node:lts
   stage: test
-  script: npm run test:ci
+  script: 
+    - npm ci
+    - npm run test:ci

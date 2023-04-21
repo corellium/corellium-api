@@ -9,6 +9,7 @@ const WebPlayer = require('./webplayer')
 const Images = require('./images')
 const pTimeout = require('p-timeout')
 const NetworkMonitor = require('./netmon')
+const NetworkMonitorProcessMap = require('./netmonprocmap')
 const { sleep } = require('./util/sleep')
 const util = require('util')
 const fs = require('fs')
@@ -416,6 +417,63 @@ class Instance extends EventEmitter {
   }
 
   /**
+   * Return an {@link NetworkMonitorProcessMap} connected to this instance. Calling this
+   * method multiple times will reuse the same agent connection.
+   * @returns {NetworkMonitorProcessMap}
+   */
+  async networkMonitorProcessMap() {
+    if (!this._netmonprocmap) this._netmonprocmap = await this.newNetworkMonitorProcessMap()
+    return this._netmonprocmap
+  }
+
+  async netmonprocmapEndpoint() {
+    // Extra while loop to avoid races where info.netmonprocmap gets unset again before we wake back up.
+    while (!this.info.netmonprocmap) await this._waitFor(() => !!this.info.netmonprocmap)
+
+    // We want to avoid a situation where we were not listening for updates, and the info we have is stale (from last boot),
+    // and the instance has started again but this time with no agent info yet or new agent info. Therefore, we can use
+    // cached if only if it's recent.
+    if (new Date().getTime() - this.infoDate.getTime() > 2 * this.project.updater.updateInterval) {
+      try {
+        await this.update()
+      } catch (err) {
+        if (err.stack.includes('500 Internal Server Error')) {
+          return undefined
+        }
+      }
+    }
+
+    return this.project.api + '/agent/' + this.info.netmonprocmap.info
+  }
+
+  /**
+   * Create a new {@link NetworkMonitorProcessMap} connection to this instance.
+   * @returns {NetworkMonitorProcessMap}
+   */
+  async newNetworkMonitorProcessMap() {
+    return new NetworkMonitorProcessMap(this)
+  }
+
+  /**
+   * Download Network Monitor Process Map pcap file.
+   * @example
+   * let pcap = await instance.downloadPcap();
+   * console.log(pcap.toString());
+   */
+  async downloadPcap() {
+    const token = await this._fetch('/netMonProcMapPcap-authorize', { method: 'POST' })
+    const response = await fetchApi(
+      this.project,
+      `/preauthed/` + token.token + `/netMonProcMap.pcap`,
+      {
+        response: 'raw'
+      }
+    )
+
+    return await response.buffer()
+  }
+
+  /**
    * Return an {@link NetworkMonitor} connected to this instance. Calling this
    * method multiple times will reuse the same agent connection.
    * @returns {NetworkMonitor}
@@ -507,12 +565,22 @@ class Instance extends EventEmitter {
   }
 
   /**
-   * Start this instance.
-   * @example
-   * await instance.start();
+   * @typedef {object} StartOptions
+   * @property {boolean} sockcap - Start the sockcap add-on extension if loaded
+   * @property {boolean} paused - Start the instance in a paused state
    */
-  async start() {
-    await this._fetch('/start', { method: 'POST' })
+
+  /**
+   * Start this instance.
+   * @param {StartOptions} options
+   * @example
+   * await instance.start({
+   *  sockcap: true,
+   *  paused: true
+   * });
+   */
+  async start(options) {
+    await this._fetch('/start', { method: 'POST' }, options)
   }
 
   /**
