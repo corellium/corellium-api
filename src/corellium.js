@@ -371,13 +371,12 @@ class Corellium {
    * @param {string} name - project name
    * @param {integer} color - color
    * @param {Object} [settings] - project settings
-   * @param {integer} settings.version
    * @param {boolean} settings.internet-access
    * @returns {Promise<Project>}
    * @example
    * corellium.createProject("TestProject");
    */
-  async createProject(name, color = 1, settings = { version: 1, 'internet-access': true }) {
+  async createProject(name, color = 1, settings = { 'internet-access': true }) {
     const response = await fetchApi(this, '/projects', {
       method: 'POST',
       json: {
