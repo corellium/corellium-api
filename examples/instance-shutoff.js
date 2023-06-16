@@ -1,6 +1,4 @@
 const { Corellium } = require("@corellium/corellium-api");
-const Project = require("@corellium/corellium-api/src/project");
-const fs = require("fs");
 const process = require("process");
 
 let ActiveInstances = 0;
