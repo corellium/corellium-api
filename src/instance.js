@@ -619,11 +619,15 @@ class Instance extends EventEmitter {
 
   /**
    * Restore instance from backup
+   * @param {string} [password] - Password for encrypted backups
    * @example
    * await instance.restoreBackup();
    */
-  async restoreBackup() {
-    await this._fetch('/restoreBackup', { method: 'POST' })
+  async restoreBackup(password) {
+    await this._fetch('/restoreBackup', {
+      method: 'POST',
+      json: { password }
+    })
     await this.waitForUserTask(null)
   }
 
