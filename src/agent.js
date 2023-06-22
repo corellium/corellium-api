@@ -147,7 +147,7 @@ class Agent {
         // Detect if a disconnection happened before we were able to get the agent endpoint.
         if (!this.pendingConnect) throw new Error("connection cancelled");
 
-        let ws = new WebSocket(endpoint);
+        let ws = new WebSocket(endpoint.replace(/^http/, "ws"));
 
         this.ws = ws;
 
@@ -155,12 +155,14 @@ class Agent {
             try {
                 let message;
                 let id;
-                if (typeof data === "string") {
+                try {
                     message = JSON.parse(data);
                     id = message["id"];
-                } else if (data.length >= 8) {
-                    id = data.readUInt32LE(0);
-                    message = data.slice(8);
+                } catch (error) {
+                    if (data.length >= 8) {
+                        id = data.readUInt32LE(0);
+                        message = data.slice(8);
+                    }
                 }
 
                 let handler = this.pending.get(id);
