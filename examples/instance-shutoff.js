@@ -5,7 +5,7 @@ let ActiveInstances = 0;
 let ShutoffInstances = 0;
 
 // Specify your domain's endpoint.
-let myEndPoint = "https://awesomedomain.enterprise.corellium.com";
+let myEndPoint = "https://app.corellium.com/";
 // Create an enviromental variable for your API token.
 let apiToken = process.env["CORELLIUM_API_TOKEN"];
 
@@ -15,7 +15,12 @@ let corellium = new Corellium({
   apiToken: apiToken,
 });
 
-main();
+if (require.main === module) {
+  main();
+} else {
+  // Export functions, variables, or classes for other modules
+}
+
 async function main() {
   // If you are seeing certificate issues when executing the script, try uncommenting this line.
   // process.env["NODE_TLS_REJECT_UNAUTHORIZED"] = 0;  
