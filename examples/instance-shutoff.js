@@ -18,7 +18,7 @@ let corellium = new Corellium({
 if (require.main === module) {
   main();
 } else {
-  // Export functions, variables, or classes for other modules
+  // Export functions, variables, or classes for other modules.
 }
 
 async function main() {
@@ -26,7 +26,7 @@ async function main() {
   // process.env["NODE_TLS_REJECT_UNAUTHORIZED"] = 0;  
   var args = process.argv;
 
-  // command line arguments that are accepted.
+  // Command line arguments that are accepted.
   const commands = ["--domain", "--projectID", "--projectName", "--help"];
 
   // Displays all arguments that can be used with this script.
@@ -47,8 +47,8 @@ async function main() {
     usage();
     process.exit(3);
   }
-
-  corellium.login();
+  // Using await captures your token once.
+  await corellium.login();
 
   // Calls a specific function depending on the command received.
   switch (args[2]) {
