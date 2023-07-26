@@ -406,6 +406,7 @@ class Project {
    * @returns {Promise<Image>}
    */
   async uploadImage(type, filePath, name, progress) {
+    const imageId = uuidv4()
     const token = await this.getToken()
     const url =
       this.api +
@@ -414,11 +415,12 @@ class Project {
       '/image-upload/' +
       encodeURIComponent(type) +
       '/' +
-      encodeURIComponent(uuidv4()) +
+      encodeURIComponent(imageId) +
       '/' +
       encodeURIComponent(name)
 
-    return await uploadFile(token, url, filePath, progress)
+    await uploadFile(token, url, filePath, progress)
+    return { id: imageId, name }
   }
 }
 
