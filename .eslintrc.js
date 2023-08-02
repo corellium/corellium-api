@@ -1,23 +1,34 @@
-"use strict";
+'use strict'
 
 module.exports = {
-    env: {
-        es2021: true,
-        mocha: true,
-        node: true,
-    },
-    extends: ["eslint:recommended", "plugin:mocha/recommended"],
-    ignorePatterns: ["docs/**/*", "resumable.js"],
-    parserOptions: {
-        ecmaVersion: 12,
-    },
-    plugins: ["mocha"],
-    rules: {
-        "mocha/no-setup-in-describe": "off",
-        "mocha/no-sibling-hooks": "off",
-        "no-unused-vars": [
-            2,
-            { vars: "all", args: "all", argsIgnorePattern: "^_", ignoreRestSiblings: false },
-        ],
-    },
-};
+  env: {
+    node: true
+  },
+  extends: [
+    'standard',
+    'eslint:recommended'
+  ],
+  root: true,
+  plugins: [
+    'no-floating-promise'
+  ],
+  rules: {
+    'no-empty': [
+      'error',
+      {
+        allowEmptyCatch: false
+      }
+    ],
+    'no-floating-promise/no-floating-promise': 'error',
+    'no-return-await': 'off',
+    'no-unused-vars': [
+      'error',
+      {
+        args: 'none',
+        caughtErrors: 'none',
+        ignoreRestSiblings: true,
+        varsIgnorePattern: '^_'
+      }
+    ]
+  }
+}

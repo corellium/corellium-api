@@ -38,7 +38,7 @@ const { fetchApi } = require('./util/fetch')
  * @hideconstructor
  */
 class WebPlayer {
-  constructor(project, instanceId, features, permissions) {
+  constructor (project, instanceId, features, permissions) {
     this._onDestroy = () => {}
     this._project = project
     this._session = {
@@ -52,7 +52,7 @@ class WebPlayer {
     }
   }
 
-  static async _fetch(args) {
+  static async _fetch (args) {
     const { project, sessionId = undefined, options = {} } = args
     const endpoint = sessionId ? `/webplayer/${sessionId}` : '/webplayer'
     return fetchApi(project, endpoint, options)
@@ -65,7 +65,7 @@ class WebPlayer {
    * @example
    * let sessionInfo = webPlayerInst.info
    */
-  get info() {
+  get info () {
     return this._session
   }
 
@@ -78,7 +78,7 @@ class WebPlayer {
    * const sessions = webPlayerInst.sessions()
    * session.forEach(session => console.log(`${session.userId} session expires at ${session.expiration}`))
    */
-  static async sessions(project) {
+  static async sessions (project) {
     return await WebPlayer._fetch({
       project,
       options: { method: 'GET' }
@@ -92,7 +92,7 @@ class WebPlayer {
    * @example
    * let sessionInfo = webPlayerInst.refreshSession()
    */
-  async refreshSession() {
+  async refreshSession () {
     const sessionId = this._session.identifier
     if (sessionId) {
       // TODO: What happens if the record is gone? Auto destroy self?
@@ -121,7 +121,7 @@ class WebPlayer {
    * // Create a session token with a 10-minute expiration
    * let wpSession = await webPlayerInst.sessionToken(600)
    */
-  async _createSession(expiresIn, onDestroy) {
+  async _createSession (expiresIn, onDestroy) {
     const newSession = await WebPlayer._fetch({
       project: this._project,
       options: {
@@ -148,7 +148,7 @@ class WebPlayer {
    * @example
    * await webPlayerInst.destroySession()
    */
-  async destroy(session) {
+  async destroy (session) {
     const onDestroy = this._onDestroy
     const sessionId = session || this._session.identifier
     this._session.identifier = null

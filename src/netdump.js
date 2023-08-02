@@ -20,7 +20,7 @@ const { fetchApi } = require('./util/fetch')
  * @hideconstructor
  */
 class Netdump {
-  constructor(instance) {
+  constructor (instance) {
     this.instance = instance
     this.connected = false
     this.connectPromise = null
@@ -35,7 +35,7 @@ class Netdump {
    * Ensure netdump is connected.
    * @private
    */
-  async connect() {
+  async connect () {
     this.pendingConnect = true
     if (!this.connected) await this.reconnect()
   }
@@ -44,7 +44,7 @@ class Netdump {
    * Ensure netdump is disconnected, then connect netdump.
    * @private
    */
-  async reconnect() {
+  async reconnect () {
     if (this.connected) this.disconnect()
 
     if (this.connectPromise) return this.connectPromise
@@ -65,18 +65,18 @@ class Netdump {
     return this.connectPromise
   }
 
-  async _connect() {
+  async _connect () {
     const endpoint = await this.instance.netdumpEndpoint()
 
     // Detect if a disconnection happened before we were able to get netdump endpoint.
     if (!this.pendingConnect) throw new Error('connection cancelled')
 
-    let ws = new WebSocket(
+    const ws = new WebSocket(
       /^https/.test(endpoint)
         ? endpoint.replace(/^https/, 'wss')
         : /^http/.test(endpoint)
-        ? endpoint.replace(/^http/, 'ws')
-        : endpoint
+          ? endpoint.replace(/^http/, 'ws')
+          : endpoint
     )
 
     this.ws = ws
@@ -151,10 +151,10 @@ class Netdump {
     this._startKeepAlive()
   }
 
-  _startKeepAlive() {
+  _startKeepAlive () {
     if (!this.connected) return
 
-    let ws = this.ws
+    const ws = this.ws
 
     ws.ping()
 
@@ -185,7 +185,7 @@ class Netdump {
     })
   }
 
-  _stopKeepAlive() {
+  _stopKeepAlive () {
     if (this._keepAliveTimeout) {
       clearTimeout(this._keepAliveTimeout)
       this._keepAliveTimeout = null
@@ -198,12 +198,12 @@ class Netdump {
    * @example
    * netdump.disconnect();
    */
-  disconnect() {
+  disconnect () {
     this.pendingConnect = false
     this._disconnect()
   }
 
-  _disconnect() {
+  _disconnect () {
     this.connected = false
     this.handler = null
     this._stopKeepAlive()
@@ -222,7 +222,7 @@ class Netdump {
    * let netdump = await instance.newNetdump();
    * netdump.start();
    */
-  async start() {
+  async start () {
     await this.connect()
     await this._fetch('/netdump/enable', { method: 'POST' })
     await this.instance._waitFor(() => {
@@ -243,7 +243,7 @@ class Netdump {
    *   }
    * });
    */
-  handleMessage(handler) {
+  handleMessage (handler) {
     this.handler = handler
   }
 
@@ -252,7 +252,7 @@ class Netdump {
    * let netdump = await instance.newNetdump();
    * netdump.clearLog();
    */
-  async clearLog() {
+  async clearLog () {
     let disconnectAfter = false
     if (!this.connected) {
       await this.connect()
@@ -269,7 +269,7 @@ class Netdump {
    * let netdump = await instance.newNetdump();
    * netdump.stop();
    */
-  async stop() {
+  async stop () {
     await this._fetch('/netdump/disable', { method: 'POST' })
     await this.disconnect()
     await this.instance._waitFor(() => {
@@ -288,12 +288,12 @@ class Netdump {
    *     console.log("disabled");
    * }
    */
-  async isEnabled() {
-    let info = await fetchApi(this.instance.project, `/instances/${this.instance.id}`)
+  async isEnabled () {
+    const info = await fetchApi(this.instance.project, `/instances/${this.instance.id}`)
     return info ? (info.netdump ? info.netdump.enabled : false) : false
   }
 
-  async _fetch(endpoint = '', options = {}) {
+  async _fetch (endpoint = '', options = {}) {
     return await fetchApi(
       this.instance.project,
       `/instances/${this.instance.id}${endpoint}`,

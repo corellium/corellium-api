@@ -76,7 +76,7 @@ const { sleep } = require('./util/sleep')
  * @hideconstructor
  */
 class Agent {
-  constructor(instance) {
+  constructor (instance) {
     this.instance = instance
     this.connected = false
     this.uploading = false
@@ -92,7 +92,7 @@ class Agent {
    * Ensure the agent is connected.
    * @private
    */
-  async connect() {
+  async connect () {
     this.pendingConnect = true
     if (!this.connected) {
       return await this.reconnect()
@@ -103,7 +103,7 @@ class Agent {
    * Ensure the agent is disconnected, then connect the agent.
    * @private
    */
-  async reconnect() {
+  async reconnect () {
     if (this.connected) this.disconnect()
 
     if (this.connectPromise) return this.connectPromise
@@ -135,7 +135,7 @@ class Agent {
     return this.connectPromise
   }
 
-  async _connect() {
+  async _connect () {
     this.pending = new Map()
 
     const endpoint = await this.instance.agentEndpoint()
@@ -147,12 +147,12 @@ class Agent {
     // Detect if a disconnection happened before we were able to get the agent endpoint.
     if (!this.pendingConnect) throw new Error('connection cancelled')
 
-    let ws = new WebSocket(
+    const ws = new WebSocket(
       /^https/.test(endpoint)
         ? endpoint.replace(/^https/, 'wss')
         : /^http/.test(endpoint)
-        ? endpoint.replace(/^http/, 'ws')
-        : endpoint
+          ? endpoint.replace(/^http/, 'ws')
+          : endpoint
     )
 
     this.ws = ws
@@ -163,13 +163,13 @@ class Agent {
         let id
         if (typeof data === 'string') {
           message = JSON.parse(data)
-          id = message['id']
+          id = message.id
         } else if (data.length >= 8) {
           id = data.readUInt32LE(0)
           message = data.slice(8)
         }
 
-        let handler = this.pending.get(id)
+        const handler = this.pending.get(id)
         if (handler) {
           // will work regardless of whether handler returns a promise
           Promise.resolve(handler(null, message)).then(shouldDelete => {
@@ -250,10 +250,10 @@ class Agent {
       })
   }
 
-  _startKeepAlive() {
+  _startKeepAlive () {
     if (!this.connected) return
 
-    let ws = this.ws
+    const ws = this.ws
 
     ws.ping()
 
@@ -267,7 +267,7 @@ class Agent {
         return
       }
 
-      let err = new Error('Agent did not get a response to ping in 10 seconds, disconnecting.')
+      const err = new Error('Agent did not get a response to ping in 10 seconds, disconnecting.')
       console.error('Agent did not get a response to ping in 10 seconds, disconnecting.')
 
       this.pending.forEach(handler => {
@@ -292,7 +292,7 @@ class Agent {
     })
   }
 
-  _stopKeepAlive() {
+  _stopKeepAlive () {
     if (this._startKeepAliveTimeout) {
       clearTimeout(this._startKeepAliveTimeout)
       this._startKeepAliveTimeout = null
@@ -311,12 +311,12 @@ class Agent {
    * @example
    * agent.disconnect();
    */
-  disconnect() {
+  disconnect () {
     this.pendingConnect = false
     this._disconnect()
   }
 
-  _disconnect() {
+  _disconnect () {
     this.connected = false
     this._stopKeepAlive()
     if (this.ws) {
@@ -351,7 +351,7 @@ class Agent {
    * @param {function} [uploadHandler] - a kludge for file uploads to work
    * @private
    */
-  async command(type, op, params, handler, uploadHandler) {
+  async command (type, op, params, handler, uploadHandler) {
     if (handler === undefined) handler = response => response
 
     const id = this.id
@@ -391,8 +391,8 @@ class Agent {
     })
   }
 
-  sendBinaryData(id, data) {
-    let idBuffer = Buffer.alloc(8, 0)
+  sendBinaryData (id, data) {
+    const idBuffer = Buffer.alloc(8, 0)
     idBuffer.writeUInt32LE(id, 0)
     if (data) this.ws.send(Buffer.concat([idBuffer, data]))
     else this.ws.send(idBuffer)
@@ -404,7 +404,7 @@ class Agent {
    * let agent = await instance.agent();
    * await agent.ready();
    */
-  async ready() {
+  async ready () {
     await this.command('app', 'ready')
   }
 
@@ -417,7 +417,7 @@ class Agent {
    *     console.log(progress, status);
    * });
    */
-  async uninstall(bundleID, progress) {
+  async uninstall (bundleID, progress) {
     await this.command('app', 'uninstall', { bundleID }, message => {
       if (message.success) return message
       if (progress && message.progress) progress(message.progress, message.status)
@@ -430,7 +430,7 @@ class Agent {
    * @example
    * await agent.run("com.corellium.demoapp");
    */
-  async run(bundleID) {
+  async run (bundleID) {
     await this.command('app', 'run', { bundleID })
   }
 
@@ -441,7 +441,7 @@ class Agent {
    * @example
    * await agent.shellExec("uname");
    */
-  async shellExec(cmd) {
+  async shellExec (cmd) {
     return await this.command('app', 'shellExec', { cmd })
   }
 
@@ -452,7 +452,7 @@ class Agent {
    * @example
    * await agent.runActivity('com.corellium.test.app', 'com.corellium.test.app/com.corellium.test.app.CrashActivity');
    */
-  async runActivity(bundleID, activity) {
+  async runActivity (bundleID, activity) {
     await this.command('app', 'run', { bundleID, activity })
   }
 
@@ -462,7 +462,7 @@ class Agent {
    * @example
    * await agent.kill("com.corellium.demoapp");
    */
-  async kill(bundleID) {
+  async kill (bundleID) {
     await this.command('app', 'kill', { bundleID })
   }
 
@@ -475,7 +475,7 @@ class Agent {
    *     console.log('Found installed app ' + app['bundleID']);
    * }
    */
-  async appList() {
+  async appList () {
     const { apps } = await this.command('app', 'list')
     return apps
   }
@@ -487,7 +487,7 @@ class Agent {
    * @example
    * let scripts = await agent.stat('/data/corellium/frida/scripts/');
    */
-  async stat(path) {
+  async stat (path) {
     const response = await this.command('file', 'stat', { path })
     return response.stat
   }
@@ -521,7 +521,7 @@ class Agent {
    *     console.log(progress, status);
    * });
    */
-  async install(path, progress) {
+  async install (path, progress) {
     await this.command('app', 'install', { path }, message => {
       if (message.success) return message
       if (progress && message.progress) progress(message.progress, message.status)
@@ -537,7 +537,7 @@ class Agent {
    *     console.log('Found configuration profile: ' + p);
    * }
    */
-  async profileList() {
+  async profileList () {
     const { profiles } = await this.command('profile', 'list')
     return profiles
   }
@@ -549,7 +549,7 @@ class Agent {
    * var profile = fs.readFileSync(path.join(__dirname, "myprofile.mobileconfig"));
    * await agent.installProfile(profile);
    */
-  async installProfile(profile) {
+  async installProfile (profile) {
     await this.command('profile', 'install', {
       profile: Buffer.from(profile).toString('base64')
     })
@@ -561,7 +561,7 @@ class Agent {
    * @example
    * await agent.removeProfile('com.test.myprofile');
    */
-  async removeProfile(profileID) {
+  async removeProfile (profileID) {
     await this.command('profile', 'remove', { profileID })
   }
 
@@ -572,9 +572,10 @@ class Agent {
    * @example
    * var profile = await agent.getProfile('com.test.myprofile');
    */
-  async getProfile(profileID) {
+  async getProfile (profileID) {
     const { profile } = await this.command('profile', 'get', { profileID })
     if (!profile) return null
+    // eslint-disable-next-line new-cap
     return new Buffer.from(profile, 'base64')
   }
 
@@ -587,7 +588,7 @@ class Agent {
    *     console.log(p['uuid']);
    * }
    */
-  async listProvisioningProfiles() {
+  async listProvisioningProfiles () {
     const { profiles } = await this.command('provisioning', 'list')
     return profiles
   }
@@ -600,7 +601,7 @@ class Agent {
    * var profile = fs.readFileSync(path.join(__dirname, "embedded.mobileprovision"));
    * await agent.installProvisioningProfile(profile, true);
    */
-  async installProvisioningProfile(profile, trust = false) {
+  async installProvisioningProfile (profile, trust = false) {
     await this.command('provisioning', 'install', {
       profile: Buffer.from(profile).toString('base64'),
       trust: trust
@@ -613,7 +614,7 @@ class Agent {
    * @example
    * await agent.removeProvisioningProfile('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa');
    */
-  async removeProvisioningProfile(profileID) {
+  async removeProvisioningProfile (profileID) {
     await this.command('provisioning', 'remove', {
       uuid: profileID
     })
@@ -626,7 +627,7 @@ class Agent {
    * @example
    * await agent.preApproveProvisioningProfile('Apple Development: my@email.com (NKJDZ3DZJB)', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa');
    */
-  async preApproveProvisioningProfile(certID, profileID) {
+  async preApproveProvisioningProfile (certID, profileID) {
     await this.command('provisioning', 'preapprove', {
       cert: certID,
       uuid: profileID
@@ -639,7 +640,7 @@ class Agent {
    * @return {Promise<string>}
    * @see example at {@link Agent#upload}
    */
-  async tempFile() {
+  async tempFile () {
     const { path } = await this.command('file', 'temp')
     return path
   }
@@ -653,7 +654,7 @@ class Agent {
    * const tmpName = await agent.tempFile();
    * await agent.upload(tmpName, fs.createReadStream('test.ipa'));
    */
-  async upload(path, stream, progress) {
+  async upload (path, stream, progress) {
     // Temporarily stop the keepalive as the upload appears to backlog
     // the control packets (ping/pong) at the proxy which can cause issues
     // and a disconnect
@@ -698,11 +699,11 @@ class Agent {
    * const dl = agent.download('/var/tmp/test.log');
    * dl.pipe(fs.createWriteStream('test.log'));
    */
-  download(path) {
+  download (path) {
     let command
     const agent = this
     return new stream.Readable({
-      read() {
+      read () {
         if (command) return
         command = agent.command('file', 'download', { path }, message => {
           if (!Buffer.isBuffer(message)) return
@@ -725,8 +726,8 @@ class Agent {
    *     console.log(installProgress, installStatus);
    * });
    */
-  async installFile(stream, installProgress, uploadProgress) {
-    let path = await this.tempFile()
+  async installFile (stream, installProgress, uploadProgress) {
+    const path = await this.tempFile()
 
     await this.upload(path, stream, uploadProgress)
     stream.on('close', () => {
@@ -751,7 +752,7 @@ class Agent {
    * @example
    * await agent.deleteFile('/var/tmp/test.log');
    */
-  async deleteFile(path) {
+  async deleteFile (path) {
     const response = await this.command('file', 'delete', { path })
     return response.path
   }
@@ -764,7 +765,7 @@ class Agent {
    * @example
    * await agent.changeFileAttributes(filePath, {mode: 511});
    */
-  async changeFileAttributes(path, attributes) {
+  async changeFileAttributes (path, attributes) {
     const response = await this.command('file', 'modify', { path, attributes })
     return response
   }
@@ -792,7 +793,7 @@ class Agent {
    *     console.log(crashReport);
    * });
    */
-  async crashes(bundleID, callback) {
+  async crashes (bundleID, callback) {
     await this.command('crash', 'subscribe', { bundleID }, async message => {
       const path = message.file
       const crashReport = await new Promise(resolve => {
@@ -815,7 +816,7 @@ class Agent {
    * @example
    * await agent.lockDevice();
    */
-  async lockDevice() {
+  async lockDevice () {
     await this.command('system', 'lock')
   }
 
@@ -823,7 +824,7 @@ class Agent {
    * @example
    * awaitagent.unlockDevice();
    */
-  async unlockDevice() {
+  async unlockDevice () {
     await this.command('system', 'unlock')
   }
 
@@ -831,7 +832,7 @@ class Agent {
    * @example
    * await agent.enableUIAutomation();
    */
-  async enableUIAutomation() {
+  async enableUIAutomation () {
     await this.command('system', 'enableUIAutomation')
   }
 
@@ -839,7 +840,7 @@ class Agent {
    * @example
    * await agent.disableUIAutomation();
    */
-  async disableUIAutomation() {
+  async disableUIAutomation () {
     await this.command('system', 'disableUIAutomation')
   }
 
@@ -853,7 +854,7 @@ class Agent {
    *     console.log("disabled");
    * }
    */
-  async isSSLPinningEnabled() {
+  async isSSLPinningEnabled () {
     return (await this.command('system', 'isSSLPinningEnabled')).enabled
   }
 
@@ -861,7 +862,7 @@ class Agent {
    * @example
    * await agent.enableSSLPinning();
    */
-  async enableSSLPinning() {
+  async enableSSLPinning () {
     await this.command('system', 'enableSSLPinning')
   }
 
@@ -869,7 +870,7 @@ class Agent {
    * @example
    * await agent.disableSSLPinning();
    */
-  async disableSSLPinning() {
+  async disableSSLPinning () {
     await this.command('system', 'disableSSLPinning')
   }
 
@@ -877,15 +878,15 @@ class Agent {
    * @example
    * await agent.shutdown();
    */
-  async shutdown() {
+  async shutdown () {
     await this.command('system', 'shutdown')
   }
 
-  async acquireDisableAutolockAssertion() {
+  async acquireDisableAutolockAssertion () {
     await this.command('system', 'acquireDisableAutolockAssertion')
   }
 
-  async releaseDisableAutolockAssertion() {
+  async releaseDisableAutolockAssertion () {
     await this.command('system', 'releaseDisableAutolockAssertion')
   }
 
@@ -893,7 +894,7 @@ class Agent {
    * @example
    * await agent.connectToWifi();
    */
-  async connectToWifi() {
+  async connectToWifi () {
     await this.command('wifi', 'connect')
   }
 
@@ -901,12 +902,12 @@ class Agent {
    * @example
    * await agent.disconnectFromWifi();
    */
-  async disconnectFromWifi() {
+  async disconnectFromWifi () {
     await this.command('wifi', 'disconnect')
   }
 
   /** Get device property. */
-  async getProp(property) {
+  async getProp (property) {
     return await this.command('system', 'getprop', { property })
   }
 
@@ -919,7 +920,7 @@ class Agent {
    * @example
    * await agent.runFrida(449, 'keystore');
    */
-  async runFrida(pid, name) {
+  async runFrida (pid, name) {
     return await this.command('frida', 'run-frida', {
       target_pid: pid.toString(),
       target_name: name.toString()
@@ -939,7 +940,7 @@ class Agent {
    *     console.log(pid, name);
    * }
    */
-  async runFridaPs() {
+  async runFridaPs () {
     return await this.command('frida', 'run-frida-ps')
   }
 
@@ -949,7 +950,7 @@ class Agent {
    * @example
    * await agent.runFridaKill();
    */
-  async runFridaKill() {
+  async runFridaKill () {
     return await this.command('frida', 'run-frida-kill')
   }
 }

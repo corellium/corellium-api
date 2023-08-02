@@ -1,4 +1,4 @@
-"use strict";
+'use strict'
 
 /**
  * An instance snapshot.
@@ -8,24 +8,24 @@
  * @hideconstructor
  */
 class Snapshot {
-    constructor(instance, snap) {
-        this.instance = instance;
-        this.receiveUpdate(snap);
-    }
+  constructor (instance, snap) {
+    this.instance = instance
+    this.receiveUpdate(snap)
+  }
 
-    async update() {
-        this.receiveUpdate(await this._fetch(""));
-    }
+  async update () {
+    this.receiveUpdate(await this._fetch(''))
+  }
 
-    receiveUpdate(snap) {
-        this.id = snap.id;
-        this.name = snap.name;
-        this.status = snap.status;
-        this.created = new Date(snap.date);
-        this.fresh = snap.fresh;
-    }
+  receiveUpdate (snap) {
+    this.id = snap.id
+    this.name = snap.name
+    this.status = snap.status
+    this.created = new Date(snap.date)
+    this.fresh = snap.fresh
+  }
 
-    /**
+  /**
      * Rename this snapshot.
      * @param {string} name - The new name for the snapshot.
      * @example
@@ -35,11 +35,11 @@ class Snapshot {
      *     await snapshot.rename('Test 1 new');
      * }
      */
-    async rename(name) {
-        await this._fetch("", { method: "PATCH", json: { name } });
-    }
+  async rename (name) {
+    await this._fetch('', { method: 'PATCH', json: { name } })
+  }
 
-    /**
+  /**
      * Restore the instance to this snapshot.
      * @example
      * const snapshots = await instance.snapshots();
@@ -48,13 +48,13 @@ class Snapshot {
      *     await snapshot.restore();
      * }
      */
-    async restore() {
-        await this._fetch(`/restore`, { method: "POST" });
-        await this.instance._waitFor(() => this.instance.taskState !== "none");
-        await this.instance.waitForTaskState("none");
-    }
+  async restore () {
+    await this._fetch('/restore', { method: 'POST' })
+    await this.instance._waitFor(() => this.instance.taskState !== 'none')
+    await this.instance.waitForTaskState('none')
+  }
 
-    /**
+  /**
      * Delete this snapshot.
      * @example
      * const snapshots = await instance.snapshots();
@@ -63,15 +63,15 @@ class Snapshot {
      *     snapshot.delete();
      * });
      */
-    async delete() {
-        await this._fetch("", { method: "DELETE" });
-        await this.instance.update();
-        await this.instance.waitForUserTask(null);
-    }
+  async delete () {
+    await this._fetch('', { method: 'DELETE' })
+    await this.instance.update()
+    await this.instance.waitForUserTask(null)
+  }
 
-    async _fetch(endpoint, options) {
-        return await this.instance._fetch(`/snapshots/${this.id}${endpoint}`, options);
-    }
+  async _fetch (endpoint, options) {
+    return await this.instance._fetch(`/snapshots/${this.id}${endpoint}`, options)
+  }
 }
 
-module.exports = Snapshot;
+module.exports = Snapshot
