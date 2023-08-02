@@ -10,6 +10,9 @@
   },
   "scripts": {
     "docs": "jsdoc -c .jsdocrc.js -d docs",
+    "lint": "eslint",
+    "lint-staged": "lint-staged",
+    "lint:fix": "eslint --fix",
     "test": "npx nyc npx mocha",
     "test:ci": "npx nyc npx mocha"
   },
@@ -31,14 +34,19 @@
   },
   "devDependencies": {
     "docdash": "^2.0.1",
-    "eslint": "^7.17.0",
-    "eslint-plugin-mocha": "^8.0.0",
+    "eslint": "^7.32.0",
+    "eslint-config-standard": "^16.0.3",
+    "eslint-plugin-import": "^2.26.0",
+    "eslint-plugin-mocha": "^8.1.0",
+    "eslint-plugin-no-floating-promise": "^1.0.2",
+    "eslint-plugin-node": "^11.1.0",
+    "eslint-plugin-promise": "^4.3.1",
+    "eslint-plugin-standard": "^5.0.0",
     "husky": "^4.3.7",
     "jsdoc": "^4.0.2",
     "lint-staged": "^10.5.3",
     "mocha": "^9.2.2",
     "nyc": "^15.1.0",
-    "prettier": "2.2.1",
     "wtfnode": "^0.8.4"
   },
   "bin": {

@@ -63,7 +63,7 @@ class Corellium {
    *     totpToken: '123456',
    * });
    */
-  constructor(options) {
+  constructor (options) {
     this.options = options
     this.api = options.endpoint + '/api/v1'
     this.token = null
@@ -77,7 +77,7 @@ class Corellium {
    * @example
    * let token = await corellium.getToken()
    */
-  async getToken() {
+  async getToken () {
     const token = this.options.token || (await this.token)
     const maxExpiration = new Date(new Date().getTime() + 15 * 60 * 1000)
 
@@ -129,7 +129,7 @@ class Corellium {
    *
    * @returns {string} apiToken
    */
-  async generateApiToken() {
+  async generateApiToken () {
     const response = await fetchApi(this, '/apitoken', {
       method: 'POST'
     })
@@ -140,7 +140,7 @@ class Corellium {
   /**
    * Remove the currently active api token from this user account.
    */
-  async removeApiToken() {
+  async removeApiToken () {
     await fetchApi(this, '/apitoken', {
       method: 'DELETE'
     })
@@ -155,19 +155,19 @@ class Corellium {
    * @example
    * await corellium.login();
    */
-  async login() {
+  async login () {
     await this.getToken()
   }
 
   /**
    * Returns an array of {@link Project}s that this client is allowed to
    * access.
-   * @returns {Project[]}
+   * @returns {Promise<Project[]>}
    * @example
    * let projects = await corellium.projects();
    * let project = projects.find(project => project.name === "Demo Project");
    */
-  async projects() {
+  async projects () {
     const projects = await fetchApi(this, '/projects?ids_only=1')
     return await Promise.all(projects.map(project => this.getProject(project.id)))
   }
@@ -179,7 +179,7 @@ class Corellium {
    * @example
    * let images = await corellium.files();
    */
-  files() {
+  async files () {
     return listImagesMetaData(this)
   }
 
@@ -192,7 +192,7 @@ class Corellium {
    * @example
    * let teamsAndUsers = await corellium.getTeamsAndUsers();
    */
-  async getTeamsAndUsers() {
+  async getTeamsAndUsers () {
     const teams = (this._teams = new Map())
     for (const team of await fetchApi(this, '/teams')) {
       teams.set(team.id, new Team(this, team))
@@ -214,7 +214,7 @@ class Corellium {
    * @example
    * let roles = await corellium.roles();
    */
-  async roles() {
+  async roles () {
     const roles = (this._roles = new Map())
 
     for (const role of await fetchApi(this, '/roles')) {
@@ -237,7 +237,7 @@ class Corellium {
    * @example
    * let teams = await corellium.teams();
    */
-  async teams() {
+  async teams () {
     return (await this.getTeamsAndUsers()).teams
   }
 
@@ -249,7 +249,7 @@ class Corellium {
    * @example
    * let users = await corellium.users();
    */
-  async users() {
+  async users () {
     return (await this.getTeamsAndUsers()).users
   }
 
@@ -261,7 +261,7 @@ class Corellium {
    * @example
    * let user = await instance.getUser('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa');
    */
-  getUser(id) {
+  getUser (id) {
     return this._users.get(id)
   }
 
@@ -273,7 +273,7 @@ class Corellium {
    * @example
    * let team = await instance.getTeam('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa');
    */
-  getTeam(id) {
+  getTeam (id) {
     return this._teams.get(id)
   }
 
@@ -285,7 +285,7 @@ class Corellium {
    * @example
    * let user = await instance.createUser("login", "User Name", "user@email.com", "password");
    */
-  async createUser(login, name, email, password) {
+  async createUser (login, name, email, password) {
     const response = await fetchApi(this, '/users', {
       method: 'POST',
       json: {
@@ -308,7 +308,7 @@ class Corellium {
    * @example
    * instance.destroyUser('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa');
    */
-  async destroyUser(id) {
+  async destroyUser (id) {
     await fetchApi(this, `/users/${id}`, {
       method: 'DELETE'
     })
@@ -322,12 +322,13 @@ class Corellium {
    * @example
    * instance.createRole(project.id, grantee, 'user');
    */
-  async createRole(project, grantee, type = 'user') {
+  async createRole (project, grantee, type = 'user') {
     let usersOrTeams = grantee instanceof User && 'users'
     if (!usersOrTeams) {
       usersOrTeams = grantee instanceof Team && 'teams'
     }
     if (!usersOrTeams) {
+      // eslint-disable-next-line no-throw-literal
       throw 'Grantee not User or Team'
     }
 
@@ -342,8 +343,8 @@ class Corellium {
    * @example
    * instance.destroyRole(role);
    */
-  async destroyRole(role) {
-    let usersOrTeams = role.isUser ? 'users' : 'teams'
+  async destroyRole (role) {
+    const usersOrTeams = role.isUser ? 'users' : 'teams'
     await fetchApi(
       this,
       `/roles/projects/${role.project}/${usersOrTeams}/${role.grantee.id}/roles/{$role.type}`,
@@ -360,7 +361,7 @@ class Corellium {
    * @example
    * let project = await corellium.getProject('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa');
    */
-  async getProject(projectId) {
+  async getProject (projectId) {
     const project = new Project(this, projectId)
     await project.refresh()
     return project
@@ -376,7 +377,7 @@ class Corellium {
    * @example
    * corellium.createProject("TestProject");
    */
-  async createProject(name, color = 1, settings = { 'internet-access': true }) {
+  async createProject (name, color = 1, settings = { 'internet-access': true }) {
     const response = await fetchApi(this, '/projects', {
       method: 'POST',
       json: {
@@ -397,7 +398,7 @@ class Corellium {
    * @example
    * let project = await corellium.projectNamed('Default Project');
    */
-  async projectNamed(name) {
+  async projectNamed (name) {
     const projects = await this.projects()
     return projects.find(project => project.name === name)
   }
@@ -407,7 +408,7 @@ class Corellium {
    * @example
    * let supported = await corellium.supported();
    */
-  async supported() {
+  async supported () {
     if (!this.supportedDevices) {
       this.supportedDevices = await fetchApi(this, '/supported')
     }
@@ -422,7 +423,7 @@ class Corellium {
    * for(let key of keys)
    *   console.log(key);
    */
-  async projectKeys(project) {
+  async projectKeys (project) {
     return await fetchApi(this, `/projects/${project}/keys`)
   }
 
@@ -436,7 +437,7 @@ class Corellium {
    * let project = instance.getProjectNamed('TestProject');
    * instance.addProjectKey(project.id, 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIA+eDLGqe+nefGQ2LjvXDlTXDuF33ZHD9wHk/oEICKYd', 'ssh', 'SSH Key');
    */
-  async addProjectKey(project, key, kind = 'ssh', label = null) {
+  async addProjectKey (project, key, kind = 'ssh', label = null) {
     return await fetchApi(this, `/projects/${project}/keys`, {
       method: 'POST',
       json: {
@@ -454,7 +455,7 @@ class Corellium {
    * let project = instance.getProjectNamed('TestProject');
    * instance.deleteProjectKey(project.id, 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa');
    */
-  async deleteProjectKey(project, keyId) {
+  async deleteProjectKey (project, keyId) {
     return await fetchApi(this, `/projects/${project}/keys/${keyId}`, {
       method: 'DELETE'
     })

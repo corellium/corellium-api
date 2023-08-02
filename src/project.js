@@ -31,7 +31,7 @@ const { compress, uploadFile } = require('./images')
  * @hideconstructor
  */
 class Project {
-  constructor(client, id) {
+  constructor (client, id) {
     this.client = client
     this.api = this.client.api
     this.id = id
@@ -45,7 +45,7 @@ class Project {
    * @example
    * project.refresh();
    */
-  async refresh() {
+  async refresh () {
     this.info = await fetchApi(this, `/projects/${this.id}`)
   }
 
@@ -55,7 +55,7 @@ class Project {
    * @example
    * let token = await project.getToken()
    */
-  async getToken() {
+  async getToken () {
     return await this.client.getToken()
   }
 
@@ -66,7 +66,7 @@ class Project {
    * const instances = await project.instances();
    * const instance = instances.find(instance => instance.name === 'Test Device');
    */
-  async instances() {
+  async instances () {
     const instances = await fetchApi(this, `/projects/${this.id}/instances`)
     return await Promise.all(instances.map(info => new Instance(this, info)))
   }
@@ -78,7 +78,7 @@ class Project {
    * @example
    * await project.getInstance('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa');
    */
-  async getInstance(id) {
+  async getInstance (id) {
     const info = await fetchApi(this, `/instances/${id}`)
     return new Instance(this, info)
   }
@@ -137,7 +137,7 @@ class Project {
    * });
    * await instance.finishRestore();
    */
-  async createInstance(options) {
+  async createInstance (options) {
     const { id } = await fetchApi(this, '/instances', {
       method: 'POST',
       json: Object.assign({}, options, { project: this.id })
@@ -157,7 +157,7 @@ class Project {
    * @example
    * await project.vpnConfig('ovpn', undefined)
    */
-  async vpnConfig(type = 'ovpn', clientUUID) {
+  async vpnConfig (type = 'ovpn', clientUUID) {
     if (!clientUUID) clientUUID = uuidv4()
 
     const response = await fetchApi(
@@ -172,7 +172,7 @@ class Project {
    * @example
    * project.destroy();
    */
-  async destroy() {
+  async destroy () {
     return await fetchApi(this, `/projects/${this.id}`, {
       method: 'DELETE'
     })
@@ -196,11 +196,11 @@ class Project {
    *
    * console.log('Used: ' + cpusUsed + '/' + project.quotas.cpus);
    */
-  get quotas() {
+  get quotas () {
     return this.info.quotas
   }
 
-  set quotas(quotas) {
+  set quotas (quotas) {
     this.setQuotas(quotas)
   }
 
@@ -209,7 +209,7 @@ class Project {
    *
    * @param {ProjectQuotas} quotas
    */
-  async setQuotas(quotas) {
+  async setQuotas (quotas) {
     this.info.quotas = Object.assign({}, this.info.quotas, quotas)
     await fetchApi(this, `/projects/${this.id}`, {
       method: 'PATCH',
@@ -227,7 +227,7 @@ class Project {
    * @example
    * project.quotasUsed();
    */
-  get quotasUsed() {
+  get quotasUsed () {
     return this.info.quotasUsed
   }
 
@@ -235,7 +235,7 @@ class Project {
    * @example
    * project.name();
    */
-  get name() {
+  get name () {
     return this.info.name
   }
 
@@ -247,7 +247,7 @@ class Project {
    * @example
    * await project.roles();
    */
-  async roles() {
+  async roles () {
     const roles = await this.client.roles()
     return roles.get(this.id)
   }
@@ -261,7 +261,7 @@ class Project {
    * @example
    * project.createRole(grantee, 'user');
    */
-  async createRole(grantee, type = 'user') {
+  async createRole (grantee, type = 'user') {
     await this.client.createRole(this.id, grantee, type)
   }
 
@@ -277,7 +277,7 @@ class Project {
    * for(let key of keys)
    *   console.log(key);
    */
-  async keys() {
+  async keys () {
     return await this.client.projectKeys(this.id)
   }
 
@@ -292,7 +292,7 @@ class Project {
    * @example
    * project.addKey('ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIA+eDLGqe+nefGQ2LjvXDlTXDuF33ZHD9wHk/oEICKYd', 'ssh', 'SSH Key');
    */
-  async addKey(key, kind = 'ssh', label = null) {
+  async addKey (key, kind = 'ssh', label = null) {
     return await this.client.addProjectKey(this.id, key, kind, label)
   }
 
@@ -302,7 +302,7 @@ class Project {
    * @example
    * project.deleteKey('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa');
    */
-  async deleteKey(keyId) {
+  async deleteKey (keyId) {
     return await this.client.deleteProjectKey(this.id, keyId)
   }
 
@@ -310,7 +310,7 @@ class Project {
    * Delete an IoT firmware
    * @param {FirmwareImage} firmwareImage
    */
-  async deleteIotFirmware(firmwareImage) {
+  async deleteIotFirmware (firmwareImage) {
     return await this.deleteImage(firmwareImage)
   }
 
@@ -318,7 +318,7 @@ class Project {
    * Delete a kernel
    * @param {KernelImage} kernelImage
    */
-  async deleteKernel(kernelImage) {
+  async deleteKernel (kernelImage) {
     return await this.deleteImage(kernelImage)
   }
 
@@ -326,7 +326,7 @@ class Project {
    * Delete a Image
    * @param {Image} image
    */
-  async deleteImage(image) {
+  async deleteImage (image) {
     return await fetchApi(this, `/images/${image.id}`, {
       method: 'DELETE'
     })
@@ -341,7 +341,7 @@ class Project {
    *
    * @returns {Promise<FirmwareImage>}
    */
-  async uploadIotFirmware(filePath, name, progress) {
+  async uploadIotFirmware (filePath, name, progress) {
     return await this.uploadKernel(filePath, name, progress)
   }
 
@@ -354,13 +354,13 @@ class Project {
    *
    * @returns {Promise<KernelImage>}
    */
-  async uploadKernel(filePath, name, progress) {
+  async uploadKernel (filePath, name, progress) {
     let tmpfile = null
     const data = await util.promisify(fs.readFile)(filePath)
 
     tmpfile = await compress(data, name)
 
-    let image = await this.uploadImage('kernel', tmpfile, name, progress)
+    const image = await this.uploadImage('kernel', tmpfile, name, progress)
 
     if (tmpfile) {
       fs.unlinkSync(tmpfile)
@@ -377,7 +377,7 @@ class Project {
    *
    * @returns {Promise<string>}
    */
-  async uploadVmfile(filePath, name, progress) {
+  async uploadVmfile (filePath, name, progress) {
     const imageId = uuidv4()
     const token = await this.getToken()
     const url =
@@ -405,7 +405,7 @@ class Project {
    *
    * @returns {Promise<Image>}
    */
-  async uploadImage(type, filePath, name, progress) {
+  async uploadImage (type, filePath, name, progress) {
     const imageId = uuidv4()
     const token = await this.getToken()
     const url =

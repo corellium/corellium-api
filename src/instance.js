@@ -72,7 +72,7 @@ const split = require('split')
  * @hideconstructor
  */
 class Instance extends EventEmitter {
-  constructor(project, info) {
+  constructor (project, info) {
     super()
 
     this.project = project
@@ -95,7 +95,7 @@ class Instance extends EventEmitter {
       }
     })
     this.on('removeListener', event => {
-      if (event === 'change' && this.listenerCount('change') == 0) {
+      if (event === 'change' && this.listenerCount('change') === 0) {
         this.project.updater.remove(this)
       }
     })
@@ -104,7 +104,7 @@ class Instance extends EventEmitter {
   /**
    * The instance name.
    */
-  get name() {
+  get name () {
     return this.info.name
   }
 
@@ -122,28 +122,28 @@ class Instance extends EventEmitter {
    *
    * A full list of possible values is available in the API documentation.
    */
-  get state() {
+  get state () {
     return this.info.state
   }
 
   /**
    * The timestamp when the state last changed.
    */
-  get stateChanged() {
+  get stateChanged () {
     return this.info.stateChanged
   }
 
   /**
    * The instance flavor, such as `iphone6`.
    */
-  get flavor() {
+  get flavor () {
     return this.info.flavor
   }
 
   /**
    * The instance type, such as `ios`.
    */
-  get type() {
+  get type () {
     return this.info.type
   }
 
@@ -155,14 +155,14 @@ class Instance extends EventEmitter {
    * For start and revert, options.bootOptions contains the boot options the instance is to be started with.
    *
    */
-  get userTask() {
+  get userTask () {
     return this.info.userTask
   }
 
   /**
    * Return the current task state.
    */
-  get taskState() {
+  get taskState () {
     return this.info.taskState
   }
 
@@ -174,7 +174,7 @@ class Instance extends EventEmitter {
    * const instance = instances.find(instance => instance.name == 'foo');
    * await instance.rename('bar');
    */
-  async rename(name) {
+  async rename (name) {
     await this._fetch('', {
       method: 'PATCH',
       json: { name }
@@ -184,7 +184,7 @@ class Instance extends EventEmitter {
   /**
    * The instance boot options.
    */
-  get bootOptions() {
+  get bootOptions () {
     return this.info.bootOptions
   }
 
@@ -196,7 +196,7 @@ class Instance extends EventEmitter {
    * const instance = instances.find(instance => instance.name == 'foo');
    * await instance.modifyBootOptions(Object.assign({}, instance.bootOptions, {bootArgs: 'new-boot-args'}));
    */
-  async modifyBootOptions(bootOptions) {
+  async modifyBootOptions (bootOptions) {
     await this._fetch('', {
       method: 'PATCH',
       json: { bootOptions }
@@ -232,7 +232,7 @@ class Instance extends EventEmitter {
    *     "humidity": "55.000000"
    * }));
    */
-  async modifyPeripherals(peripheralData) {
+  async modifyPeripherals (peripheralData) {
     await this._fetch('', {
       method: 'PATCH',
       json: { peripherals: peripheralData }
@@ -245,7 +245,7 @@ class Instance extends EventEmitter {
    * @example
    * let peripherals = await instance.getPeripherals();
    */
-  async getPeripherals() {
+  async getPeripherals () {
     return await this._fetch('/peripherals', { method: 'GET' })
   }
 
@@ -257,7 +257,7 @@ class Instance extends EventEmitter {
    * const instance = instances.find(instance => instance.name == 'foo');
    * await instance.snapshots();
    */
-  async snapshots() {
+  async snapshots () {
     const snapshots = await this._fetch('/snapshots')
     return snapshots.map(snap => new Snapshot(this, snap))
   }
@@ -271,7 +271,7 @@ class Instance extends EventEmitter {
    * const instance = instances.find(instance => instance.name == 'foo');
    * await instance.takeSnapshot("TestSnapshot");
    */
-  async takeSnapshot(name) {
+  async takeSnapshot (name) {
     const snapshot = await this._fetch('/snapshots', {
       method: 'POST',
       json: { name }
@@ -290,7 +290,7 @@ class Instance extends EventEmitter {
    * const instance = instances.find(instance => instance.name == 'foo');
    * console.log(await instance.consoleLog());
    */
-  async consoleLog() {
+  async consoleLog () {
     const response = await this._fetch('/consoleLog', { response: 'raw' })
     return await response.text()
   }
@@ -303,7 +303,7 @@ class Instance extends EventEmitter {
    * const instance = instances.find(instance => instance.name == 'foo');
    * console.log(await instance.panics());
    */
-  async panics() {
+  async panics () {
     return await this._fetch('/panics')
   }
 
@@ -314,7 +314,7 @@ class Instance extends EventEmitter {
    * const instance = instances.find(instance => instance.name == 'foo');
    * await instance.clearPanics();
    */
-  async clearPanics() {
+  async clearPanics () {
     await this._fetch('/panics', { method: 'DELETE' })
   }
 
@@ -326,7 +326,7 @@ class Instance extends EventEmitter {
    * let agent = await instance.agent();
    * await agent.ready();
    */
-  async agent() {
+  async agent () {
     if (this._agent && !this._agent.connected && !this._agent.pendingConnect) {
       this._agent.disconnect()
       delete this._agent
@@ -339,7 +339,7 @@ class Instance extends EventEmitter {
     return this._agent
   }
 
-  async agentEndpoint() {
+  async agentEndpoint () {
     // Extra while loop to avoid races where info.agent gets unset again before we wake back up.
     while (!this.info.agent) await this._waitFor(() => !!this.info.agent)
 
@@ -359,7 +359,7 @@ class Instance extends EventEmitter {
     return this.project.api + '/agent/' + this.info.agent.info
   }
 
-  async waitForAgentReady() {
+  async waitForAgentReady () {
     let agentObtained
     do {
       try {
@@ -412,7 +412,7 @@ class Instance extends EventEmitter {
    *     console.log(crashReport);
    * });
    */
-  async newAgent() {
+  async newAgent () {
     return new Agent(this)
   }
 
@@ -421,12 +421,12 @@ class Instance extends EventEmitter {
    * method multiple times will reuse the same agent connection.
    * @returns {Netdump}
    */
-  async netdump() {
+  async netdump () {
     if (!this._netdump) this._netdump = await this.newNetdump()
     return this._netdump
   }
 
-  async netdumpEndpoint() {
+  async netdumpEndpoint () {
     // Extra while loop to avoid races where info.netdump gets unset again before we wake back up.
     while (!this.info.netdump) await this._waitFor(() => !!this.info.netdump)
 
@@ -450,7 +450,7 @@ class Instance extends EventEmitter {
    * Create a new {@link Netdump} connection to this instance.
    * @returns {Netdump}
    */
-  async newNetdump() {
+  async newNetdump () {
     return new Netdump(this)
   }
 
@@ -460,9 +460,9 @@ class Instance extends EventEmitter {
    * let pcap = await instance.downloadPcap();
    * console.log(pcap.toString());
    */
-  async downloadPcap() {
+  async downloadPcap () {
     const token = await this._fetch('/netdumpPcap-authorize', { method: 'POST' })
-    const response = await fetchApi(this.project, `/preauthed/` + token.token + `/netdump.pcap`, {
+    const response = await fetchApi(this.project, '/preauthed/' + token.token + '/netdump.pcap', {
       response: 'raw'
     })
 
@@ -474,12 +474,12 @@ class Instance extends EventEmitter {
    * method multiple times will reuse the same agent connection.
    * @returns {NetworkMonitor}
    */
-  async networkMonitor() {
+  async networkMonitor () {
     if (!this._netmon) this._netmon = await this.newNetworkMonitor()
     return this._netmon
   }
 
-  async netmonEndpoint() {
+  async netmonEndpoint () {
     // Extra while loop to avoid races where info.netmon gets unset again before we wake back up.
     while (!this.info.netmon) await this._waitFor(() => !!this.info.netmon)
 
@@ -503,7 +503,7 @@ class Instance extends EventEmitter {
    * Create a new {@link NetworkMonitor} connection to this instance.
    * @returns {NetworkMonitor}
    */
-  async newNetworkMonitor() {
+  async newNetworkMonitor () {
     return new NetworkMonitor(this)
   }
 
@@ -514,7 +514,7 @@ class Instance extends EventEmitter {
    * const consoleStream = await instance.console();
    * consoleStream.pipe(process.stdout);
    */
-  async console() {
+  async console () {
     const { url } = await this._fetch('/console')
     return wsstream(url, ['binary'])
   }
@@ -524,18 +524,17 @@ class Instance extends EventEmitter {
    * @example
    * await instance.waitForLineOnConsole(line)
    */
-  async waitForLineOnConsole(line) {
+  async waitForLineOnConsole (line) {
     const stream = await this.console()
     await stream
       .pipe(split())
       .on('data', l => {
         if (l === line) {
           stream.destroy()
-          return
         }
       })
       .on('end', () => {
-        return
+
       })
   }
 
@@ -545,7 +544,7 @@ class Instance extends EventEmitter {
    * @example
    * const rateInfo = await instance.rate();
    */
-  async rate() {
+  async rate () {
     return await this._fetch('/rate')
   }
 
@@ -556,7 +555,7 @@ class Instance extends EventEmitter {
    * @example
    * await instance.sendInput(I.pressRelease('home'));
    */
-  async sendInput(input) {
+  async sendInput (input) {
     await this._fetch('/input', { method: 'POST', json: input.points })
   }
 
@@ -575,7 +574,7 @@ class Instance extends EventEmitter {
    *  paused: true
    * });
    */
-  async start(options) {
+  async start (options) {
     await this._fetch('/start', { method: 'POST' }, options)
   }
 
@@ -584,7 +583,7 @@ class Instance extends EventEmitter {
    * @example
    * await instance.stop();
    */
-  async stop() {
+  async stop () {
     await this._fetch('/stop', { method: 'POST' })
   }
 
@@ -593,7 +592,7 @@ class Instance extends EventEmitter {
    * @example
    * await instance.pause();
    */
-  async pause() {
+  async pause () {
     await this._fetch('/pause', { method: 'POST' })
   }
 
@@ -602,7 +601,7 @@ class Instance extends EventEmitter {
    * @example
    * await instance.unpause();
    */
-  async unpause() {
+  async unpause () {
     await this._fetch('/unpause', { method: 'POST' })
   }
 
@@ -611,7 +610,7 @@ class Instance extends EventEmitter {
    * @example
    * await instance.reboot();
    */
-  async reboot() {
+  async reboot () {
     await this._fetch('/reboot', { method: 'POST' })
     await this.waitForTaskState('rebooting')
     await this.waitForTaskState('none')
@@ -623,7 +622,7 @@ class Instance extends EventEmitter {
    * @example
    * await instance.restoreBackup();
    */
-  async restoreBackup(password) {
+  async restoreBackup (password) {
     await this._fetch('/restoreBackup', {
       method: 'POST',
       json: { password }
@@ -646,7 +645,7 @@ class Instance extends EventEmitter {
    *     osbuild: '20B79'
    * });
    */
-  async upgrade(options) {
+  async upgrade (options) {
     await this._fetch('/upgrade', {
       method: 'POST',
       json: Object.assign({}, options)
@@ -662,7 +661,7 @@ class Instance extends EventEmitter {
    *     instance.destroy();
    * });
    */
-  async destroy() {
+  async destroy () {
     await this._fetch('', { method: 'DELETE' })
   }
 
@@ -674,7 +673,7 @@ class Instance extends EventEmitter {
    * @param {string} number - phone number to receive the message from
    * @param {string} message - message to receive
    */
-  async message(sender, message) {
+  async message (sender, message) {
     await this._fetch('/message', {
       method: 'POST',
       json: { number: sender, message: message }
@@ -688,7 +687,7 @@ class Instance extends EventEmitter {
    *
    * @param {string} data - hex encoded data to send
    */
-  async messageRaw(data) {
+  async messageRaw (data) {
     await this._fetch('/message', { method: 'POST', json: { raw: data } })
   }
 
@@ -704,7 +703,7 @@ class Instance extends EventEmitter {
    *     }
    * }
    */
-  async getCoreTraceThreadList() {
+  async getCoreTraceThreadList () {
     return await this._fetch('/strace/thread-list', { method: 'GET' })
   }
 
@@ -716,26 +715,29 @@ class Instance extends EventEmitter {
    * @example
    * await instance.setCoreTraceFilter([111, 222], ["proc_name"], [333]);
    */
-  async setCoreTraceFilter(pids, names, tids) {
+  async setCoreTraceFilter (pids, names, tids) {
     let filter = []
-    if (pids.length)
+    if (pids.length) {
       filter = filter.concat(
         pids.map(pid => {
           return { trait: 'pid', value: pid.toString() }
         })
       )
-    if (names.length)
+    }
+    if (names.length) {
       filter = filter.concat(
         names.map(name => {
           return { trait: 'name', value: name }
         })
       )
-    if (tids.length)
+    }
+    if (tids.length) {
       filter = filter.concat(
         tids.map(tid => {
           return { trait: 'tid', value: tid.toString() }
         })
       )
+    }
     await this._fetch('', { method: 'PATCH', json: { straceFilter: filter } })
   }
 
@@ -744,7 +746,7 @@ class Instance extends EventEmitter {
    * @example
    * await instance.clearCoreTraceFilter();
    */
-  async clearCoreTraceFilter() {
+  async clearCoreTraceFilter () {
     await this._fetch('', { method: 'PATCH', json: { straceFilter: [] } })
   }
 
@@ -753,7 +755,7 @@ class Instance extends EventEmitter {
    * @example
    * await instance.startCoreTrace();
    */
-  async startCoreTrace() {
+  async startCoreTrace () {
     await this._fetch('/strace/enable', { method: 'POST' })
     if (this.info.coreTrace) {
       await this._waitFor(() => this.info.coreTrace.enabled === true)
@@ -765,7 +767,7 @@ class Instance extends EventEmitter {
    * @example
    * await instance.stopCoreTrace();
    */
-  async stopCoreTrace() {
+  async stopCoreTrace () {
     await this._fetch('/strace/disable', { method: 'POST' })
     if (this.info.coreTrace) {
       await this._waitFor(() => this.info.coreTrace.enabled === false)
@@ -778,9 +780,9 @@ class Instance extends EventEmitter {
    * let trace = await instance.downloadCoreTraceLog();
    * console.log(trace.toString());
    */
-  async downloadCoreTraceLog() {
+  async downloadCoreTraceLog () {
     const token = await this._fetch('/strace-authorize', { method: 'GET' })
-    const response = await fetchApi(this.project, `/preauthed/` + token.token + `/coretrace.log`, {
+    const response = await fetchApi(this.project, '/preauthed/' + token.token + '/coretrace.log', {
       response: 'raw'
     })
     return await response.buffer()
@@ -791,7 +793,7 @@ class Instance extends EventEmitter {
    * @example
    * await instance.clearCoreTraceLog();
    */
-  async clearCoreTraceLog() {
+  async clearCoreTraceLog () {
     await this._fetch('/strace', { method: 'DELETE' })
   }
 
@@ -802,9 +804,9 @@ class Instance extends EventEmitter {
    * const consoleStream = await instance.fridaConsole();
    * consoleStream.pipe(process.stdout);
    */
-  async fridaConsole() {
+  async fridaConsole () {
     const { url } = await this._fetch('/console?type=frida')
-    var fridaConsole = wsstream(url, ['binary'])
+    const fridaConsole = wsstream(url, ['binary'])
 
     await new Promise(resolve => {
       fridaConsole.socket.on('open', () => {
@@ -821,7 +823,7 @@ class Instance extends EventEmitter {
    * @example
    * await instance.executeFridaScript("/data/corellium/frida/scripts/script.js");
    */
-  async executeFridaScript(filePath) {
+  async executeFridaScript (filePath) {
     const fridaConsoleStream = await this.fridaConsole()
     fridaConsoleStream.socket.on('close', function () {
       fridaConsoleStream.destroy()
@@ -846,7 +848,7 @@ class Instance extends EventEmitter {
    * const screenshot = await instance.takeScreenshot();
    * fs.writeFileSync('screenshot.png', screenshot);
    */
-  async takeScreenshot(options) {
+  async takeScreenshot (options) {
     const { format = 'png', scale = 1 } = options || {}
     const res = await this._fetch(`/screenshot.${format}?scale=${scale}`, {
       response: 'raw'
@@ -860,7 +862,7 @@ class Instance extends EventEmitter {
    * Enable exposing a port for connecting to VM.
    * For iOS, this would mean ssh, for Android, adb access.
    */
-  async enableExposedPort() {
+  async enableExposedPort () {
     await this._fetch('/exposeport/enable', { method: 'POST' })
   }
 
@@ -868,18 +870,18 @@ class Instance extends EventEmitter {
    * Disable exposing a port for connecting to VM.
    * For iOS, this would mean ssh, for Android, adb access.
    */
-  async disableExposedPort() {
+  async disableExposedPort () {
     await this._fetch('/exposeport/disable', { method: 'POST' })
   }
 
-  async update() {
+  async update () {
     this.receiveUpdate(await this._fetch(''))
   }
 
-  receiveUpdate(info) {
+  receiveUpdate (info) {
     this.infoDate = new Date()
     // one way of checking object equality
-    if (JSON.stringify(info) != JSON.stringify(this.info)) {
+    if (JSON.stringify(info) !== JSON.stringify(this.info)) {
       this.info = info
       /**
        * Fired when a property of an instance changes, such as its name or its state.
@@ -890,8 +892,8 @@ class Instance extends EventEmitter {
        * });
        */
       this.emit('change')
-      if (info.panicked)
-        /**
+      if (info.panicked) {
+      /**
          * Fired when an instance panics. The panic information can be retrieved with {@link Instance#panics}.
          * @event Instance#panic
          * @example
@@ -912,6 +914,7 @@ class Instance extends EventEmitter {
          * });
          */
         this.emit('panic')
+      }
     }
   }
 
@@ -919,7 +922,7 @@ class Instance extends EventEmitter {
    * Wait for ...
    * @param {function} reporterFn - Called with instance information (optional)
    */
-  async _waitFor(callback, reporterFn = null) {
+  async _waitFor (callback, reporterFn = null) {
     await this.update()
     return new Promise(resolve => {
       const change = () => {
@@ -949,7 +952,7 @@ class Instance extends EventEmitter {
    * @example <caption>Wait for VM to finish OS upgrade</caption>
    * instance.finishUpgrade();
    */
-  async finishUpgrade(reporterFn = null) {
+  async finishUpgrade (reporterFn = null) {
     await this._waitFor(() => this.state !== 'updating', reporterFn)
   }
 
@@ -959,7 +962,7 @@ class Instance extends EventEmitter {
    * @example <caption>Wait for VM to finish restore</caption>
    * instance.finishRestore();
    */
-  async finishRestore(reporterFn = null) {
+  async finishRestore (reporterFn = null) {
     await this._waitFor(() => this.state !== 'creating', reporterFn)
   }
 
@@ -970,7 +973,7 @@ class Instance extends EventEmitter {
    * @example <caption>Wait for VM to be ON</caption>
    * instance.waitForState('on');
    */
-  async waitForState(state, reporterFn = null) {
+  async waitForState (state, reporterFn = null) {
     await this._waitFor(() => this.state === state, reporterFn)
   }
 
@@ -979,7 +982,7 @@ class Instance extends EventEmitter {
    * @param {function} reporterFn - Called with instance information (optional)
    * @param {string} taskName
    */
-  async waitForTaskState(taskName, reporterFn = null) {
+  async waitForTaskState (taskName, reporterFn = null) {
     await this._waitFor(() => this.taskState === taskName, reporterFn)
   }
 
@@ -988,7 +991,7 @@ class Instance extends EventEmitter {
    * @param {function} reporterFn - Called with instance information (optional)
    * @param {string} userTaskName
    */
-  async waitForUserTask(userTaskName, reporterFn = null) {
+  async waitForUserTask (userTaskName, reporterFn = null) {
     await this._waitFor(() => {
       if (!userTaskName) {
         return !this.userTask
@@ -998,7 +1001,7 @@ class Instance extends EventEmitter {
     }, reporterFn)
   }
 
-  async _fetch(endpoint = '', options = {}) {
+  async _fetch (endpoint = '', options = {}) {
     return await fetchApi(this.project, `/instances/${this.id}${endpoint}`, options)
   }
 
@@ -1006,7 +1009,7 @@ class Instance extends EventEmitter {
    * Delete Iot Firmware that is attached to an instance
    * @param {FirmwareImage} firmwareImage
    */
-  async deleteIotFirmware(firmwareImage) {
+  async deleteIotFirmware (firmwareImage) {
     return await this.deleteImage(firmwareImage)
   }
 
@@ -1014,7 +1017,7 @@ class Instance extends EventEmitter {
    * Delete kernel that is attached to an instance
    * @param {KernelImage} kernelImage
    */
-  async deleteKernel(kernelImage) {
+  async deleteKernel (kernelImage) {
     return await this.deleteImage(kernelImage)
   }
 
@@ -1022,7 +1025,7 @@ class Instance extends EventEmitter {
    * Delete an image that is attached to an instance
    * @param {Image | KernelImage | FirmwareImage} kernelImage
    */
-  async deleteImage(image) {
+  async deleteImage (image) {
     return await fetchApi(this, `/images/${image.id}`, {
       method: 'DELETE'
     })
@@ -1032,7 +1035,7 @@ class Instance extends EventEmitter {
    * Get all images attached to this instance with optional type
    * @param {string} type - the type of image being uploaded ie. kernel, ramdisk, devicetree, or backup
    */
-  async getImages(type) {
+  async getImages (type) {
     const images = (await Images.listImagesMetaData(this.project)).filter(
       i => i.instance === this.id
     )
@@ -1049,7 +1052,7 @@ class Instance extends EventEmitter {
    *
    * @returns {Promise<PartitionImage>}
    */
-  async uploadPartition(filePath, name, progress) {
+  async uploadPartition (filePath, name, progress) {
     return await this.compressAndUploadImage('partition', filePath, name, progress)
   }
 
@@ -1062,7 +1065,7 @@ class Instance extends EventEmitter {
    *
    * @returns {Promise<FirmwareImage>}
    */
-  async uploadIotFirmware(filePath, name, progress) {
+  async uploadIotFirmware (filePath, name, progress) {
     return await this.uploadKernel(filePath, name, progress)
   }
 
@@ -1076,13 +1079,13 @@ class Instance extends EventEmitter {
    *
    * @returns {Promise<Image>}
    */
-  async compressAndUploadImage(type, filePath, name, progress) {
+  async compressAndUploadImage (type, filePath, name, progress) {
     let tmpfile = null
     const data = await util.promisify(fs.readFile)(filePath)
 
     tmpfile = await compress(data, name)
 
-    let uploadedImage = await this.uploadImage(type, tmpfile, name, progress)
+    const uploadedImage = await this.uploadImage(type, tmpfile, name, progress)
 
     if (tmpfile) {
       fs.unlinkSync(tmpfile)
@@ -1100,7 +1103,7 @@ class Instance extends EventEmitter {
    *
    * @returns {Promise<KernelImage>}
    */
-  async uploadKernel(filePath, name, progress) {
+  async uploadKernel (filePath, name, progress) {
     await this.compressAndUploadImage('kernel', filePath, name, progress)
   }
 
@@ -1113,7 +1116,7 @@ class Instance extends EventEmitter {
    *
    * @returns {Promise<RamDiskImage>}
    */
-  async uploadRamDisk(filePath, name, progress) {
+  async uploadRamDisk (filePath, name, progress) {
     await this.compressAndUploadImage('ramdisk', filePath, name, progress)
   }
 
@@ -1126,7 +1129,7 @@ class Instance extends EventEmitter {
    *
    * @returns {Promise<DeviceTreeImage>}
    */
-  async uploadDeviceTree(filePath, name, progress) {
+  async uploadDeviceTree (filePath, name, progress) {
     await this.compressAndUploadImage('devicetree', filePath, name, progress)
   }
 
@@ -1140,7 +1143,7 @@ class Instance extends EventEmitter {
    *
    * @returns {Promise<Image>}
    */
-  async uploadImage(type, filePath, name, progress) {
+  async uploadImage (type, filePath, name, progress) {
     const token = await this.project.getToken()
     const url =
       this.project.api +
@@ -1168,7 +1171,7 @@ class Instance extends EventEmitter {
    * @example
    * let webplayer = instance.webplayer(features, permissions);
    */
-  async webplayer(features, permissions, expiresIn = 15 * 60) {
+  async webplayer (features, permissions, expiresIn = 15 * 60) {
     if (this._webplayer === null) {
       this._webplayer = new WebPlayer(this.project, this.id, features, permissions)
       await this._webplayer._createSession(expiresIn, () => {

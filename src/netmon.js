@@ -20,7 +20,7 @@ const { fetchApi } = require('./util/fetch')
  * @hideconstructor
  */
 class NetworkMonitor {
-  constructor(instance) {
+  constructor (instance) {
     this.instance = instance
     this.connected = false
     this.connectPromise = null
@@ -47,7 +47,7 @@ class NetworkMonitor {
    * Ensure the network monitor is connected.
    * @private
    */
-  async connect() {
+  async connect () {
     this.pendingConnect = true
     if (!this.connected) await this.reconnect()
   }
@@ -56,7 +56,7 @@ class NetworkMonitor {
    * Ensure the network monitor is disconnected, then connect the network monitor.
    * @private
    */
-  async reconnect() {
+  async reconnect () {
     if (this.connected) this.disconnect()
 
     if (this.connectPromise) return this.connectPromise
@@ -77,18 +77,18 @@ class NetworkMonitor {
     return this.connectPromise
   }
 
-  async _connect() {
+  async _connect () {
     const endpoint = await this.instance.netmonEndpoint()
 
     // Detect if a disconnection happened before we were able to get the network monitor endpoint.
     if (!this.pendingConnect) throw new Error('connection cancelled')
 
-    let ws = new WebSocket(
+    const ws = new WebSocket(
       /^https/.test(endpoint)
         ? endpoint.replace(/^https/, 'wss')
         : /^http/.test(endpoint)
-        ? endpoint.replace(/^http/, 'ws')
-        : endpoint
+          ? endpoint.replace(/^http/, 'ws')
+          : endpoint
     )
 
     this.ws = ws
@@ -163,10 +163,10 @@ class NetworkMonitor {
     this._startKeepAlive()
   }
 
-  _startKeepAlive() {
+  _startKeepAlive () {
     if (!this.connected) return
 
-    let ws = this.ws
+    const ws = this.ws
 
     ws.ping()
 
@@ -197,7 +197,7 @@ class NetworkMonitor {
     })
   }
 
-  _stopKeepAlive() {
+  _stopKeepAlive () {
     if (this._keepAliveTimeout) {
       clearTimeout(this._keepAliveTimeout)
       this._keepAliveTimeout = null
@@ -210,12 +210,12 @@ class NetworkMonitor {
    * @example
    * netmon.disconnect();
    */
-  disconnect() {
+  disconnect () {
     this.pendingConnect = false
     this._disconnect()
   }
 
-  _disconnect() {
+  _disconnect () {
     this.connected = false
     this.handler = null
     this._stopKeepAlive()
@@ -234,7 +234,7 @@ class NetworkMonitor {
    * let netmon = await instance.newNetworkMonitor();
    * netmon.start();
    */
-  async start() {
+  async start () {
     await this.connect()
     await this._fetch('/sslsplit/enable', { method: 'POST' })
     await this.instance._waitFor(() => {
@@ -252,7 +252,7 @@ class NetworkMonitor {
    *     console.log(message.response.status, message.request.method, message.response.body.size, host.value);
    * });
    */
-  async handleMessage(handler) {
+  async handleMessage (handler) {
     this.handler = handler
   }
 
@@ -261,7 +261,7 @@ class NetworkMonitor {
    * let netmon = await instance.newNetworkMonitor();
    * netmon.clearLog();
    */
-  async clearLog() {
+  async clearLog () {
     let disconnectAfter = false
     if (!this.connected) {
       await this.connect()
@@ -278,7 +278,7 @@ class NetworkMonitor {
    * let netmon = await instance.newNetworkMonitor();
    * netmon.stop();
    */
-  async stop() {
+  async stop () {
     await this._fetch('/sslsplit/disable', { method: 'POST' })
     await this.disconnect()
     await this.instance._waitFor(() => {
@@ -297,12 +297,12 @@ class NetworkMonitor {
    *     console.log("disabled");
    * }
    */
-  async isEnabled() {
-    let info = await fetchApi(this.instance.project, `/instances/${this.instance.id}`)
+  async isEnabled () {
+    const info = await fetchApi(this.instance.project, `/instances/${this.instance.id}`)
     return info ? (info.netmon ? info.netmon.enabled : false) : false
   }
 
-  async _fetch(endpoint = '', options = {}) {
+  async _fetch (endpoint = '', options = {}) {
     return await fetchApi(
       this.instance.project,
       `/instances/${this.instance.id}${endpoint}`,

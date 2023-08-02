@@ -43,29 +43,29 @@ const yazl = require('yazl')
  */
 
 class File {
-  constructor({ filePath, type, size }) {
+  constructor ({ filePath, type, size }) {
     this.path = filePath
     this.name = path.basename(filePath)
     this.type = type
     this.size = size
   }
 
-  slice(start, end, _contentType) {
+  slice (start, end, _contentType) {
     return fs.createReadStream(this.path, { start, end })
   }
 }
 
-function listImagesMetaData(client) {
-  return fetchApi(client, `/images`, {
+function listImagesMetaData (client) {
+  return fetchApi(client, '/images', {
     method: 'GET'
   })
 }
 
-function isCompressed(data) {
+function isCompressed (data) {
   return Buffer.compare(data.slice(0, 4), Buffer.from([0x50, 0x4b, 0x03, 0x04])) === 0
 }
 
-async function compress(data, name) {
+async function compress (data, name) {
   const tmpFile = path.join(os.tmpdir(), name)
   const zipFile = new yazl.ZipFile()
   zipFile.addBuffer(data, name)
@@ -79,7 +79,7 @@ async function compress(data, name) {
   return tmpFile
 }
 
-async function uploadFile(token, url, filePath, progress) {
+async function uploadFile (token, url, filePath, progress) {
   return new Promise((resolve, reject) => {
     const r = new Resumable({
       target: url,
