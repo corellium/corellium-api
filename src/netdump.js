@@ -71,7 +71,13 @@ class Netdump {
     // Detect if a disconnection happened before we were able to get netdump endpoint.
     if (!this.pendingConnect) throw new Error('connection cancelled')
 
-    let ws = new WebSocket(endpoint)
+    let ws = new WebSocket(
+      /^https/.test(endpoint)
+        ? endpoint.replace(/^https/, 'wss')
+        : /^http/.test(endpoint)
+        ? endpoint.replace(/^http/, 'ws')
+        : endpoint
+    )
 
     this.ws = ws
 
