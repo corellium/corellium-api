@@ -1,6 +1,6 @@
 {
   "name": "@corellium/corellium-api",
-  "version": "1.6.1",
+  "version": "1.6.2",
   "description": "Supported nodejs library for interacting with the Corellium service and VMs",
   "main": "src/corellium.js",
   "husky": {
@@ -30,7 +30,7 @@
     "yazl": "^2.5.1"
   },
   "devDependencies": {
-    "docdash": "^1.2.0",
+    "docdash": "^2.0.1",
     "eslint": "^7.17.0",
     "eslint-plugin-mocha": "^8.0.0",
     "husky": "^4.3.7",
