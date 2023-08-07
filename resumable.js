@@ -194,10 +194,8 @@ const XMLHttpRequest = require('xhr2').XMLHttpRequest;
             if (callback(o[i]) === false) return
           }
         } else {
-          // eslint-disable-next-line no-undef
-          for (i in o) {
+          for (const i in o) {
             // Object
-            // eslint-disable-next-line no-undef
             if (callback(i, o[i]) === false) return
           }
         }
@@ -751,7 +749,7 @@ const XMLHttpRequest = require('xhr2').XMLHttpRequest;
       const chunkSize = $.getOpt('chunkSize')
       $.loaded = 0
       $.startByte = $.offset * chunkSize
-      $.endByte = Math.min($.fileObjSize, ($.offset + 1) * chunkSize)
+      $.endByte = Math.min($.fileObjSize, (($.offset + 1) * chunkSize) - 1)
       if ($.fileObjSize - $.endByte < chunkSize && !$.getOpt('forceChunkSize')) {
         // The last chunk will be bigger than the chunk size, but less than 2*chunkSize
         $.endByte = $.fileObjSize
