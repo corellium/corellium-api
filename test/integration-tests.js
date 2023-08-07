@@ -1,5 +1,6 @@
 'use strict'
 
+const { describe, it, before, beforeEach, after } = require('mocha')
 const assert = require('assert')
 const fs = require('fs')
 const path = require('path')
@@ -11,6 +12,7 @@ const Corellium = require('../src/corellium').Corellium
 const { Input } = require('../src/input')
 
 const CONFIGURATION = require('./config.json')
+const { setFlagIfHookFailedDecorator, validateConfig, destroyInstance } = require('./testUtils')
 
 /** @typedef {import('../src/instance.js')} Instance */
 /** @typedef {import('../src/project.js')} Project */
@@ -20,23 +22,14 @@ process.on('SIGUSR2', () => wtfnode.dump())
 
 global.hookOrTestFailed = false
 
-function setFlagIfHookFailedDecorator(fn) {
-  return function () {
-    return Promise.resolve(fn.apply(this, arguments)).catch(error => {
-      global.hookOrTestFailed = true
-      throw error
-    })
-  }
-}
-
-async function turnOff(instance) {
+async function turnOff (instance) {
   await instance.stop()
   await instance.waitForState('off')
   assert.strictEqual(instance.state, 'off')
   assert.notEqual(instance.stateChanged, null)
 }
 
-async function turnOn(instance) {
+async function turnOn (instance) {
   await instance.start()
   await instance.waitForState('on')
   assert.strictEqual(instance.state, 'on')
@@ -69,18 +62,7 @@ describe('Corellium API', function () {
 
   before(
     'should have a configuration',
-    setFlagIfHookFailedDecorator(function () {
-      if (
-        !CONFIGURATION.endpoint ||
-        !CONFIGURATION.project ||
-        !CONFIGURATION.testFlavor ||
-        (!(CONFIGURATION.username && CONFIGURATION.password) && !CONFIGURATION.apiToken)
-      ) {
-        throw new Error(
-          'The configuration must include endpoint, project and testFlavor as well as username and password or apiToken properties.'
-        )
-      }
-    })
+    setFlagIfHookFailedDecorator(() => validateConfig(CONFIGURATION))
   )
 
   before(
@@ -97,27 +79,10 @@ describe('Corellium API', function () {
   )
 
   INSTANCE_VERSIONS.forEach(instanceVersion => {
-    after(
-      setFlagIfHookFailedDecorator(async function () {
-        this.timeout(80000)
-
-        const instance = instanceMap.get(instanceVersion)
-        if (!instance) {
-          return
-        }
-
-        // To facilitate debugging, don't destroy instances if a test or hook failed.
-        if (global.hookOrTestFailed) {
-          // Stop updating the instance. Otherwise the updater keeps at it and the
-          // integration tests don't terminate.
-          instance.project.updater.remove(instance)
-          return
-        }
-
-        await instance.destroy()
-        await instance.waitForState('deleted')
-      })
-    )
+    after(setFlagIfHookFailedDecorator(() => {
+      this.timeout(80000)
+      destroyInstance(instanceMap, instanceVersion)
+    }))
   })
 
   describe('projects', function () {
@@ -151,12 +116,13 @@ describe('Corellium API', function () {
     it(`has room for ${INSTANCE_VERSIONS.length} new VMs (get quota / quotasUsed)`, async function () {
       assert(project, 'Unable to test as no project was returned from previous tests')
       assert(project.quotas !== project.quotasUsed)
-      if (project.quotas.cores - project.quotasUsed.cores < 2 * INSTANCE_VERSIONS.length)
+      if (project.quotas.cores - project.quotasUsed.cores < 2 * INSTANCE_VERSIONS.length) {
         throw new Error(
           `no room for an extra device to be made, please free at least ${
             2 * INSTANCE_VERSIONS.length
           } cores`
         )
+      }
     })
 
     INSTANCE_VERSIONS.forEach(instanceVersion => {
@@ -197,7 +163,7 @@ describe('Corellium API', function () {
     })
 
     it('can get teams and users', async function () {
-      let teamsAndUsers = await corellium.getTeamsAndUsers()
+      const teamsAndUsers = await corellium.getTeamsAndUsers()
       teamsAndUsers.users.forEach((value, key) => {
         assert.strictEqual(value, corellium._users.get(key))
       })
@@ -214,7 +180,7 @@ describe('Corellium API', function () {
 
     // Not visible to cloud users with one project:
     it('can add and remove keys', async function () {
-      let keyInfo = await project
+      const keyInfo = await project
         .addKey(
           'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCqpvRmc/JQoH9P6XVlHnod0wRCg+7iSGfpyoBoe+nWwp2iEqPyM7A2RzW7ZIX2FZmlD5ldR6Oj5Z+LUR/GXfCFQvpQkidL5htzGMoI59SwntpSMvHlFLOcbyS7VmI4MKbdIF+UrelPCcCJjOaZIFOJfNtuLWDx0L14jW/4wflzcj6Fd1rBTVh2SB3mvhsraOuv9an74zr/PMSHtpFnt5m4SYWpE4HLTf0FJksEe/Qda9jQu5i86Mhu6ewSAVccUDLzgz6E4i8hvSqfctcYGT7asqxsubPTpTPfuOkc3WOxlqZYnnAbpGh8NvCu9uC+5gfWRcLoyRBE4J2Y3wcfOueP example-key'
         )
@@ -234,7 +200,7 @@ describe('Corellium API', function () {
     })
 
     it('can refresh', async function () {
-      let tempName = project.info.name
+      const tempName = project.info.name
       await project.refresh()
       assert(tempName === project.info.name)
     })
@@ -249,7 +215,7 @@ describe('Corellium API', function () {
     })
 
     it('can get openvpn profile', async function () {
-      let expected = Buffer.from('client')
+      const expected = Buffer.from('client')
 
       await project
         .vpnConfig('ovpn', undefined)
@@ -269,7 +235,7 @@ describe('Corellium API', function () {
     })
 
     it('can get tunnelblick profile', async function () {
-      let expected = Buffer.from('504b0304', 'hex')
+      const expected = Buffer.from('504b0304', 'hex')
 
       await project
         .vpnConfig('tblk', undefined)
@@ -347,12 +313,12 @@ describe('Corellium API', function () {
           assert.strictEqual(
             ((rate.onRateMicrocents * (60 * 60 * 24)) / 1000000 / 100).toFixed(2) > 0,
             true,
-            `'On' rate should be larger than 0`
+            '\'On\' rate should be larger than 0'
           )
           assert.strictEqual(
             ((rate.offRateMicrocents * (60 * 60 * 24)) / 1000000 / 100).toFixed(2) > 0,
             true,
-            `'Off' rate should be larger than 0`
+            '\'Off\' rate should be larger than 0'
           )
         })
       })
@@ -503,7 +469,7 @@ describe('Corellium API', function () {
       it('can rename', async function () {
         const instance = instanceMap.get(instanceVersion)
         const instanceName = instance.name
-        async function rename(name) {
+        async function rename (name) {
           await instance.rename(name)
           await instance.update()
           assert.strictEqual(instance.name, name)
@@ -554,14 +520,14 @@ describe('Corellium API', function () {
 
           it('can get peripheral data', async function () {
             const instance = instanceMap.get(instanceVersion)
-            let peripheralData = await instance.getPeripherals()
+            const peripheralData = await instance.getPeripherals()
             assert(peripheralData !== undefined && Object.keys(peripheralData).length > 0)
           })
 
           it('can set and get updated peripheral data', async function () {
             const instance = instanceMap.get(instanceVersion)
             await instance.modifyPeripherals({ batteryCapacity: '42' })
-            let peripheralData = await instance.getPeripherals()
+            const peripheralData = await instance.getPeripherals()
             assert(peripheralData !== undefined && parseInt(peripheralData.batteryCapacity) === 42)
           })
         })
@@ -596,14 +562,14 @@ describe('Corellium API', function () {
         )
 
         it('can list device apps', async function () {
-          let appList = await agent.appList()
+          const appList = await agent.appList()
           assert(appList !== undefined && appList.length > 0)
         })
 
         it('can use shellExec', async function () {
-          let uname = await agent.shellExec('uname')
+          const uname = await agent.shellExec('uname')
           assert(uname.output !== undefined && uname.output.length > 0)
-          assert(uname['success'], true)
+          assert(uname.success, true)
         })
 
         it('uses the correct Websocket url', async function () {
@@ -615,7 +581,7 @@ describe('Corellium API', function () {
         })
 
         describe(`Files ${instanceVersion}`, function () {
-          let expectedData = Buffer.from('D1FF', 'hex')
+          const expectedData = Buffer.from('D1FF', 'hex')
           let testPath
 
           it('can get temp file', async function () {
@@ -623,7 +589,7 @@ describe('Corellium API', function () {
           })
 
           it('can upload a file', async function () {
-            let rs = stream.Readable.from(expectedData)
+            const rs = stream.Readable.from(expectedData)
 
             let lastStatus
             try {
@@ -636,21 +602,21 @@ describe('Corellium API', function () {
           })
 
           it('can stat a file', async function () {
-            let stat = await agent.stat(testPath)
+            const stat = await agent.stat(testPath)
             assert.strictEqual(stat.name, testPath)
           })
 
           it('can change a files attributes', async function () {
             await agent.changeFileAttributes(testPath, { mode: 511 })
-            let stat = await agent.stat(testPath)
+            const stat = await agent.stat(testPath)
             assert.strictEqual(stat.mode, 33279)
           })
 
           it('can download files', async function () {
             try {
-              let downloaded = await new Promise(resolve => {
+              const downloaded = await new Promise(resolve => {
                 const rs = agent.download(testPath)
-                let bufs = []
+                const bufs = []
                 rs.on('data', function (chunk) {
                   bufs.push(chunk)
                 })
@@ -702,14 +668,14 @@ describe('Corellium API', function () {
               assert.rejects(() => agent.getProfile('test'))
             })
           } else {
-            let profileID = 'TBA'
+            const profileID = 'TBA'
 
             it.skip('can use profile/list', async function () {
               await agent.profileList()
             })
 
             it.skip('can use profile/install', async function () {
-              var profile = fs.readFileSync(path.join(__dirname, 'TBA.mobileconfig'))
+              const profile = fs.readFileSync(path.join(__dirname, 'TBA.mobileconfig'))
               await agent.installProfile(profile)
             })
 
@@ -742,11 +708,11 @@ describe('Corellium API', function () {
               assert.rejects(() => agent.preApproveProvisioningProfile())
             })
           } else {
-            let certID = 'TBA'
-            let profileID = 'TBA'
+            const certID = 'TBA'
+            const profileID = 'TBA'
 
             it.skip('can use provisioning/install', async function () {
-              var profile = fs.readFileSync(path.join(__dirname, 'embedded.mobileprovision'))
+              const profile = fs.readFileSync(path.join(__dirname, 'embedded.mobileprovision'))
               await agent.installProvisioningProfile(profile, true)
             })
 
@@ -979,7 +945,7 @@ describe('Corellium API', function () {
           it('can get monitor', async function () {
             const instance = instanceMap.get(instanceVersion)
             netmon = await instance.newNetworkMonitor()
-            assert.strictEqual(netmon !== undefined, true, `Expected monitor to be returned`)
+            assert.strictEqual(netmon !== undefined, true, 'Expected monitor to be returned')
           })
 
           it('uses the correct Websocket url', async function () {
@@ -994,12 +960,12 @@ describe('Corellium API', function () {
             assert.strictEqual(
               await netmon.start(),
               true,
-              `Expected the network monitor to start and return true`
+              'Expected the network monitor to start and return true'
             )
           })
 
           it('can monitor data', async function () {
-            assert(installSuccess, `This test can't run because application installation failed.`)
+            assert(installSuccess, 'This test cannot run because application installation failed.')
 
             return new Promise(resolve => {
               this.slow(80000)
@@ -1040,7 +1006,7 @@ describe('Corellium API', function () {
             assert.strictEqual(
               await netmon.stop(),
               true,
-              `Expected the network monitor to stop and return true`
+              'Expected the network monitor to stop and return true'
             )
           })
 
@@ -1055,17 +1021,17 @@ describe('Corellium API', function () {
 
           if (CONFIGURATION.testFlavor === 'ranchu') {
             it('can get process list', async function () {
-              let procList = await agent.runFridaPs()
-              let lines = procList.output.trim().split('\n')
+              const procList = await agent.runFridaPs()
+              const lines = procList.output.trim().split('\n')
               lines.shift()
               lines.shift()
               for (const line of lines) {
-                ;[pid, name] = line.trim().split(/\s+/)
+                [pid, name] = line.trim().split(/\s+/)
                 if (name === 'keystore') {
                   break
                 }
               }
-              assert(pid != 0)
+              assert(pid !== 0)
             })
           } else {
             it('cannot get process list', async function () {
@@ -1097,13 +1063,13 @@ describe('Corellium API', function () {
               })
 
               it('can get frida scripts', async function () {
-                let fridaScripts = await agent.stat('/data/corellium/frida/scripts/')
-                let scriptList = fridaScripts.entries.map(entry => entry.name)
+                const fridaScripts = await agent.stat('/data/corellium/frida/scripts/')
+                const scriptList = fridaScripts.entries.map(entry => entry.name)
                 let s = ''
                 for (s of scriptList) {
                   if (s === 'hook_native.js') break
                 }
-                assert(s != '')
+                assert(s !== '')
               })
 
               it.skip('can execute script', async function () {
@@ -1111,10 +1077,10 @@ describe('Corellium API', function () {
                 await instance.executeFridaScript('/data/corellium/frida/scripts/hook_native.js')
                 await new Promise(resolve => setTimeout(resolve, 5000))
 
-                let fridaConsole = await instance.fridaConsole()
-                let fridaOutput = await new Promise(resolve => {
+                const fridaConsole = await instance.fridaConsole()
+                const fridaOutput = await new Promise(resolve => {
                   const w = new stream.Writable({
-                    write(chunk, _encoding, _callback) {
+                    write (chunk, _encoding, _callback) {
                       fridaConsole.socket.close()
                       resolve(chunk)
                     }
@@ -1168,14 +1134,14 @@ describe('Corellium API', function () {
 
           it('can get thread list', async function () {
             const instance = instanceMap.get(instanceVersion)
-            let threadList = await instance.getCoreTraceThreadList()
-            for (let p of threadList) {
+            const threadList = await instance.getCoreTraceThreadList()
+            for (const p of threadList) {
               if (p.name.includes('corelliumd')) {
                 pid = p.pid
                 break
               }
             }
-            assert(pid != 0)
+            assert(pid !== 0)
           })
 
           it('can set filter', async function () {

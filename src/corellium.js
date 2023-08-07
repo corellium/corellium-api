@@ -37,7 +37,7 @@ const { listImagesMetaData } = require('./images')
 
 /**
  * @typedef {object} Token
- * @property {string} jwt
+ * @property {string} token
  * @property {string} expiration
  */
 
@@ -78,13 +78,20 @@ class Corellium {
    * let token = await corellium.getToken()
    */
   async getToken () {
-    const token = this.options.token || (await this.token)
-    const maxExpiration = new Date(new Date().getTime() + 15 * 60 * 1000)
+    const token = this.options.token || this.token
 
     // If the token is more than 15 minutes from expiring, we don't need to refresh it.
     if (token) {
-      const expiration =
-        typeof token.expiration === 'string' ? Date.parse(token.expiration) : token.expiration
+      const maxExpiration = new Date(new Date().getTime() + 15 * 60 * 1000)
+
+      if (Promise.resolve(token) === token) {
+        const tokenObj = await token
+        if (tokenObj.expiration > maxExpiration) {
+          return tokenObj.token
+        }
+      }
+
+      const expiration = typeof token.expiration === 'string' ? Date.parse(token.expiration) : token.expiration
       if (expiration > maxExpiration) {
         return token.token
       }
