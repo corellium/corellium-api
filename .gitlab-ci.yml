@@ -4,6 +4,7 @@ include:
 
 stages:
   - test
+  - publish
 
 test:
   image: node:lts
@@ -11,3 +12,68 @@ test:
   script: 
     - npm ci
     - npm run test:ci
+
+release-publish:
+  image:
+    name: git.corellium.co:5050/corellium/ci/docker/nodejs:16
+    pull_policy: [always, if-not-present]
+  stage: publish
+  script:
+    - RELEASE_VERSION=${CI_COMMIT_TAG#release/v}
+    - |
+      if git rev-parse --verify --quiet refs/tags/* > /dev/null; then
+          LAST_TAG="$(git describe --tags --abbrev=0 HEAD~1)"
+      else
+          # Setting LAST_TAG to the initial commit
+          LAST_TAG=$(git rev-list --max-parents=0 HEAD)
+      fi
+      NOTES="$(git log ${LAST_TAG}..${CI_COMMIT_TAG} --oneline --no-notes | sed -e 's/^/  - /')"
+    - |
+        RAWDESCRIPTION="
+        ${NOTES}
+    - echo $NOTES
+    - echo $RAWDESCRIPTION
+    - echo "Version parsed $RELEASE_VERSION"
+    - jq ".version = \"${RELEASE_VERSION}\"" package.json > temp.json
+    - mv temp.json package.json
+    - jq . package.json
+    - echo "npm publish"
+    - |
+        PAYLOAD=$(jq -n \
+        --arg tag "$CI_COMMIT_TAG" \
+        --arg name "Release v$RELEASE_VERSION" \
+        --arg body "$RAWDESCRIPTION" \
+        '{tag_name: $tag, name: $name, body: $body}')
+    - |
+        curl -X POST \
+        -H "Authorization: token ${GITHUB_API_TOKEN}" \
+        -H "Content-Type: application/json" \
+        -d "$PAYLOAD" \
+        https://api.github.com/repos/stevensuarezz/npm-publish-test/releases
+  only:
+    - /release\/v*/
+
+local-publish:
+  image:
+    name: git.corellium.co:5050/corellium/ci/docker/nodejs:16
+    pull_policy: [always, if-not-present]
+  stage: publish
+  before_script:
+    # Configure the npm registry URL and authentication
+    - echo "//git.corellium.co/api/v4/projects/${CI_PROJECT_ID}/packages/npm/:_authToken=${CI_JOB_TOKEN}" > .npmrc
+    - echo "@corellium:registry=${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/npm/" >> .npmrc
+  script:
+    - cat .npmrc
+    - PKG_VERSION="$(echo ${CI_COMMIT_TAG} | sed -n 's/.*v\([0-9]\+\.[0-9]\+\.[0-9]\+\).*/\1/p')"
+    - |
+        if [[ -z "$PKG_VERSION" ]]; then
+          echo "Error: Failed to parse version from tag ${CI_COMMIT_TAG}"
+          exit 1
+        fi
+    - echo "Version parsed $PKG_VERSION"
+    - jq ".version = \"${PKG_VERSION}\"" package.json > temp.json
+    - mv temp.json package.json
+    - jq . package.json
+    - npm publish
+  only:
+    - tags
