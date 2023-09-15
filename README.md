@@ -11,6 +11,18 @@ Corellium API reference documentation is available [here](https://corellium.gith
 npm install @corellium/corellium-api
 ```
 
+### Publishing
+To publish the corellium-api npm package to the GitLab registry, create a tag with the format
+```
+v#.#.#
+```
+
+To publish to the official Corellium npm registry, create a tag with the format
+```
+release/v#.#.#
+```
+This will publish the package in the GitLab registry, the npm registry, as well as create a release in the mirrored GitHub repository
+
 ### Usage
 ```javascript=
 const { Corellium } = require("@corellium/corellium-api");
