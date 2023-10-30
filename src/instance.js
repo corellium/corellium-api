@@ -455,16 +455,20 @@ class Instance extends EventEmitter {
   }
 
   /**
-   * Download netdump pcap file.
+   * Download specified pcap file.  If pcapFile is not given or is invalid, default to netdump.pcap
    * @example
-   * let pcap = await instance.downloadPcap();
+   * const pcap = await instance.downloadPcap();
    * console.log(pcap.toString());
    */
-  async downloadPcap () {
-    const token = await this._fetch('/netdumpPcap-authorize', { method: 'POST' })
-    const response = await fetchApi(this.project, '/preauthed/' + token.token + '/netdump.pcap', {
-      response: 'raw'
-    })
+  async downloadPcap (pcapFile) {
+    const availablePcaps = {
+      networkMonitor: { preAuth: '/networkMonitorPcap-authorize', pcapFile: 'networkMonitor.pcap' },
+      netdump: { preAuth: '/netdumpPcap-authorize', pcapFile: 'netdump.pcap' }
+    }
+
+    const pcap = (typeof pcapFile === 'string' && availablePcaps[pcapFile]) || availablePcaps.netdump
+    const token = await this._fetch(pcap.preAuth, { method: 'POST' })
+    const response = await fetchApi(this.project, `/preauthed/${token.token}/${pcap.pcapFile}`, { response: 'raw' })
 
     return await response.buffer()
   }
