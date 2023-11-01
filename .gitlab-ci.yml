@@ -23,10 +23,11 @@ release-publish:
     - echo "//registry.npmjs.org/:_authToken=${NPM_AUTH_TOKEN}" > .npmrc
     # Set up GitHub SSH key
     - eval $(ssh-agent -s)
+    - echo "" >> "${GITHUB_DEPLOY_KEY}" # Add any missing newline on the end ugh
+    - chmod 400 "${GITHUB_DEPLOY_KEY}"
+    - ssh-add "${GITHUB_DEPLOY_KEY}"
     - mkdir -p ~/.ssh
-    - echo "$GITHUB_DEPLOY_KEY" | tr -d '\r' | ssh-add -
     - ssh-keyscan github.com >> ~/.ssh/known_hosts
-    - chmod 644 ~/.ssh/known_hosts
   script:
     # Attempt to parse commit tag of format release/vX.X.X
     - RELEASE_VERSION=${CI_COMMIT_TAG#release/v}
