@@ -29,8 +29,8 @@ release-publish:
     - mkdir -p ~/.ssh
     - ssh-keyscan github.com >> ~/.ssh/known_hosts
   script:
-    # Attempt to parse commit tag of format release/vX.X.X
-    - RELEASE_VERSION=${CI_COMMIT_TAG#release/v}
+    # Attempt to parse commit tag of format vX.X.X
+    - RELEASE_VERSION=${CI_COMMIT_TAG#v}
     - |
       if [[ -z "$RELEASE_VERSION" ]]; then
         echo "Error: Failed to parse release version from tag ${CI_COMMIT_TAG}"
@@ -39,12 +39,12 @@ release-publish:
     - LAST_TAG="$(git describe --tags --abbrev=0 HEAD~1)"
     - jq ".version = \"${RELEASE_VERSION}\"" package.json > temp.json
     - mv temp.json package.json
+    - git push git@github.com:corellium/corellium-api.git HEAD:master
+    - git push git@github.com:corellium/corellium-api.git "refs/tags/${CI_COMMIT_TAG}"
     - jq . package.json
     - npm publish
-    - git remote add github git@github.com:corellium/corellium-api.git
-    - git push github master
-  only:
-    - /release\/v*/
+  rules:
+    - if: '$CI_COMMIT_TAG =~ /^v/'
 
 local-publish:
   image:
