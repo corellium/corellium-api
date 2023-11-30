@@ -694,7 +694,7 @@ class Agent {
   /**
    * Downloads the file at the given path from the VM's filesystem. Returns a node ReadableStream.
    * @param {string} path - The path of the file to download.
-   * @return {Promise<Readable>}
+   * @return {Readable}
    * @example
    * const dl = agent.download('/var/tmp/test.log');
    * dl.pipe(fs.createWriteStream('test.log'));

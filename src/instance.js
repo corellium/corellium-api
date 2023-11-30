@@ -476,7 +476,7 @@ class Instance extends EventEmitter {
   /**
    * Return an {@link NetworkMonitor} connected to this instance. Calling this
    * method multiple times will reuse the same agent connection.
-   * @returns {NetworkMonitor}
+   * @returns {Promise<NetworkMonitor>}
    */
   async networkMonitor () {
     if (!this._netmon) this._netmon = await this.newNetworkMonitor()
