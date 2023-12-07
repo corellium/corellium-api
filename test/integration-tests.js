@@ -178,6 +178,13 @@ describe('Corellium API', function () {
       assert(roles, 'Roles should not be undefined, even if there have been no roles')
     })
 
+    it('can get instance', async function () {
+      const instance = instanceMap.get(INSTANCE_VERSIONS[0])
+      await instance.waitForState('on')
+      const foundInstance = await corellium.getInstance(instance.id)
+      assert(foundInstance.id === instance.id)
+    })
+
     // Not visible to cloud users with one project:
     it('can add and remove keys', async function () {
       const keyInfo = await project

@@ -467,6 +467,36 @@ class Corellium {
       method: 'DELETE'
     })
   }
+
+  /**
+   * Attempts to retrieve Instance by iterating through all projects until the instance is found.
+   *
+   * @param {string} instanceId
+   * @returns {Promise<Instance>}
+   * @example
+   * await corellium.instance('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa')
+   */
+  async getInstance (instanceId) {
+    let lastError
+    const projects = await this.projects()
+    for (const project of projects) {
+      try {
+        const instance = await project.getInstance(instanceId)
+        if (instance.info.state !== 'on') {
+          throw new Error('The instance is not turned on')
+        }
+        return instance
+      } catch (err) {
+        if (!(err instanceof CorelliumError)) {
+          throw err
+        } else {
+          lastError = err
+        }
+      }
+    }
+
+    throw lastError || new Error(`Could not retrieve instance!  instanceId=${instanceId}`)
+  }
 }
 
 module.exports = {
