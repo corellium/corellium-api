@@ -66,6 +66,16 @@ const split = require('split')
  */
 
 /**
+ * @typedef {number} RotationType
+ *
+ * Valid values are 1-4 where each number corresponds to a device orientation.
+ * 1. Portrait: The device is held upright, with the top edge at the top.
+ * 2. Portrait Vertically Inverted (Upside-Down): The device is held upright, but with the top edge at the bottom.
+ * 3. Landscape (Top of Device to the Left): The device is turned sideways with the top edge facing left.
+ * 4. Landscape (Top of Device to the Right): The device is turned sideways with the top edge facing right.
+ */
+
+/**
  * Instances of this class are returned from {@link Project#instances}, {@link
  * Project#getInstance}, and {@link Project#createInstance}. They should not be
  * created using the constructor.
@@ -145,6 +155,13 @@ class Instance extends EventEmitter {
    */
   get type () {
     return this.info.type
+  }
+
+  /**
+   * The instance orientation
+   */
+  get orientation() {
+    return this.info.orientation
   }
 
   /**
@@ -236,6 +253,21 @@ class Instance extends EventEmitter {
     await this._fetch('', {
       method: 'PATCH',
       json: { peripherals: peripheralData }
+    })
+  }
+
+  /**
+   * Change device orientation.
+   * @param {RotationType} rotation - The new rotation for the instance.
+   * @example await instance.rotate(1);
+   */
+  async rotate(rotation) {
+    await this._fetch('/rotate', {
+      method: 'POST',
+      json: {
+        orientation: rotation
+      },
+      response: 'raw'
     })
   }
 
