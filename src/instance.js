@@ -160,7 +160,7 @@ class Instance extends EventEmitter {
   /**
    * The instance orientation
    */
-  get orientation() {
+  get orientation () {
     return this.info.orientation
   }
 
@@ -261,7 +261,7 @@ class Instance extends EventEmitter {
    * @param {RotationType} rotation - The new rotation for the instance.
    * @example await instance.rotate(1);
    */
-  async rotate(rotation) {
+  async rotate (rotation) {
     await this._fetch('/rotate', {
       method: 'POST',
       json: {
@@ -1113,7 +1113,7 @@ class Instance extends EventEmitter {
    * @param {string} name - The name of the file to identify the file on the server. Usually the basename of the path.
    * @param {Project~progressCallback} [progress] - The callback for file upload progress information.
    *
-   * @returns {Promise<Image>}
+   * @returns {Promise<{ id: string, name: string }>}
    */
   async compressAndUploadImage (type, filePath, name, progress) {
     let tmpfile = null
@@ -1177,9 +1177,10 @@ class Instance extends EventEmitter {
    * @param {string} name - The name of the file to identify the file on the server. Usually the basename of the path.
    * @param {Project~progressCallback} [progress] - The callback for file upload progress information.
    *
-   * @returns {Promise<Image>}
+   * @returns {Promise<{ id: string, name: string }>}
    */
   async uploadImage (type, filePath, name, progress) {
+    const imageId = uuidv4()
     const token = await this.project.getToken()
     const url =
       this.project.api +
@@ -1188,11 +1189,12 @@ class Instance extends EventEmitter {
       '/image-upload/' +
       encodeURIComponent(type) +
       '/' +
-      encodeURIComponent(uuidv4()) +
+      encodeURIComponent(imageId) +
       '/' +
       encodeURIComponent(name)
 
-    return await uploadFile(token, url, filePath, progress)
+    await uploadFile(token, url, filePath, progress)
+    return { id: imageId, name }
   }
 
   /**
