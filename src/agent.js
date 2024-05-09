@@ -287,7 +287,8 @@ class Agent {
       this._keepAliveTimeout = null
 
       if (!this.uploading) {
-        this._startKeepAliveTimeout = setTimeout(this._startKeepAlive, 10 * 1000)
+        // use arrow function to ensure the "this" binding references the Agent context, NOT a Timer.
+        this._startKeepAliveTimeout = setTimeout(() => this._startKeepAlive(), 10 * 1000)
       }
     })
   }
