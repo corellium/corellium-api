@@ -1108,6 +1108,26 @@ Example:
 await agent.runFridaKill();
 ```
 
+
+### async openApp(bundleId)
+
+Open an app on the device.
+
+Best effort attempt, may not _always_ open the app.
+- ios apps open consistently.
+- android apps installed by the user open consistently, system apps are less predictable.
+  - If it does not open the app, output will generally include `** No activities found to run, monkey aborted.`
+
+**Note:**  iOS devices require `uikittools` version `1.1.23-1` or greater for this function to work.  Devices created after 5/15/24 should contain a sufficient version.  You can verify with `apt list uikittools`.  If the device does not have a sufficient version you can update via `apt-get update && apt-get install uikittools`
+
+Example:
+
+```javascript=
+await agent.openApp('com.apple.mobilesafari');
+```
+
+
+
 ## class NetworkMonitor
 
 **Note:** Instances of the class `NetworkMonitor` are only supposed to be retrieved with `Instance#networkMonitor()` or `Instance#newNetworkMonitor()`.

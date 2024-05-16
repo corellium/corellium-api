@@ -954,6 +954,29 @@ class Agent {
   async runFridaKill () {
     return await this.command('frida', 'run-frida-kill')
   }
+
+  /**
+   * Open an app on the device.
+   *
+   * Best effort attempt, may not _always_ open the app.
+   * - ios apps open consistently.
+   * - android apps installed by the user open consistently, system apps are less predictable.
+   *   - If it does not open the app, output will generally include `** No activities found to run, monkey aborted.`
+   *
+   * @param {string} bundleId - App bundleId
+   * @return {Promise<ShellExecResult>}
+   * @example
+   * await agent.openApp('com.apple.mobilesafari');
+   */
+  async openApp (bundleId) {
+    // start commands
+    const commands = {
+      android: `monkey -p ${bundleId} 1`,
+      ios: `uiopen ${bundleId}`
+    }
+
+    return await this.shellExec(commands[this.instance.info.type])
+  }
 }
 
 module.exports = Agent
