@@ -575,16 +575,6 @@ class Instance extends EventEmitter {
   }
 
   /**
-   * Returns the cost, in microcents, for the instance in the on and off state. Instances are charged $0.25 / day for storage (off) and $0.25 per core per hour (on).
-   * @returns {RateInfo}
-   * @example
-   * const rateInfo = await instance.rate();
-   */
-  async rate () {
-    return await this._fetch('/rate')
-  }
-
-  /**
    * Send an input to this instance.
    * @param {Input} input - The input to send.
    * @see Input

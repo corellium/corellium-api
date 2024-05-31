@@ -332,27 +332,6 @@ instances.forEach(instance => {
 });
 ```
 
-### async rate()
-
-Returns the cost, in microcents, for the instance in the on and off state. Instances are charged $0.25 / day for storage (off) and $0.25 per core per hour (on).
-
-Example:
-
-```javascript=
-let rateInfo = await instance.rate();
-
-// dollars = rate * seconds / microcents / cents
-console.log(`instance on for 24 hours: $${(rateInfo.onRateMicrocents * (60 * 60 * 24) / 1000000 / 100).toFixed(2)} USD`)
-console.log(`instance off for 24 hours: $${(rateInfo.offRateMicrocents * (60 * 60 * 24) / 1000000 / 100).toFixed(2)} USD`)
-```
-
-Output:
-
-```text=
-instance on for 24 hours: $36.00 USD
-instance off for 24 hours: $0.25 USD
-```
-
 ### async rename(name)
 
 Renames an `Instance` to `name`.
