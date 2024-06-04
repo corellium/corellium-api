@@ -1,0 +1,96 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    ":dependencyDashboard",
+    ":dependencyDashboardApproval",
+    ":semanticPrefixFixDepsChoreOthers",
+    ":ignoreModulesAndTests",
+    "replacements:all",
+    "workarounds:all",
+    "npm:unpublishSafe",
+    "group:datadog-browser-sdkMonorepo"
+  ],
+  "enabledManagers": [
+    "npm"
+  ],
+  "prConcurrentLimit": 5,
+  "labels": [
+    "renovate"
+  ],
+  "osvVulnerabilityAlerts": true,
+  "semanticCommits": "enabled",
+  "packageRules": [
+    {
+      "description": "node.js & npm shouldn't be updated automatically, they require manual updates in many places",
+      "matchDepNames": [
+        "node",
+        "npm"
+      ],
+      "enabled": false
+    },
+    {
+      "description": "Ignored",
+      "matchDepNames": [
+        "ts-node",
+        "@types/node",
+        "typescript"
+      ],
+      "matchPackagePatterns": [
+        "^@swc",
+        "^@typescript",
+        "^@commitlint"
+      ],
+      "enabled": false
+    },
+    {
+      "description": "Internal corellium packages major versions, immediately created, requires manual review/approve",
+      "groupName": "corellium-internal",
+      "dependencyDashboardApproval": false,
+      "addLabels": [
+        "corellium-internal-major"
+      ],
+      "matchPackagePatterns": [
+        "^@corellium"
+      ],
+      "matchUpdateTypes": [
+        "major"
+      ]
+    },
+    {
+      "description": "Internal corellium packages, minor/patch versions, immediately created, automatically merged",
+      "groupName": "corellium-internal",
+      "dependencyDashboardApproval": false,
+      "addLabels": [
+        "corellium-internal"
+      ],
+      "matchPackagePatterns": [
+        "^@corellium"
+      ],
+      "automerge": true,
+      "autoApprove": true,
+      "matchUpdateTypes": [
+        "minor",
+        "patch"
+      ]
+    },
+    {
+      "matchPackageNames": ["sinon"],
+      "allowedVersions": "<17.0.0"
+    },
+    {
+      "description": "higher versions drop node 16 support",
+      "matchPackageNames": ["husky", "eslint"],
+      "allowedVersions": "<9.0.0"
+    },
+    {
+      "description": "higher versions drop node 16 support",
+      "matchPackageNames": ["node-fetch"],
+      "allowedVersions": "<3.0.0"
+    },
+    {
+      "description": "higher versions drop node 16 support",
+      "matchPackageNames": ["file-type"],
+      "allowedVersions": "<19.0.0"
+    }
+  ]
+}
