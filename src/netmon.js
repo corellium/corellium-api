@@ -229,14 +229,20 @@ class NetworkMonitor {
     }
   }
 
+  /**
+   * @typedef {object} StartOptions
+   * @property {boolean} truncatePcap - Truncate PCAP file
+   */
+
   /** Start Network Monitor
+   * @param {StartOptions} options
    * @example
    * let netmon = await instance.newNetworkMonitor();
-   * netmon.start();
+   * netmon.start({ truncatePcap: true });
    */
-  async start () {
+  async start (options) {
     await this.connect()
-    await this._fetch('/sslsplit/enable', { method: 'POST' })
+    await this._fetch('/sslsplit/enable', { method: 'POST' }, options)
     await this.instance._waitFor(() => {
       return this.instance.info.netmon && this.instance.info.netmon.enabled
     })

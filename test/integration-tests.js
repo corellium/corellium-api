@@ -947,7 +947,7 @@ describe('Corellium API', function () {
 
           it('can start monitor', async function () {
             assert.strictEqual(
-              await netmon.start(),
+              await netmon.start({ truncatePcap: true }),
               true,
               'Expected the network monitor to start and return true'
             )
