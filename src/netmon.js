@@ -242,7 +242,7 @@ class NetworkMonitor {
    */
   async start (options) {
     await this.connect()
-    await this._fetch('/sslsplit/enable', { method: 'POST' }, options)
+    await this._fetch('/sslsplit/enable', { method: 'POST', ...options })
     await this.instance._waitFor(() => {
       return this.instance.info.netmon && this.instance.info.netmon.enabled
     })
