@@ -488,11 +488,14 @@ class Instance extends EventEmitter {
 
   /**
    * Download specified pcap file.  If pcapFile is not given or is invalid, default to netdump.pcap
+   * @param {string} pcapFile - Which pcap file you want to download
+   * @param {boolean} [asStream] - If true, return pcap as stream instead of buffer.
+   * @returns {Promise<Buffer | NodeJS.ReadableStream>}
    * @example
    * const pcap = await instance.downloadPcap();
    * console.log(pcap.toString());
    */
-  async downloadPcap (pcapFile) {
+  async downloadPcap (pcapFile, asStream) {
     const availablePcaps = {
       networkMonitor: { preAuth: '/networkMonitorPcap-authorize', pcapFile: 'networkMonitor.pcap' },
       netdump: { preAuth: '/netdumpPcap-authorize', pcapFile: 'netdump.pcap' }
@@ -501,6 +504,10 @@ class Instance extends EventEmitter {
     const pcap = (typeof pcapFile === 'string' && availablePcaps[pcapFile]) || availablePcaps.netdump
     const token = await this._fetch(pcap.preAuth, { method: 'POST' })
     const response = await fetchApi(this.project, `/preauthed/${token.token}/${pcap.pcapFile}`, { response: 'raw' })
+
+    if (asStream) {
+      return response.body
+    }
 
     return await response.buffer()
   }
