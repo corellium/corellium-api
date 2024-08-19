@@ -7,6 +7,9 @@ const { v4: uuidv4 } = require('uuid')
 const util = require('util')
 const fs = require('fs')
 const { compress, uploadFile } = require('./images')
+const path = require('path')
+const os = require('os')
+const { fetch } = require('./util/fetch')
 
 /**
  * @typedef {object} ProjectKey
@@ -138,11 +141,42 @@ class Project {
    * await instance.finishRestore();
    */
   async createInstance (options) {
-    const { id } = await fetchApi(this, '/instances', {
-      method: 'POST',
-      json: Object.assign({}, options, { project: this.id })
-    })
-    return await this.getInstance(id)
+    try {
+      const { id } = await fetchApi(this, '/instances', {
+        method: 'POST',
+        json: Object.assign({}, options, { project: this.id })
+      })
+      return await this.getInstance(id)
+    } catch (err) {
+      if (err.field === 'firmware_asset') {
+        if (process.env.FETCH_FIRMWARE_ASSETS !== '1') {
+          throw new Error('This instance requires additional firmware assets. To automatically download firmware assets and associate them with your domain, set the environment variable FETCH_FIRMWARE_ASSETS=1')
+        }
+        if (err.originalError.missingFwAssets && err.originalError.missingFwAssets.length > 0) {
+          for (const firmwareAssetUrl of err.originalError.missingFwAssets) {
+            const response = await fetch(firmwareAssetUrl, { response: 'raw' })
+            const fwAssetPath = path.join(os.tmpdir(), `${uuidv4()}.fwasset`)
+            if (response.ok) {
+              const stream = fs.createWriteStream(fwAssetPath)
+              response.body.pipe(stream)
+
+              await new Promise(resolve => response.body.on('finish', () => {
+                stream.end()
+                resolve()
+              }))
+
+              await new Promise(resolve => stream.on('finish', () => { resolve() }))
+
+              await this.uploadFirmwareAsset(fwAssetPath, encodeURIComponent(firmwareAssetUrl), () => {})
+            }
+          }
+        }
+
+        return this.createInstance(options)
+      } else {
+        throw err
+      }
+    }
   }
 
   /**
@@ -386,6 +420,31 @@ class Project {
       encodeURIComponent(this.id) +
       '/image-upload/' +
       encodeURIComponent('vmfile') +
+      '/' +
+      encodeURIComponent(imageId) +
+      '/' +
+      encodeURIComponent(name)
+
+    await uploadFile(token, url, filePath, progress)
+    return { id: imageId, name }
+  }
+
+  /**
+   * Add a firmware asset image to a proejct for use in creating new instances.
+   * @param filePath - The path on the local file system to get the firmware asset file
+   * @param name - The name of the file to identify the file on the server, usually the full url
+   * @param progress
+   * @returns {Promise<{name, id: *}>}
+   */
+  async uploadFirmwareAsset (filePath, name, progress) {
+    const imageId = uuidv4()
+    const token = await this.getToken()
+    const url =
+      this.api +
+      '/projects/' +
+      encodeURIComponent(this.id) +
+      '/image-upload/' +
+      encodeURIComponent('fwasset') +
       '/' +
       encodeURIComponent(imageId) +
       '/' +

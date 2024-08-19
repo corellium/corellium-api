@@ -1,6 +1,6 @@
 {
   "name": "@corellium/corellium-api",
-  "version": "1.7.6",
+  "version": "1.8.0",
   "description": "Supported nodejs library for interacting with the Corellium service and VMs",
   "main": "src/corellium.js",
   "husky": {

@@ -266,7 +266,7 @@ Creates a new instance with the given options. The following options are support
     - `irq`: system IRQs, 1-16 ranges must be specified
     - `port`: tcp port for vMMIO usage
 
-Example:
+#### Example:
 
 ```javascript=
 // create instance
@@ -280,6 +280,24 @@ let instance = await project.createInstance({
 });
 // wait for the instance to finish restoring
 await instance.finishRestore();
+```
+
+#### Example: Handling Firmware Assets
+
+```
+❯ node myscript.js
+Error: This instance requires additional firmware assets. To automatically download firmware assets and associate them
+with your domain, set the environment variable FETCH_FIRMWARE_ASSETS=1
+```
+
+Some recent firmwares require additional files that must be downloaded by the api client and associated with your domain.
+The Corellium API can download these resources and associated them with your domain. To enable automatic download, set
+the environment variable `FETCH_FIRMWARE_ASSETS=1`.
+
+```
+❯ env FETCH_FIRMWARE_ASSETS=1 node myscript.js
+Creating ios device...
+Created 741d5b9c-01dd-4878-b16f-8d6aa513c9c4
 ```
 
 ## class Instance

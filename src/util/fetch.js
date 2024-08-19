@@ -14,18 +14,19 @@ class CorelliumError extends Error {
     this.name = this.constructor.name
     this.field = error.field
     this.code = code
+    this.originalError = error
   }
 }
 
 async function fetch (url, options) {
-  if (options.headers === undefined) options.headers = {}
+  if (options && options.headers === undefined) options.headers = {}
 
-  if (options.json !== undefined) {
+  if (options && options.json !== undefined) {
     options.body = JSON.stringify(options.json)
     options.headers['Content-Type'] = 'application/json'
     delete options.json
   }
-  if (options.token !== undefined) {
+  if (options && options.token !== undefined) {
     options.headers.Authorization = options.token
   }
 
@@ -46,7 +47,7 @@ async function fetch (url, options) {
 
     throw new Error(`${options.method || 'GET'} ${url} -- ${res.status} ${res.statusText}`)
   }
-  if (options.response === 'raw') return res
+  if (options && options.response === 'raw') return res
   return await res.json()
 }
 
