@@ -551,14 +551,25 @@ class Instance extends EventEmitter {
   }
 
   /**
-   * Returns a bidirectional node stream for this instance's serial console.
-   * @return {WebSocket-Stream}
+   * Creates and returns a bidirectional WebSocket stream for accessing console output.
+   * If no console name is specified, returns the default console stream.
+   *
+   * @param {string} [name] - Optional name of the specific console to retrieve (e.g., 'uart-0')
+   * @returns {Promise<WebSocket>} A promise that resolves to a WebSocket stream for the console
+   * @throws {Error} If the console connection cannot be established
+   *
    * @example
+   * // Connect to default console
    * const consoleStream = await instance.console();
    * consoleStream.pipe(process.stdout);
+   *
+   * @example
+   * // Connect to a specific named console
+   * const uartConsole = await instance.console('uart-0');
+   * uartConsole.pipe(process.stdout);
    */
-  async console () {
-    const { url } = await this._fetch('/console')
+  async console (name) {
+    const { url } = name ? await this._fetch(`/console?type=${name}`) : await this._fetch('/console')
     return wsstream(url, ['binary'])
   }
 
@@ -848,6 +859,17 @@ class Instance extends EventEmitter {
     })
 
     return fridaConsole
+  }
+
+  /**
+   * Returns an array of all supported console types for this instance.
+   * @returns {string[]} Array of available console names (e.g., ['uart0-cons', 'uart1-cons'])
+   * @example
+   * // types might be ['uart0-cons', 'uart1-cons', ...]
+   * const types = instance.consoleTypes();
+   */
+  get consoleTypes () {
+    return this.info.consoles?.map(({ id }) => id.slice(5))
   }
 
   /**
