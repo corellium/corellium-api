@@ -254,6 +254,11 @@ class Agent {
     if (!this.connected) return
 
     const ws = this.ws
+    // clean up any existing keepalive timers before registering new ones.  This prevents a bug that occurs if _startKeepAlive() is invoked multiple times.
+    // _startKeepAlive() invoked once -> this._keepAliveTimeout is registered in state with the pong listener relying on that state to clear it.
+    // _startKeepAlive() invoked second -> overwrites this._keepAliveTimeout.
+    // Now, when original pong listener goes to clear timer based on this._keepAliveTimeout state, it has lost the reference to the first timer which results in it blowing up at 10 seconds
+    this._stopKeepAlive();
 
     ws.ping()
 
