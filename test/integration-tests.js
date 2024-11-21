@@ -489,10 +489,18 @@ describe('Corellium API', function () {
         })
       })
 
-      it('can send input', async function () {
+      it('can send input as an instance of Input', async function () {
         const input = new Input()
         const instance = instanceMap.get(instanceVersion)
         instance.sendInput(input.pressRelease('home'))
+      })
+
+      it('can send input as an array of steps', async function () {
+        const instance = instanceMap.get(instanceVersion)
+        instance.sendInput([
+          { buttons: ['finger'], position: [[300, 600]], wait: 0 },
+          { buttons: [], wait: 100 }
+        ])
       })
 
       if (CONFIGURATION.testFlavor === 'ranchu') {

@@ -14,6 +14,7 @@ const { sleep } = require('./util/sleep')
 const util = require('util')
 const fs = require('fs')
 const { compress, uploadFile } = require('./images')
+const { Input } = require('./input')
 const { v4: uuidv4 } = require('uuid')
 const split = require('split')
 
@@ -594,13 +595,15 @@ class Instance extends EventEmitter {
 
   /**
    * Send an input to this instance.
-   * @param {Input} input - The input to send.
+   * @param {Input | Array<Record<string, unknown>>} input - The input(s) to send.
    * @see Input
    * @example
    * await instance.sendInput(I.pressRelease('home'));
+   * @example
+   * await instance.sendInput([{ "text": "Hello, world" }]);
    */
   async sendInput (input) {
-    await this._fetch('/input', { method: 'POST', json: input.points })
+    await this._fetch('/input', { method: 'POST', json: input instanceof Input ? input.points : input })
   }
 
   /**

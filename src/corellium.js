@@ -474,7 +474,7 @@ class Corellium {
    * @param {string} instanceId
    * @returns {Promise<Instance>}
    * @example
-   * await corellium.instance('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa')
+   * await corellium.getInstance('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa')
    */
   async getInstance (instanceId) {
     let lastError
