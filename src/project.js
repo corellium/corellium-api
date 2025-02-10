@@ -105,7 +105,7 @@ class Project {
    * @param {string} options.flavor - The device flavor, such as `iphone6`
    * @param {string} options.os - The device operating system version
    * @param {string} options.ipsw - The ID of a previously uploaded image in the project to use as the firmware
-   * @param {string} options.osbuild - The device operating system build
+   * @param {string} [options.osbuild] - The device operating system build
    * @param {string} [options.snapshot] - The ID of snapshot to clone this device off of
    * @param {string} [options.name] - The device name
    * @param {string} [options.patches] - Instance patches, such as `jailbroken` (default), `nonjailbroken` or `corelliumd` which is non-jailbroken with API agent.
