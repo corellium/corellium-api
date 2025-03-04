@@ -1,12 +1,15 @@
 {
   "name": "@corellium/corellium-api",
-  "version": "1.8.0",
+  "version": "1.9.0",
   "description": "Supported nodejs library for interacting with the Corellium service and VMs",
   "main": "src/corellium.js",
   "husky": {
     "hooks": {
       "pre-commit": "lint-staged && npm run docs"
     }
+  },
+  "engines": {
+    "node": ">=18.0.0"
   },
   "scripts": {
     "docs": "jsdoc -c .jsdocrc.js -d docs",

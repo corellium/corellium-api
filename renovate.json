@@ -76,21 +76,6 @@
     {
       "matchPackageNames": ["sinon"],
       "allowedVersions": "<17.0.0"
-    },
-    {
-      "description": "higher versions drop node 16 support",
-      "matchPackageNames": ["husky", "eslint"],
-      "allowedVersions": "<9.0.0"
-    },
-    {
-      "description": "higher versions drop node 16 support",
-      "matchPackageNames": ["node-fetch"],
-      "allowedVersions": "<3.0.0"
-    },
-    {
-      "description": "higher versions drop node 16 support",
-      "matchPackageNames": ["file-type"],
-      "allowedVersions": "<19.0.0"
     }
   ]
 }

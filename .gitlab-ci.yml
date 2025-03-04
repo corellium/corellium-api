@@ -9,13 +9,13 @@ stages:
 test:
   image: node:lts
   stage: test
-  script: 
+  script:
     - npm ci
     - npm run test:ci
 
 release-publish:
   image:
-    name: git.corellium.co:5050/corellium/ci/docker/nodejs:16
+    name: git.corellium.co:5050/corellium/ci/docker/nodejs:18
     pull_policy: [always, if-not-present]
   stage: publish
   before_script:
@@ -48,7 +48,7 @@ release-publish:
 
 local-publish:
   image:
-    name: git.corellium.co:5050/corellium/ci/docker/nodejs:16
+    name: git.corellium.co:5050/corellium/ci/docker/nodejs:18
     pull_policy: [always, if-not-present]
   stage: publish
   before_script:
