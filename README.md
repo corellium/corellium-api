@@ -12,19 +12,13 @@ npm install @corellium/corellium-api
 ```
 
 ### Publishing
-To publish the corellium-api npm package to the GitLab registry, create a tag with the format
+To publish the corellium-api npm package to the GitLab registry, the npm registry, as well as create a release in the
+mirrored GitHub repository.
+
 ```
 git tag -a v#.#.# -m "v#.#.#"
 git push origin v#.#.#
 ```
-
-To publish to the official Corellium npm registry, create a tag with the format
-```
-git tag -a release/v#.#.# -m "v#.#.#"
-git push origin release/v#.#.#
-
-```
-This will publish the package in the GitLab registry, the npm registry, as well as create a release in the mirrored GitHub repository
 
 ### Usage
 ```javascript=
