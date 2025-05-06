@@ -15,7 +15,7 @@ test:
 
 release-publish:
   image:
-    name: git.corellium.co:5050/corellium/ci/docker/nodejs:18
+    name: git.corellium.co:5050/corellium/ci/docker/nodejs:22
     pull_policy: [always, if-not-present]
   stage: publish
   before_script:
@@ -42,13 +42,14 @@ release-publish:
     - git push git@github.com:corellium/corellium-api.git HEAD:master
     - git push git@github.com:corellium/corellium-api.git "refs/tags/${CI_COMMIT_TAG}"
     - jq . package.json
+    - nvm use 18
     - npm publish
   rules:
-    - if: '$CI_COMMIT_TAG =~ /^v/'
+    - if: '$CI_COMMIT_TAG =~ /^release\/v/'
 
 local-publish:
   image:
-    name: git.corellium.co:5050/corellium/ci/docker/nodejs:18
+    name: git.corellium.co:5050/corellium/ci/docker/nodejs:22
     pull_policy: [always, if-not-present]
   stage: publish
   before_script:
@@ -67,6 +68,7 @@ local-publish:
     - jq ".version = \"${PKG_VERSION}\"" package.json > temp.json
     - mv temp.json package.json
     - jq . package.json
+    - nvm use 18
     - npm publish
   only:
     - tags
