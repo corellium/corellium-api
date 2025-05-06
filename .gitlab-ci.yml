@@ -1,10 +1,17 @@
 include:
   - project: infrastructure/gitlab_shared_ci
     file: Sonarqube.gitlab-ci.yml
+  - project: infrastructure/gitlab_shared_ci
+    file: security_compliance.yml
 
 stages:
+  - security
   - test
   - publish
+
+variables:
+  DD_ENV: 'ci'
+  DD_SERVICE: $CI_PROJECT_NAME
 
 test:
   image: node:lts
