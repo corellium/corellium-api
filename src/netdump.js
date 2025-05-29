@@ -89,8 +89,14 @@ class Netdump {
         let message
         if (typeof data === 'string') {
           message = JSON.parse(data)
-        } else if (data.length >= 8) {
-          message = data.slice(8)
+        } else if (Buffer.isBuffer(data)) {
+          try {
+            message = JSON.parse(data.toString('utf8'))
+          } catch (e) {
+            if (data.length >= 8) {
+              message = data.slice(8)
+            }
+          }
         }
 
         if (this.handler) {

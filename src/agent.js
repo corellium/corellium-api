@@ -163,13 +163,24 @@ class Agent {
     ws.on('message', data => {
       try {
         let message
-        let id
+        let id = -1
         if (typeof data === 'string') {
           message = JSON.parse(data)
           id = message.id
-        } else if (data.length >= 8) {
-          id = data.readUInt32LE(0)
-          message = data.slice(8)
+        } else if (Buffer.isBuffer(data)) {
+          try {
+            message = JSON.parse(data.toString('utf8'))
+            id = message.id
+          } catch (e) {
+            if (data.length >= 8) {
+              id = data.readUInt32LE(0)
+              message = data.slice(8)
+            }
+          }
+        }
+
+        if (id === -1) {
+          throw new Error(`handler not found for id: ${id}`)
         }
 
         const handler = this.pending.get(id)
@@ -261,7 +272,7 @@ class Agent {
     // _startKeepAlive() invoked once -> this._keepAliveTimeout is registered in state with the pong listener relying on that state to clear it.
     // _startKeepAlive() invoked second -> overwrites this._keepAliveTimeout.
     // Now, when original pong listener goes to clear timer based on this._keepAliveTimeout state, it has lost the reference to the first timer which results in it blowing up at 10 seconds
-    this._stopKeepAlive();
+    this._stopKeepAlive()
 
     ws.ping()
 
