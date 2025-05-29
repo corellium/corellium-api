@@ -54,7 +54,10 @@ class Netdump {
         try {
           await this._connect()
           break
-        } catch (e) {
+        } catch (err) {
+          if (err.stack.includes('self-signed certificate')) {
+            throw err
+          }
           await new Promise(resolve => setTimeout(resolve, 1000))
         }
       }

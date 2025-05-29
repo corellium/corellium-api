@@ -117,6 +117,9 @@ class Agent {
           if (err.stack.includes('Instance likely does not exist')) {
             throw err
           }
+          if (err.stack.includes('self-signed certificate')) {
+            throw err
+          }
           if (err.stack.includes('unexpected server response (502)')) {
             // 'Error: unexpected server response (502)' means the device is not likely up yet
             await sleep(10 * 1000)
