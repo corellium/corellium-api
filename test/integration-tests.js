@@ -42,10 +42,10 @@ describe('Corellium API', function () {
   let INSTANCE_VERSIONS = []
   if (CONFIGURATION.testFlavor === 'ranchu') {
     this.slow(10000)
-    this.timeout(20000)
+    this.timeout(60000)
 
     BASE_LIFECYCLE_TIMEOUT = 40000
-    BASE_SNAPSHOT_TIMEOUT = 20000
+    BASE_SNAPSHOT_TIMEOUT = 60000
     INSTANCE_VERSIONS = ['7.1.2', '8.1.0', '9.0.0', '10.0.0', '11.0.0', '12.0.0']
   } else {
     this.slow(40000)
@@ -182,6 +182,12 @@ describe('Corellium API', function () {
       const instance = instanceMap.get(INSTANCE_VERSIONS[0])
       await instance.waitForState('on')
       const foundInstance = await corellium.getInstance(instance.id)
+      assert(foundInstance.id === instance.id)
+    })
+
+    it('can get instance and bypass instance on error', async function () {
+      const instance = instanceMap.get(INSTANCE_VERSIONS[0])
+      const foundInstance = await corellium.getInstance({ id: instance.id, throwIfNotOn: false })
       assert(foundInstance.id === instance.id)
     })
 

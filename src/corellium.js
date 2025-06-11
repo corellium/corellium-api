@@ -469,20 +469,38 @@ class Corellium {
   }
 
   /**
+   * @typedef {Object} GetInstanceOpts
+   * @property {string} id - instanceId
+   * @property {boolean} [throwIfNotOn=true] - Optional boolean property to not throw if the instance is off (defaults to true)
+   */
+
+  /**
    * Attempts to retrieve Instance by iterating through all projects until the instance is found.
    *
-   * @param {string} instanceId
+   * @param {string | GetInstanceOpts} opts - Either an instanceId string or an object with an `id` string and optional `throwIfNotOn` boolean (defaults to true if omitted)
    * @returns {Promise<Instance>}
    * @example
    * await corellium.getInstance('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa')
+   * @example
+   * await corellium.getInstance({ id: 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', throwIfNotOn: false })
+   * @example
+   * await corellium.getInstance({ id: 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa' })
    */
-  async getInstance (instanceId) {
+  async getInstance (opts) {
     let lastError
+    let id, throwIfNotOn
+    if (typeof opts === 'string') {
+      id = opts
+      throwIfNotOn = true
+    } else {
+      ({ id, throwIfNotOn = true } = opts)
+    }
+
     const projects = await this.projects()
     for (const project of projects) {
       try {
-        const instance = await project.getInstance(instanceId)
-        if (instance.info.state !== 'on') {
+        const instance = await project.getInstance(id)
+        if (throwIfNotOn && (instance.info.state !== 'on')) {
           throw new Error('The instance is not turned on')
         }
         return instance
@@ -495,7 +513,7 @@ class Corellium {
       }
     }
 
-    throw lastError || new Error(`Could not retrieve instance!  instanceId=${instanceId}`)
+    throw lastError || new Error(`Could not retrieve instance!  instanceId=${id}`)
   }
 }
 
