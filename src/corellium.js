@@ -2,6 +2,7 @@
 
 const { fetch, fetchApi, CorelliumError } = require('./util/fetch')
 const Project = require('./project')
+const Instance = require('./instance')
 const Team = require('./team')
 const User = require('./user')
 const Role = require('./role')
@@ -487,7 +488,6 @@ class Corellium {
    * await corellium.getInstance({ id: 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa' })
    */
   async getInstance (opts) {
-    let lastError
     let id, throwIfNotOn
     if (typeof opts === 'string') {
       id = opts
@@ -496,24 +496,19 @@ class Corellium {
       ({ id, throwIfNotOn = true } = opts)
     }
 
-    const projects = await this.projects()
-    for (const project of projects) {
-      try {
-        const instance = await project.getInstance(id)
-        if (throwIfNotOn && (instance.info.state !== 'on')) {
-          throw new Error('The instance is not turned on')
-        }
-        return instance
-      } catch (err) {
-        if (!(err instanceof CorelliumError)) {
-          throw err
-        } else {
-          lastError = err
-        }
-      }
-    }
+    try {
+      const info = await fetchApi(this, `/instances/${id}`)
+      const project = await this.getProject(info.project);
+      const instance = new Instance(project, info);
 
-    throw lastError || new Error(`Could not retrieve instance!  instanceId=${id}`)
+      if (throwIfNotOn && (instance.info.state !== 'on')) {
+        throw new Error('The instance is not turned on')
+      }
+
+      return instance
+    } catch (err) {
+      throw err;
+    }
   }
 }
 

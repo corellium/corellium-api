@@ -83,6 +83,9 @@ class Project {
    */
   async getInstance (id) {
     const info = await fetchApi(this, `/instances/${id}`)
+    if (info.project !== this.id) {
+      throw new Error('Instance does not belong to this project.');
+    }
     return new Instance(this, info)
   }
 
