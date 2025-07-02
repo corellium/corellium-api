@@ -79,7 +79,7 @@ class Corellium {
    * let token = await corellium.getToken()
    */
   async getToken () {
-    const token = this.options.token || this.token
+    const token = this.token || this.options.token
 
     // If the token is more than 15 minutes from expiring, we don't need to refresh it.
     if (token) {
